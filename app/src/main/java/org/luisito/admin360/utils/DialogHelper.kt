@@ -18,12 +18,12 @@ fun ConfirmDialog(
         title = { Text(title) },
         text = { Text(message) },
         confirmButton = {
-            TextButton(onClick = { onConfirm() }) {
-                Text("Confirmar", color = Color.Red)
+            TextButton(onClick = onConfirm) {
+                Text("Eliminar", color = Color.Red)
             }
         },
         dismissButton = {
-            TextButton(onClick = { onDismiss() }) {
+            TextButton(onClick = onDismiss) {
                 Text("Cancelar")
             }
         }

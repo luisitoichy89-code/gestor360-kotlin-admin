@@ -66,7 +66,7 @@ fun AdminDashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             // Resumen
             Row(
@@ -75,7 +75,7 @@ fun AdminDashboardScreen(
             ) {
                 Card(modifier = Modifier.weight(1f).padding(4.dp)) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("🏢", style = MaterialTheme.typography.headlineMedium)
@@ -85,7 +85,7 @@ fun AdminDashboardScreen(
                 }
                 Card(modifier = Modifier.weight(1f).padding(4.dp)) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("✅", style = MaterialTheme.typography.headlineMedium)
@@ -95,7 +95,7 @@ fun AdminDashboardScreen(
                 }
                 Card(modifier = Modifier.weight(1f).padding(4.dp)) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("🔴", style = MaterialTheme.typography.headlineMedium)
@@ -128,7 +128,7 @@ fun AdminDashboardScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp),
+                                    .padding(20.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
