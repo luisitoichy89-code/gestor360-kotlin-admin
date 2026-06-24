@@ -75,3 +75,8 @@ data class LicenciaUiState(
     val licencias: List<Licencia> = emptyList(),
     val error: String? = null
 )
+
+    fun getDiasRestantes(clienteId: String): Int {
+        val licencia = _uiState.value.licencias.find { it.cliente_id == clienteId }
+        return licencia?.getDiasRestantes() ?: 0
+    }

@@ -17,6 +17,27 @@ class NegocioRepository {
         }
     }
 
+    suspend fun getNegociosConLicencia(): List<Pair<Negocio, Int>> {
+        return try {
+            val supabase = SupabaseClientProvider.client
+            val negocios = supabase.from("clientes")
+                .select()
+                .decodeAs<List<Negocio>>()
+            
+            val licencias = supabase.from("licencias")
+                .select()
+                .decodeAs<List<Licencia>>()
+            
+            negocios.map { negocio ->
+                val licencia = licencias.find { it.cliente_id == negocio.id }
+                val dias = licencia?.getDiasRestantes() ?: 0
+                Pair(negocio, dias)
+            }.sortedBy { it.second }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     suspend fun createNegocio(nombre: String): Boolean {
         return try {
             val supabase = SupabaseClientProvider.client
