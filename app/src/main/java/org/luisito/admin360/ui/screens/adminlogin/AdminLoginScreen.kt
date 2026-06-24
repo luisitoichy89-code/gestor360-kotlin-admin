@@ -28,7 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import org.luisito.admin360.ui.theme.Gestor360AdminTheme
+import org.luisito.admin360.ui.theme.Gestor360Theme
 
 @Composable
 fun AdminLoginScreen(
@@ -47,7 +47,7 @@ fun AdminLoginScreen(
         }
     }
 
-    Gestor360AdminTheme {
+    Gestor360Theme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background

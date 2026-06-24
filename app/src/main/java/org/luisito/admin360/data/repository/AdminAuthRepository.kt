@@ -4,6 +4,11 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import org.luisito.admin360.data.SupabaseClientProvider
 
+sealed class LoginResult {
+    data class Success(val userId: String) : LoginResult()
+    data class Error(val message: String) : LoginResult()
+}
+
 class AdminAuthRepository {
 
     suspend fun login(email: String, password: String): LoginResult {
@@ -34,9 +39,4 @@ class AdminAuthRepository {
             false
         }
     }
-}
-
-sealed class LoginResult {
-    data class Success(val userId: String) : LoginResult()
-    data class Error(val message: String) : LoginResult()
 }
