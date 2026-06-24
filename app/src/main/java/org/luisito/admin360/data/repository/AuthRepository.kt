@@ -12,21 +12,16 @@ sealed class LoginResult {
 class AuthRepository {
 
     suspend fun login(email: String, password: String): LoginResult {
-        return try {
-            val supabase = SupabaseClientProvider.client
-            val response = supabase.auth.signInWith(Email) {
+        val supabase = SupabaseClientProvider.client
+        
+        return runCatching {
+            supabase.auth.signInWith(Email) {
                 this.email = email
                 this.password = password
             }
-
-            val user = response.user
-            if (user != null) {
-                LoginResult.Success(user.id)
-            } else {
-                LoginResult.Error("Credenciales inválidas")
-            }
-        } catch (e: Exception) {
-            LoginResult.Error(e.message ?: "Error de conexión")
+            LoginResult.Success(email)
+        }.getOrElse { exception ->
+            LoginResult.Error(exception.message ?: "Error de conexión")
         }
     }
 

@@ -31,24 +31,8 @@ class AdminUserRepository {
     ): Boolean {
         return try {
             val supabase = SupabaseClientProvider.client
-            val email = "$username@gestor360.local"
-            
-            // Crear en Auth
-            val authRes = supabase.auth.admin.createUser(
-                mapOf(
-                    "email" to email,
-                    "password" to password,
-                    "email_confirm" to true
-                )
-            )
-            val authId = (authRes as? Map<*, *>)?.get("user")?.let {
-                (it as? Map<*, *>)?.get("id") as? String
-            } ?: return false
-
-            // Crear en usuarios
             supabase.from("usuarios").insert(
                 mapOf(
-                    "auth_id" to authId,
                     "cliente_id" to clienteId,
                     "username" to username,
                     "nombre" to nombre,
