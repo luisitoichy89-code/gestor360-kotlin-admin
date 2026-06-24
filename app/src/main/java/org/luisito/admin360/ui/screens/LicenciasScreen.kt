@@ -10,6 +10,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,8 +20,10 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -44,6 +49,10 @@ fun LicenciasScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deleteLicenciaId by remember { mutableStateOf<Int?>(null) }
+    var showRenewDialog by remember { mutableStateOf(false) }
+    var renewLicenciaId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(clienteId) {
         viewModel.loadLicencias(clienteId)
@@ -107,10 +116,23 @@ fun LicenciasScreen(
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
-                                IconButton(
-                                    onClick = { viewModel.renewLicense(clienteId, 30) }
-                                ) {
-                                    Text("🔄")
+                                Row {
+                                    IconButton(
+                                        onClick = {
+                                            renewLicenciaId = lic.id
+                                            showRenewDialog = true
+                                        }
+                                    ) {
+                                        Text("🔄")
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            deleteLicenciaId = lic.id
+                                            showDeleteDialog = true
+                                        }
+                                    ) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Eliminar")
+                                    }
                                 }
                             }
                         }
@@ -118,5 +140,99 @@ fun LicenciasScreen(
                 }
             }
         }
+    }
+
+    // Dialog para eliminar
+    if (showDeleteDialog && deleteLicenciaId != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("⚠️ Eliminar licencia") },
+            text = { Text("¿Estás seguro de que quieres eliminar esta licencia? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteLicense(deleteLicenciaId!!)
+                        showDeleteDialog = false
+                        deleteLicenciaId = null
+                    }
+                ) {
+                    Text("Eliminar", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false; deleteLicenciaId = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // Dialog para renovar
+    if (showRenewDialog && renewLicenciaId != null) {
+        AlertDialog(
+            onDismissRequest = { showRenewDialog = false },
+            title = { Text("🔄 Renovar licencia") },
+            text = { Text("¿Cuántos días quieres renovar esta licencia?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.renewLicense(clienteId, 30)
+                        showRenewDialog = false
+                        renewLicenciaId = null
+                    }
+                ) {
+                    Text("Renovar 30 días")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenewDialog = false; renewLicenciaId = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // Dialog para activar nueva
+    if (showDialog) {
+        var newDeviceId by remember { mutableStateOf("") }
+        var newDias by remember { mutableStateOf("30") }
+
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("🔑 Activar licencia") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = newDeviceId,
+                        onValueChange = { newDeviceId = it },
+                        label = { Text("Android ID") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = newDias,
+                        onValueChange = { newDias = it },
+                        label = { Text("Días") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (newDeviceId.isNotEmpty()) {
+                            viewModel.activateLicense(clienteId, newDeviceId, newDias.toIntOrNull() ?: 30)
+                            showDialog = false
+                        }
+                    }
+                ) {
+                    Text("Activar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
