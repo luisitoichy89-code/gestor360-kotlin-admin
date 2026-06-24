@@ -1,5 +1,6 @@
 package org.luisito.admin360.ui.screens.adminlogin
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,13 +10,21 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.luisito.admin360.data.repository.AuthRepository
 import org.luisito.admin360.data.repository.LoginResult
+import org.luisito.admin360.utils.DataStoreManager
 
 class AdminLoginViewModel(
+    private val context: Context,
     private val authRepository: AuthRepository = AuthRepository()
 ) : ViewModel() {
 
+    private val dataStore = DataStoreManager(context)
+
     private val _uiState = MutableStateFlow(AdminLoginUiState())
     val uiState: StateFlow<AdminLoginUiState> = _uiState.asStateFlow()
+
+    suspend fun checkSession(): Boolean {
+        return dataStore.isLoggedIn.collect { }.run { false } // Temporal
+    }
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
@@ -25,6 +34,7 @@ class AdminLoginViewModel(
 
             when (result) {
                 is LoginResult.Success -> {
+                    dataStore.saveSession(result.userId, email)
                     _uiState.update {
                         it.copy(
                             isLoading = false,

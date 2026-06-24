@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,30 +25,45 @@ import org.luisito.admin360.ui.screens.NegociosScreen
 import org.luisito.admin360.ui.screens.adminlogin.AdminLoginScreen
 import org.luisito.admin360.ui.screens.adminlogin.AdminLoginViewModel
 import org.luisito.admin360.ui.theme.Gestor360Theme
+import org.luisito.admin360.utils.DataStoreManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            Gestor360AdminApp()
+            Gestor360AdminApp(dataStoreManager = DataStoreManager(this))
         }
     }
 }
 
 @Composable
-fun Gestor360AdminApp() {
+fun Gestor360AdminApp(
+    dataStoreManager: DataStoreManager
+) {
     var isLoggedIn by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf("dashboard") }
     var selectedNegocioId by remember { mutableStateOf<String?>(null) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    var isLoading by remember { mutableStateOf(true) }
 
-    val loginViewModel: AdminLoginViewModel = viewModel()
+    val loginViewModel: AdminLoginViewModel = viewModel(
+        factory = AdminLoginViewModelFactory(dataStoreManager)
+    )
     val loginState by loginViewModel.uiState.collectAsState()
 
-    if (!isLoggedIn) {
+    LaunchedEffect(Unit) {
+        dataStoreManager.isLoggedIn.collect { loggedIn ->
+            isLoggedIn = loggedIn
+            isLoading = false
+        }
+    }
+
+    if (isLoading) {
+        // Pantalla de carga
+    } else if (!isLoggedIn && !loginState.isLoggedIn) {
         AdminLoginScreen(
-            onLoginSuccess = { isLoggedIn = true },
+            onLoginSuccess = { /* Ya se maneja en el ViewModel */ },
             viewModel = loginViewModel
         )
     } else {
@@ -58,8 +74,11 @@ fun Gestor360AdminApp() {
                 selectedItem = item
                 when (item) {
                     "logout" -> {
-                        isLoggedIn = false
-                        loginViewModel.resetState()
+                        CoroutineScope(Dispatchers.Main).launch {
+                            dataStoreManager.clearSession()
+                            loginViewModel.resetState()
+                            isLoggedIn = false
+                        }
                     }
                 }
             }
