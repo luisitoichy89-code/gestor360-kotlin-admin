@@ -53,6 +53,7 @@ fun Gestor360AdminApp(prefs: PreferenceManager) {
         AdminNavigationDrawer(
             drawerState = drawerState,
             selectedItem = selectedItem,
+            clienteId = selectedNegocioId,
             onItemClick = { item ->
                 when (item) {
                     "logout" -> {
@@ -122,6 +123,21 @@ fun Gestor360AdminApp(prefs: PreferenceManager) {
                             onNegocioSeleccionado = { id ->
                                 selectedNegocioId = id
                                 selectedItem = "licencias"
+                            }
+                        )
+                    }
+                }
+                "control" -> {
+                    if (selectedNegocioId != null) {
+                        ControlLicenciasScreen(
+                            onBack = { selectedItem = "dashboard" }
+                        )
+                    } else {
+                        NegociosScreen(
+                            onBack = { selectedItem = "dashboard" },
+                            onNegocioSeleccionado = { id ->
+                                selectedNegocioId = id
+                                selectedItem = "control"
                             }
                         )
                     }
