@@ -17,6 +17,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.luisito.admin360.ui.components.AdminNavigationDrawer
 import org.luisito.admin360.ui.screens.AdminDashboardScreen
+import org.luisito.admin360.ui.screens.AdminUsersScreen
+import org.luisito.admin360.ui.screens.LicenciasScreen
+import org.luisito.admin360.ui.screens.LocalesScreen
 import org.luisito.admin360.ui.screens.NegociosScreen
 import org.luisito.admin360.ui.screens.adminlogin.AdminLoginScreen
 import org.luisito.admin360.ui.screens.adminlogin.AdminLoginViewModel
@@ -69,6 +72,54 @@ fun Gestor360AdminApp() {
                         selectedItem = "locales"
                     }
                 )
+                "locales" -> {
+                    if (selectedNegocioId != null) {
+                        LocalesScreen(
+                            clienteId = selectedNegocioId!!,
+                            onBack = { selectedItem = "negocios" }
+                        )
+                    } else {
+                        NegociosScreen(
+                            onBack = { selectedItem = "dashboard" },
+                            onNegocioSeleccionado = { id ->
+                                selectedNegocioId = id
+                                selectedItem = "locales"
+                            }
+                        )
+                    }
+                }
+                "usuarios" -> {
+                    if (selectedNegocioId != null) {
+                        AdminUsersScreen(
+                            clienteId = selectedNegocioId!!,
+                            onBack = { selectedItem = "negocios" }
+                        )
+                    } else {
+                        NegociosScreen(
+                            onBack = { selectedItem = "dashboard" },
+                            onNegocioSeleccionado = { id ->
+                                selectedNegocioId = id
+                                selectedItem = "usuarios"
+                            }
+                        )
+                    }
+                }
+                "licencias" -> {
+                    if (selectedNegocioId != null) {
+                        LicenciasScreen(
+                            clienteId = selectedNegocioId!!,
+                            onBack = { selectedItem = "negocios" }
+                        )
+                    } else {
+                        NegociosScreen(
+                            onBack = { selectedItem = "dashboard" },
+                            onNegocioSeleccionado = { id ->
+                                selectedNegocioId = id
+                                selectedItem = "licencias"
+                            }
+                        )
+                    }
+                }
                 else -> AdminDashboardScreen(
                     onMenuClick = {
                         CoroutineScope(Dispatchers.Main).launch {
