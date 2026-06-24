@@ -3,6 +3,8 @@ package org.luisito.admin360
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +33,7 @@ fun Gestor360AdminApp(prefs: PreferenceManager) {
     var isLoggedIn by remember { mutableStateOf(prefs.isLoggedIn()) }
     var selectedItem by remember { mutableStateOf("dashboard") }
     var selectedNegocioId by remember { mutableStateOf<String?>(null) }
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
     val loginViewModel: AdminLoginViewModel = viewModel()
     val loginState by loginViewModel.uiState.collectAsState()
@@ -48,6 +51,7 @@ fun Gestor360AdminApp(prefs: PreferenceManager) {
         )
     } else {
         AdminNavigationDrawer(
+            drawerState = drawerState,
             selectedItem = selectedItem,
             onItemClick = { item ->
                 when (item) {
@@ -59,6 +63,9 @@ fun Gestor360AdminApp(prefs: PreferenceManager) {
                     }
                     else -> {
                         selectedItem = item
+                        CoroutineScope(Dispatchers.Main).launch {
+                            drawerState.close()
+                        }
                     }
                 }
             }
@@ -120,7 +127,11 @@ fun Gestor360AdminApp(prefs: PreferenceManager) {
                     }
                 }
                 else -> AdminDashboardScreen(
-                    onMenuClick = { /* el menú se abre desde el icono en la top bar */ },
+                    onMenuClick = {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            drawerState.open()
+                        }
+                    },
                     onNegocioClick = { id ->
                         selectedNegocioId = id
                         selectedItem = "locales"
