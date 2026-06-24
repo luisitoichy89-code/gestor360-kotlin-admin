@@ -75,3 +75,28 @@ data class AdminUserUiState(
     val users: List<AdminUser> = emptyList(),
     val error: String? = null
 )
+
+    fun updateUser(
+        id: Int,
+        username: String,
+        nombre: String,
+        rol: String,
+        almacenId: String,
+        activo: Boolean
+    ) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val success = repository.updateUser(id, username, nombre, rol, almacenId, activo)
+            if (success) {
+                _uiState.update { it.copy(isLoading = false) }
+                loadUsers(_uiState.value.users.firstOrNull()?.cliente_id ?: "")
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Error al actualizar usuario"
+                    )
+                }
+            }
+        }
+    }

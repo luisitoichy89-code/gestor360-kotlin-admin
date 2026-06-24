@@ -75,3 +75,21 @@ data class LocalUiState(
     val locales: List<Local> = emptyList(),
     val error: String? = null
 )
+
+    fun updateLocal(id: Int, nombre: String, activo: Boolean) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val success = repository.updateLocal(id, nombre, activo)
+            if (success) {
+                _uiState.update { it.copy(isLoading = false) }
+                loadLocales(_uiState.value.locales.firstOrNull()?.cliente_id ?: "")
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Error al actualizar local"
+                    )
+                }
+            }
+        }
+    }

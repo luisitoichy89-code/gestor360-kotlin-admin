@@ -80,3 +80,21 @@ data class LicenciaUiState(
     val licencias: List<Licencia> = emptyList(),
     val error: String? = null
 )
+
+    fun deleteLicense(id: Int) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val success = repository.deleteLicense(id)
+            if (success) {
+                _uiState.update { it.copy(isLoading = false) }
+                loadLicencias(_uiState.value.licencias.firstOrNull()?.cliente_id ?: "")
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Error al eliminar licencia"
+                    )
+                }
+            }
+        }
+    }
