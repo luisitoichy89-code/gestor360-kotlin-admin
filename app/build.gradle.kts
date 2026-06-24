@@ -80,6 +80,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("io.ktor:ktor-client-android:3.4.3")
     implementation("io.ktor:ktor-client-core:3.4.3")
+    implementation("io.ktor:ktor-client-cio:3.4.3")
     implementation("io.ktor:ktor-utils:3.4.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
