@@ -7,11 +7,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.luisito.admin360.data.repository.AdminAuthRepository
+import org.luisito.admin360.data.repository.AuthRepository
 import org.luisito.admin360.data.repository.LoginResult
 
 class AdminLoginViewModel(
-    private val authRepository: AdminAuthRepository = AdminAuthRepository()
+    private val authRepository: AuthRepository = AuthRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdminLoginUiState())

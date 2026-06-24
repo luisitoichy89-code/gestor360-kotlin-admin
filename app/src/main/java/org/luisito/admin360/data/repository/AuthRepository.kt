@@ -9,7 +9,7 @@ sealed class LoginResult {
     data class Error(val message: String) : LoginResult()
 }
 
-class AdminAuthRepository {
+class AuthRepository {
 
     suspend fun login(email: String, password: String): LoginResult {
         return try {
