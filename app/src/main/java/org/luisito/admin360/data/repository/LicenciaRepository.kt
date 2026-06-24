@@ -22,16 +22,11 @@ class LicenciaRepository {
         }
     }
 
-    suspend fun activateLicense(
-        clienteId: String,
-        deviceId: String,
-        dias: Int
-    ): Boolean {
+    suspend fun activateLicense(clienteId: String, deviceId: String, dias: Int): Boolean {
         return try {
             val expiracion = LocalDate.now().plusDays(dias.toLong()).toString()
             val supabase = SupabaseClientProvider.client
             
-            // Verificar si ya existe licencia para este negocio
             val existing = supabase.from("licencias")
                 .select {
                     filter {
@@ -41,7 +36,6 @@ class LicenciaRepository {
                 .decodeAs<List<Licencia>>()
             
             if (existing.isNotEmpty()) {
-                // Actualizar licencia existente
                 supabase.from("licencias")
                     .update(
                         mapOf(
@@ -55,7 +49,6 @@ class LicenciaRepository {
                         }
                     }
             } else {
-                // Crear nueva licencia
                 supabase.from("licencias").insert(
                     mapOf(
                         "cliente_id" to clienteId,

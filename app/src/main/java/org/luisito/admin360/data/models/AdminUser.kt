@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AdminUser(
     val id: Int,
-    val auth_id: String,
+    val auth_id: String? = null,
     val cliente_id: String,
     val username: String,
     val nombre: String? = null,

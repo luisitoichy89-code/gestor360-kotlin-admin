@@ -14,14 +14,15 @@ class AuthRepository {
     suspend fun login(email: String, password: String): LoginResult {
         val supabase = SupabaseClientProvider.client
         
-        return runCatching {
-            supabase.auth.signInWith(Email) {
+        return try {
+            val response = supabase.auth.signInWith(Email) {
                 this.email = email
                 this.password = password
             }
-            LoginResult.Success(email)
-        }.getOrElse { exception ->
-            LoginResult.Error(exception.message ?: "Error de conexión")
+            val userId = response.user?.id ?: return LoginResult.Error("No se pudo obtener el usuario")
+            LoginResult.Success(userId)
+        } catch (e: Exception) {
+            LoginResult.Error(e.message ?: "Error de conexión")
         }
     }
 
