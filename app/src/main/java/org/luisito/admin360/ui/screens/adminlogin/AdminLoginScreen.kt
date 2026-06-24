@@ -32,7 +32,6 @@ import org.luisito.admin360.ui.theme.Gestor360Theme
 
 @Composable
 fun AdminLoginScreen(
-    onLoginSuccess: () -> Unit,
     viewModel: AdminLoginViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
@@ -43,7 +42,7 @@ fun AdminLoginScreen(
 
     LaunchedEffect(uiState.isLoggedIn) {
         if (uiState.isLoggedIn) {
-            onLoginSuccess()
+            // El login ya está manejado
         }
     }
 
