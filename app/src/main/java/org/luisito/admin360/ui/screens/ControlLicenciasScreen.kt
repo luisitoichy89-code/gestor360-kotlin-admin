@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,15 +87,11 @@ fun ControlLicenciasScreen(
                                         text = negocio.nombre_negocio,
                                         style = MaterialTheme.typography.titleMedium
                                     )
+                                    // TODO: Calcular días restantes desde Licencia
                                     Text(
-                                        text = "Días restantes: ${negocio.getDiasRestantes()}",
+                                        text = "Días restantes: --",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = when (negocio.getDiasRestantes()) {
-                                            0 -> Color.Red
-                                            in 1..5 -> Color.Red
-                                            in 6..10 -> Color.Yellow
-                                            else -> Color.Green
-                                        }
+                                        color = Color.Green
                                     )
                                 }
                             }

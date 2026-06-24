@@ -3,6 +3,7 @@ package org.luisito.admin360.data.repository
 import io.github.jan.supabase.postgrest.from
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.Negocio
+import org.luisito.admin360.data.models.Licencia
 
 class NegocioRepository {
 
