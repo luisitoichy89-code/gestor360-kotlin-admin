@@ -16,6 +16,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.AdminUser
+import org.luisito.admin360.BuildConfig
 
 @Serializable
 data class CreateUserRequest(
@@ -32,8 +33,8 @@ data class CreateUserResponse(
 
 class AdminUserRepository {
 
-    private val supabaseUrl = "https://duspeazziwxptcrignju.supabase.co"
-    private val supabaseKey = "sb_secret_yrX5riDfgP5rJ76D5FWktg_ZZPl5jjG"
+    private val supabaseUrl = BuildConfig.SUPABASE_URL
+    private val supabaseKey = BuildConfig.SUPABASE_KEY
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -69,7 +70,6 @@ class AdminUserRepository {
         return try {
             val email = "$username@gestor360.local"
             
-            // 1. Crear usuario en Supabase Auth vía API REST
             val response: HttpResponse = client.post("$supabaseUrl/auth/v1/admin/users") {
                 contentType(ContentType.Application.Json)
                 headers {
@@ -86,7 +86,6 @@ class AdminUserRepository {
             val userResponse: CreateUserResponse = response.body()
             val authId = userResponse.id
 
-            // 2. Insertar en la tabla usuarios
             val supabase = SupabaseClientProvider.client
             supabase.from("usuarios").insert(
                 mapOf(
