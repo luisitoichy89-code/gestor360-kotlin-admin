@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.map
 
 private val Context.dataStore by preferencesDataStore("admin_prefs")
 
-class DataStoreManager(private val context: Context) {
+class DataStoreManager(val context: Context) {
 
     companion object {
         private val KEY_LOGGED_IN = booleanPreferencesKey("logged_in")
