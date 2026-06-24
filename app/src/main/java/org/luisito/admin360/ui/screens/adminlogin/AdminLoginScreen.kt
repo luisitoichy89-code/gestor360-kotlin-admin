@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,6 +16,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,17 +27,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import org.luisito.admin360.ui.theme.Gestor360AdminTheme
 
 @Composable
 fun AdminLoginScreen(
     onLoginSuccess: () -> Unit,
-    onRecovery: () -> Unit,
-    isLoading: Boolean = false,
-    error: String? = null
+    viewModel: AdminLoginViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isRecoveryMode by remember { mutableStateOf(false) }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.isLoggedIn) {
+        if (uiState.isLoggedIn) {
+            onLoginSuccess()
+        }
+    }
 
     Gestor360AdminTheme {
         Surface(
@@ -49,7 +60,7 @@ fun AdminLoginScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "🔐 Gestor360 Admin",
+                    text = if (isRecoveryMode) "🔐 Recuperar Contraseña" else "🔐 Gestor360 Admin",
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -57,7 +68,7 @@ fun AdminLoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Acceso exclusivo para administradores",
+                    text = if (isRecoveryMode) "Ingresa tu email para recibir un enlace" else "Acceso exclusivo para administradores",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -73,23 +84,34 @@ fun AdminLoginScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                if (!isRecoveryMode) {
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Contraseña") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-                )
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Contraseña") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                    )
+                }
 
-                if (error != null) {
+                if (uiState.error != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = error,
+                        text = uiState.error ?: "",
                         color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                if (uiState.recoverySent) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "✅ Correo de recuperación enviado. Revisa tu bandeja.",
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -98,29 +120,38 @@ fun AdminLoginScreen(
 
                 Button(
                     onClick = {
-                        if (email.isNotEmpty() && password.isNotEmpty()) {
-                            onLoginSuccess()
+                        if (isRecoveryMode) {
+                            viewModel.sendRecovery(email)
+                        } else {
+                            if (email.isNotEmpty() && password.isNotEmpty()) {
+                                viewModel.login(email, password)
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !isLoading
+                    enabled = !uiState.isLoading
                 ) {
-                    if (isLoading) {
+                    if (uiState.isLoading) {
                         CircularProgressIndicator(
                             modifier = Modifier.height(20.dp),
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text("Iniciar Sesión")
+                        Text(if (isRecoveryMode) "Enviar Enlace" else "Iniciar Sesión")
                     }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 TextButton(
-                    onClick = onRecovery
+                    onClick = {
+                        isRecoveryMode = !isRecoveryMode
+                        viewModel.resetState()
+                    }
                 ) {
-                    Text("¿Olvidaste tu contraseña?")
+                    Text(
+                        if (isRecoveryMode) "← Volver al login" else "¿Olvidaste tu contraseña?"
+                    )
                 }
             }
         }
