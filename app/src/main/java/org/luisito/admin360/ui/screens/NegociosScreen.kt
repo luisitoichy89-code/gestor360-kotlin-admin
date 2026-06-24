@@ -3,10 +3,8 @@ package org.luisito.admin360.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +12,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,8 +21,10 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -48,6 +50,12 @@ fun NegociosScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deleteNegocioId by remember { mutableStateOf<String?>(null) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editNegocioId by remember { mutableStateOf<String?>(null) }
+    var editNombre by remember { mutableStateOf("") }
+    var editActivo by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         viewModel.loadNegocios()
@@ -118,12 +126,20 @@ fun NegociosScreen(
                                         Text("📂")
                                     }
                                     IconButton(
-                                        onClick = { /* TODO: Editar */ }
+                                        onClick = {
+                                            editNegocioId = negocio.id
+                                            editNombre = negocio.nombre_negocio
+                                            editActivo = negocio.activo
+                                            showEditDialog = true
+                                        }
                                     ) {
                                         Icon(Icons.Default.Edit, contentDescription = "Editar")
                                     }
                                     IconButton(
-                                        onClick = { viewModel.deleteNegocio(negocio.id) }
+                                        onClick = {
+                                            deleteNegocioId = negocio.id
+                                            showDeleteDialog = true
+                                        }
                                     ) {
                                         Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                                     }
@@ -136,7 +152,96 @@ fun NegociosScreen(
         }
     }
 
+    // Dialog para eliminar
+    if (showDeleteDialog && deleteNegocioId != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("⚠️ Eliminar negocio") },
+            text = { Text("¿Estás seguro de que quieres eliminar este negocio? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteNegocio(deleteNegocioId!!)
+                        showDeleteDialog = false
+                        deleteNegocioId = null
+                    }
+                ) {
+                    Text("Eliminar", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false; deleteNegocioId = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // Dialog para editar
+    if (showEditDialog && editNegocioId != null) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text("✏️ Editar negocio") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = editNombre,
+                        onValueChange = { editNombre = it },
+                        label = { Text("Nombre") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.updateNegocio(editNegocioId!!, editNombre, editActivo)
+                        showEditDialog = false
+                        editNegocioId = null
+                    }
+                ) {
+                    Text("Guardar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false; editNegocioId = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // Dialog para crear
     if (showDialog) {
-        // TODO: Dialog para crear negocio
+        var newNombre by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("🏢 Nuevo negocio") },
+            text = {
+                OutlinedTextField(
+                    value = newNombre,
+                    onValueChange = { newNombre = it },
+                    label = { Text("Nombre del negocio") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (newNombre.isNotEmpty()) {
+                            viewModel.createNegocio(newNombre)
+                            showDialog = false
+                        }
+                    }
+                ) {
+                    Text("Crear")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }

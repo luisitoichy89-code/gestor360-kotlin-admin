@@ -3,18 +3,16 @@ package org.luisito.admin360.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compute.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -50,7 +49,12 @@ fun LocalesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
-    var nuevoNombre by remember { mutableStateOf("") }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deleteLocalId by remember { mutableStateOf<Int?>(null) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editLocalId by remember { mutableStateOf<Int?>(null) }
+    var editNombre by remember { mutableStateOf("") }
+    var editActivo by remember { mutableStateOf(true) }
 
     LaunchedEffect(clienteId) {
         viewModel.loadLocales(clienteId)
@@ -116,12 +120,20 @@ fun LocalesScreen(
                                 }
                                 Row {
                                     IconButton(
-                                        onClick = { /* TODO: Editar */ }
+                                        onClick = {
+                                            editLocalId = local.id
+                                            editNombre = local.nombre
+                                            editActivo = local.activo
+                                            showEditDialog = true
+                                        }
                                     ) {
                                         Icon(Icons.Default.Edit, contentDescription = "Editar")
                                     }
                                     IconButton(
-                                        onClick = { viewModel.deleteLocal(local.id, clienteId) }
+                                        onClick = {
+                                            deleteLocalId = local.id
+                                            showDeleteDialog = true
+                                        }
                                     ) {
                                         Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                                     }
@@ -134,7 +146,96 @@ fun LocalesScreen(
         }
     }
 
+    // Dialog para eliminar
+    if (showDeleteDialog && deleteLocalId != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("⚠️ Eliminar local") },
+            text = { Text("¿Estás seguro de que quieres eliminar este local? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteLocal(deleteLocalId!!, clienteId)
+                        showDeleteDialog = false
+                        deleteLocalId = null
+                    }
+                ) {
+                    Text("Eliminar", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false; deleteLocalId = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // Dialog para editar
+    if (showEditDialog && editLocalId != null) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text("✏️ Editar local") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = editNombre,
+                        onValueChange = { editNombre = it },
+                        label = { Text("Nombre") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.updateLocal(editLocalId!!, editNombre, editActivo)
+                        showEditDialog = false
+                        editLocalId = null
+                    }
+                ) {
+                    Text("Guardar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false; editLocalId = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // Dialog para crear
     if (showDialog) {
-        // Dialog simple para crear local
+        var newNombre by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("🏪 Nuevo local") },
+            text = {
+                OutlinedTextField(
+                    value = newNombre,
+                    onValueChange = { newNombre = it },
+                    label = { Text("Nombre del local") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (newNombre.isNotEmpty()) {
+                            viewModel.createLocal(clienteId, newNombre)
+                            showDialog = false
+                        }
+                    }
+                ) {
+                    Text("Crear")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
