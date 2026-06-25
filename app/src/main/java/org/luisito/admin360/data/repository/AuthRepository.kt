@@ -19,7 +19,6 @@ class AuthRepository {
                 this.email = email
                 this.password = password
             }
-            // Si llegamos aquí, la autenticación fue exitosa
             LoginResult.Success(email)
         }.getOrElse { exception ->
             LoginResult.Error(exception.message ?: "Error de conexión")
