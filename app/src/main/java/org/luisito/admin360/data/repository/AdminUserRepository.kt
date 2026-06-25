@@ -1,6 +1,6 @@
 package org.luisito.admin360.data.repository
 
-import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.admin
 import io.github.jan.supabase.postgrest.from
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.AdminUser
@@ -34,16 +34,14 @@ class AdminUserRepository {
             val supabase = SupabaseClientProvider.client
             val email = "$username@gestor360.local"
             
+            // ✅ Sintaxis correcta según tu amigo
             val authRes = supabase.auth.admin.createUser(
-                mapOf(
-                    "email" to email,
-                    "password" to password,
-                    "email_confirm" to true
-                )
+                email = email,
+                password = password,
+                emailConfirm = true
             )
-            val authId = (authRes as? Map<*, *>)?.get("user")?.let {
-                (it as? Map<*, *>)?.get("id") as? String
-            } ?: return false
+            
+            val authId = authRes.user?.id ?: return false
 
             supabase.from("usuarios").insert(
                 mapOf(

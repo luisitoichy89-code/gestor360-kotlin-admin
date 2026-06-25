@@ -76,6 +76,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
 
     implementation(platform("io.github.jan-tennert.supabase:bom:3.5.0"))
+    implementation("io.github.jan.supabase:auth-kt:3.5.0")
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("io.ktor:ktor-client-android:3.4.3")
