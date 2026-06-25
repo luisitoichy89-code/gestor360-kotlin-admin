@@ -4,124 +4,59 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.luisito.admin360.data.models.AdminUser
 import org.luisito.admin360.data.repository.AdminUserRepository
 
-class AdminUserViewModel(
-    private val repository: AdminUserRepository = AdminUserRepository()
-) : ViewModel() {
+data class AdminUserUiState(
+    val users: List<AdminUser> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
 
+class AdminUserViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(AdminUserUiState())
-    val uiState: StateFlow<AdminUserUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<AdminUserUiState> = _uiState
+    private val repo = AdminUserRepository()
 
     fun loadUsers(clienteId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val users = repository.getUsers(clienteId)
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    users = users,
-                    error = if (users.isEmpty()) "No hay usuarios" else null
-                )
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                val users = repo.getUsers(clienteId)
+                _uiState.value = _uiState.value.copy(users = users, isLoading = false)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message, isLoading = false)
             }
         }
     }
 
-    fun createUser(
-        clienteId: String,
-        username: String,
-        password: String,
-        nombre: String,
-        rol: String,
-        almacenId: String
-    ) {
+    fun createUser(clienteId: String, username: String, password: String, nombre: String, rol: String, almacenId: String, deviceId: String?) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val success = repository.createUser(clienteId, username, password, nombre, rol, almacenId)
-            if (success) {
-                loadUsers(clienteId)
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al crear usuario"
-                    )
-                }
-            }
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val ok = repo.createUser(clienteId, username, password, nombre, rol, almacenId, deviceId)
+            if (ok) loadUsers(clienteId) else _uiState.value = _uiState.value.copy(error = "Error al crear usuario", isLoading = false)
         }
     }
 
-    fun updateUser(
-        id: Int,
-        username: String,
-        nombre: String,
-        rol: String,
-        almacenId: String,
-        activo: Boolean
-    ) {
+    fun updateUser(id: Int, username: String, nombre: String, rol: String, almacenId: String, activo: Boolean, deviceId: String?) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val success = repository.updateUser(id, username, nombre, rol, almacenId, activo)
-            if (success) {
-                val clienteId = _uiState.value.users.firstOrNull()?.cliente_id ?: ""
-                loadUsers(clienteId)
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al actualizar usuario"
-                    )
-                }
-            }
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val ok = repo.updateUser(id, username, nombre, rol, almacenId, activo, deviceId)
+            if (ok) { /* recargar */ } else _uiState.value = _uiState.value.copy(error = "Error al actualizar", isLoading = false)
         }
     }
 
     fun deleteUser(id: Int, clienteId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val success = repository.deleteUser(id)
-            if (success) {
-                loadUsers(clienteId)
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al eliminar usuario"
-                    )
-                }
-            }
+            val ok = repo.deleteUser(id)
+            if (ok) loadUsers(clienteId)
         }
     }
 
-    fun approveUser(id: Int) {
+    fun confirmPasswordReset(userId: Int) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val success = repository.approveUser(id)
-            if (success) {
-                val clienteId = _uiState.value.users.firstOrNull()?.cliente_id ?: ""
-                loadUsers(clienteId)
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al aprobar usuario"
-                    )
-                }
-            }
+            repo.confirmPasswordReset(userId)
         }
-    }
-
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
     }
 }
-
-data class AdminUserUiState(
-    val isLoading: Boolean = false,
-    val users: List<AdminUser> = emptyList(),
-    val error: String? = null
-)
