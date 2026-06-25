@@ -28,7 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.luisito.admin360.ui.theme.Gestor360Theme
-import org.luisito.admin360.data.repository.AdminAuthRepository
+import org.luisito.admin360.data.repository.AuthRepository
 import org.luisito.admin360.data.repository.LoginResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +59,7 @@ fun LoginScreen() {
     var error by remember { mutableStateOf<String?>(null) }
     var isLoggedIn by remember { mutableStateOf(false) }
 
-    val authRepo = AdminAuthRepository()
+    val authRepo = AuthRepository()
 
     if (isLoggedIn) {
         // TODO: Mostrar Dashboard
