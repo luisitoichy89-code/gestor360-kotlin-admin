@@ -81,9 +81,6 @@ dependencies {
     implementation(libs.serialization.json)
     implementation(libs.coroutines.android)
 
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)   // ← KSP, no kapt
 
     implementation(libs.datastore)
     testImplementation(libs.junit)
