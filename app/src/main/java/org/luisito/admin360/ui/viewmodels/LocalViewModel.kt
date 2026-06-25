@@ -4,92 +4,52 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.luisito.admin360.data.models.Local
 import org.luisito.admin360.data.repository.LocalRepository
 
-class LocalViewModel(
-    private val repository: LocalRepository = LocalRepository()
-) : ViewModel() {
+data class LocalUiState(
+    val locales: List<Local> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
 
+class LocalViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(LocalUiState())
-    val uiState: StateFlow<LocalUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<LocalUiState> = _uiState
+    private val repo = LocalRepository()
 
     fun loadLocales(clienteId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val locales = repository.getLocales(clienteId)
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    locales = locales,
-                    error = if (locales.isEmpty()) "No hay locales" else null
-                )
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                val locales = repo.getLocales(clienteId)
+                _uiState.value = _uiState.value.copy(locales = locales, isLoading = false)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message, isLoading = false)
             }
         }
     }
 
     fun createLocal(clienteId: String, nombre: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val success = repository.createLocal(clienteId, nombre)
-            if (success) {
-                loadLocales(clienteId)
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al crear local"
-                    )
-                }
-            }
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val ok = repo.createLocal(clienteId, nombre)
+            if (ok) loadLocales(clienteId) else _uiState.value = _uiState.value.copy(error = "Error al crear local", isLoading = false)
         }
     }
 
-    fun updateLocal(id: Int, nombre: String, activo: Boolean) {
+    fun updateLocal(id: Int, nombre: String, activo: Boolean, clienteId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val success = repository.updateLocal(id, nombre, activo)
-            if (success) {
-                val clienteId = _uiState.value.locales.firstOrNull()?.cliente_id ?: ""
-                loadLocales(clienteId)
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al actualizar local"
-                    )
-                }
-            }
+            val ok = repo.updateLocal(id, nombre, activo)
+            if (ok) loadLocales(clienteId)
         }
     }
 
     fun deleteLocal(id: Int, clienteId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val success = repository.deleteLocal(id)
-            if (success) {
-                loadLocales(clienteId)
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al eliminar local"
-                    )
-                }
-            }
+            val ok = repo.deleteLocal(id)
+            if (ok) loadLocales(clienteId)
         }
     }
-
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
-    }
 }
-
-data class LocalUiState(
-    val isLoading: Boolean = false,
-    val locales: List<Local> = emptyList(),
-    val error: String? = null
-)
