@@ -38,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.ui.viewmodels.LicenciaViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,8 +45,8 @@ import org.luisito.admin360.ui.viewmodels.LicenciaViewModel
 fun ControlLicenciasScreen(
     onBack: () -> Unit,
     viewModel: LicenciaViewModel = viewModel()
-) {    val uiState by viewModel.uiState.collectAsState()
-    var showActivateDialog by remember { mutableStateOf(false) }
+) {
+    val uiState by viewModel.uiState.collectAsState()    var showActivateDialog by remember { mutableStateOf(false) }
     var showRenewDialog by remember { mutableStateOf(false) }
     var renewLicenciaId by remember { mutableStateOf<Int?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -89,15 +88,14 @@ fun ControlLicenciasScreen(
             } else if (uiState.error != null) {
                 Text(text = uiState.error ?: "Error", color = MaterialTheme.colorScheme.error)
             } else {
-                // Resumen
                 val activas = uiState.licencias.count { it.activo && it.getDiasRestantes() >= 0 }
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Card(modifier = Modifier.weight(1f).padding(4.dp)) {                        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("${uiState.licencias.size}", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-                            Text("Total", style = MaterialTheme.typography.bodySmall)
+                    Card(modifier = Modifier.weight(1f).padding(4.dp)) {
+                        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("${uiState.licencias.size}", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)                            Text("Total", style = MaterialTheme.typography.bodySmall)
                         }
                     }
                     Card(modifier = Modifier.weight(1f).padding(4.dp)) {
@@ -144,9 +142,9 @@ fun ControlLicenciasScreen(
                                 Row {
                                     IconButton(onClick = {
                                         renewLicenciaId = licencia.id
-                                        showRenewDialog = true                                    }) {
-                                        Text("🔄")
-                                    }
+                                        showRenewDialog = true
+                                    }) {
+                                        Text("🔄")                                    }
                                     IconButton(onClick = {
                                         deleteLicenciaId = licencia.id
                                         showDeleteDialog = true
@@ -162,7 +160,6 @@ fun ControlLicenciasScreen(
         }
     }
 
-    // Dialog: Activar nueva licencia
     if (showActivateDialog) {
         var deviceId by remember { mutableStateOf("") }
         var almacenId by remember { mutableStateOf("") }
@@ -193,10 +190,10 @@ fun ControlLicenciasScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-            },            confirmButton = {
+            },
+            confirmButton = {
                 TextButton(onClick = {
-                    if (deviceId.isNotEmpty() && almacenId.isNotEmpty()) {
-                        viewModel.activateLicencia(deviceId, almacenId, dias.toIntOrNull() ?: 30)
+                    if (deviceId.isNotEmpty() && almacenId.isNotEmpty()) {                        viewModel.activateLicencia(deviceId, almacenId, dias.toIntOrNull() ?: 30)
                         showActivateDialog = false
                     }
                 }) { Text("Activar") }
@@ -207,7 +204,6 @@ fun ControlLicenciasScreen(
         )
     }
 
-    // Dialog: Renovar licencia
     if (showRenewDialog && renewLicenciaId != null) {
         var dias by remember { mutableStateOf("30") }
 
@@ -235,19 +231,18 @@ fun ControlLicenciasScreen(
         )
     }
 
-    // Dialog: Eliminar licencia
     if (showDeleteDialog && deleteLicenciaId != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("⚠️ Eliminar licencia") },
             text = { Text("¿Estás seguro? Esta acción no se puede deshacer.") },
             confirmButton = {
-                TextButton(onClick = {                    viewModel.deleteLicencia(deleteLicenciaId!!)
+                TextButton(onClick = {
+                    viewModel.deleteLicencia(deleteLicenciaId!!)
                     showDeleteDialog = false
                     deleteLicenciaId = null
                 }) { Text("Eliminar", color = Color.Red) }
-            },
-            dismissButton = {
+            },            dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false; deleteLicenciaId = null }) { Text("Cancelar") }
             }
         )
