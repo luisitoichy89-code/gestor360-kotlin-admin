@@ -1,6 +1,5 @@
 package org.luisito.admin360.data.repository
 
-import io.github.jan.supabase.auth.admin
 import io.github.jan.supabase.postgrest.from
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.AdminUser
@@ -33,19 +32,9 @@ class AdminUserRepository {
     ): Boolean {
         return try {
             val supabase = SupabaseClientProvider.client
-            val email = "$username@gestor360.local"
-            
-            val authRes = supabase.auth.admin.createUser(
-                email = email,
-                password = password,
-                emailConfirm = true
-            )
-            
-            val authId = authRes.user?.id ?: return false
-
+            // TODO: Crear usuario en Auth (pendiente)
             supabase.from("usuarios").insert(
                 mapOf(
-                    "auth_id" to authId,
                     "cliente_id" to clienteId,
                     "username" to username,
                     "nombre" to nombre,
@@ -56,6 +45,23 @@ class AdminUserRepository {
                     "device_approved" to false
                 )
             )
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun approveUser(id: Int): Boolean {
+        return try {
+            val supabase = SupabaseClientProvider.client
+            supabase.from("usuarios")
+                .update(
+                    mapOf("device_approved" to true)
+                ) {
+                    filter {
+                        eq("id", id)
+                    }
+                }
             true
         } catch (e: Exception) {
             false
@@ -97,23 +103,6 @@ class AdminUserRepository {
             val supabase = SupabaseClientProvider.client
             supabase.from("usuarios")
                 .delete {
-                    filter {
-                        eq("id", id)
-                    }
-                }
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    suspend fun approveUser(id: Int): Boolean {
-        return try {
-            val supabase = SupabaseClientProvider.client
-            supabase.from("usuarios")
-                .update(
-                    mapOf("device_approved" to true)
-                ) {
                     filter {
                         eq("id", id)
                     }

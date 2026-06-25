@@ -142,7 +142,7 @@ fun Gestor360AdminApp(prefs: PreferenceManager) {
                         )
                     }
                 }
-                else -> AdminDashboardScreen(
+                else -> AdminDashboardScreen(onPendientesClick = { selectedItem = "pendientes" }, 
                     onMenuClick = {
                         CoroutineScope(Dispatchers.Main).launch {
                             drawerState.open()
