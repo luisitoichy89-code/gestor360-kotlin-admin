@@ -2,6 +2,7 @@ package org.luisito.admin360.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,7 +47,8 @@ import org.luisito.admin360.ui.viewmodels.LocalViewModel
 fun LocalesScreen(
     clienteId: String,
     onBack: () -> Unit,
-    viewModel: LocalViewModel = viewModel()) {
+    viewModel: LocalViewModel = viewModel()
+) {
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
@@ -88,14 +90,15 @@ fun LocalesScreen(
             } else if (uiState.error != null) {
                 Text(uiState.error ?: "Error", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
                     items(filteredLocales, key = { it.id }) { local ->
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
-                            ) {                                Column(modifier = Modifier.weight(1f)) {
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(local.nombre, style = MaterialTheme.typography.titleMedium)
                                     Text("ID: ${local.id} | ${if (local.activo) "🟢 Activo" else "🔴 Inactivo"}", style = MaterialTheme.typography.bodySmall)
                                 }
