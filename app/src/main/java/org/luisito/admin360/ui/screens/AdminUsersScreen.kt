@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,9 +59,20 @@ fun AdminUsersScreen(
     var editRol by remember { mutableStateOf("seller") }
     var editAlmacenId by remember { mutableStateOf("") }
     var editActivo by remember { mutableStateOf(true) }
+    var showCodeDialog by remember { mutableStateOf(false) }
+    var generatedCode by remember { mutableStateOf("") }
 
-    LaunchedEffect(clienteId) {
+    LaunchedEffect(Unit) {
         viewModel.loadUsers(clienteId)
+    }
+
+    // Mostrar código generado
+    LaunchedEffect(uiState.codigoGenerado) {
+        if (uiState.codigoGenerado != null) {
+            generatedCode = uiState.codigoGenerado!!
+            showCodeDialog = true
+            viewModel.clearEstado()
+        }
     }
 
     Scaffold(
@@ -90,7 +102,7 @@ fun AdminUsersScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(20.dp)
+                .padding(16.dp)
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -107,7 +119,7 @@ fun AdminUsersScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(20.dp),
+                                    .padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -120,6 +132,28 @@ fun AdminUsersScreen(
                                         text = "Local: ${user.almacen_id} | ${if (user.activo) "🟢 Activo" else "🔴 Inactivo"}",
                                         style = MaterialTheme.typography.bodySmall
                                     )
+                                    if (user.device_id_pendiente != null && !user.device_approved) {
+                                        Text(
+                                            text = "📱 ID pendiente: ${user.device_id_pendiente.take(12)}...",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.Yellow
+                                        )
+                                        Button(
+                                            onClick = {
+                                                viewModel.approveUser(user.id)
+                                            },
+                                            modifier = Modifier.padding(top = 4.dp)
+                                        ) {
+                                            Text("✅ Aceptar")
+                                        }
+                                    }
+                                    if (user.device_approved && user.device_id_pendiente != null) {
+                                        Text(
+                                            text = "✅ Dispositivo aprobado: ${user.device_id_pendiente?.take(12)}...",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.Green
+                                        )
+                                    }
                                 }
                                 Row {
                                     IconButton(
@@ -152,12 +186,36 @@ fun AdminUsersScreen(
         }
     }
 
+    // Dialog para mostrar código generado
+    if (showCodeDialog) {
+        AlertDialog(
+            onDismissRequest = { showCodeDialog = false },
+            title = { Text("🔑 Código de activación") },
+            text = {
+                Column {
+                    Text("Código para el usuario:")
+                    Text(
+                        text = generatedCode,
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text("Comparte este código con el usuario para su primer acceso.")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCodeDialog = false }) {
+                    Text("Aceptar")
+                }
+            }
+        )
+    }
+
     // Dialog para eliminar
     if (showDeleteDialog && deleteUserId != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("⚠️ Eliminar usuario") },
-            text = { Text("¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.") },
+            text = { Text("¿Estás seguro de que quieres eliminar este usuario?") },
             confirmButton = {
                 TextButton(
                     onClick = {

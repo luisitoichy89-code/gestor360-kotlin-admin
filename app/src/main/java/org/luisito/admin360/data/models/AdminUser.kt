@@ -11,5 +11,8 @@ data class AdminUser(
     val nombre: String? = null,
     val rol: String,
     val almacen_id: String,
-    val activo: Boolean = true
+    val activo: Boolean = true,
+    val codigo_activacion: String? = null,
+    val device_id_pendiente: String? = null,
+    val device_approved: Boolean = false
 )

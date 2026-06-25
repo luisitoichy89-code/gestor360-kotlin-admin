@@ -28,13 +28,13 @@ class AdminUserRepository {
         password: String,
         nombre: String,
         rol: String,
-        almacenId: String
+        almacenId: String,
+        codigoActivacion: String
     ): Boolean {
         return try {
             val supabase = SupabaseClientProvider.client
             val email = "$username@gestor360.local"
             
-            // ✅ Sintaxis correcta según tu amigo
             val authRes = supabase.auth.admin.createUser(
                 email = email,
                 password = password,
@@ -51,7 +51,9 @@ class AdminUserRepository {
                     "nombre" to nombre,
                     "rol" to rol,
                     "almacen_id" to almacenId,
-                    "activo" to true
+                    "activo" to true,
+                    "codigo_activacion" to codigoActivacion,
+                    "device_approved" to false
                 )
             )
             true
@@ -95,6 +97,23 @@ class AdminUserRepository {
             val supabase = SupabaseClientProvider.client
             supabase.from("usuarios")
                 .delete {
+                    filter {
+                        eq("id", id)
+                    }
+                }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun approveUser(id: Int): Boolean {
+        return try {
+            val supabase = SupabaseClientProvider.client
+            supabase.from("usuarios")
+                .update(
+                    mapOf("device_approved" to true)
+                ) {
                     filter {
                         eq("id", id)
                     }

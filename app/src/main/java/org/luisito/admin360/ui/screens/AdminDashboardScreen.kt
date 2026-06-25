@@ -38,6 +38,7 @@ import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 fun AdminDashboardScreen(
     onMenuClick: () -> Unit,
     onNegocioClick: (String) -> Unit,
+    onPendientesClick: () -> Unit,
     viewModel: NegocioViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -45,6 +46,9 @@ fun AdminDashboardScreen(
     LaunchedEffect(Unit) {
         viewModel.loadNegocios()
     }
+
+    // Contar usuarios pendientes (simulado)
+    val pendientesCount = 3 // TODO: obtener de la API
 
     Scaffold(
         topBar = {
@@ -66,7 +70,7 @@ fun AdminDashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(20.dp)
+                .padding(16.dp)
         ) {
             // Resumen
             Row(
@@ -75,7 +79,7 @@ fun AdminDashboardScreen(
             ) {
                 Card(modifier = Modifier.weight(1f).padding(4.dp)) {
                     Column(
-                        modifier = Modifier.padding(20.dp),
+                        modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("🏢", style = MaterialTheme.typography.headlineMedium)
@@ -85,7 +89,7 @@ fun AdminDashboardScreen(
                 }
                 Card(modifier = Modifier.weight(1f).padding(4.dp)) {
                     Column(
-                        modifier = Modifier.padding(20.dp),
+                        modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("✅", style = MaterialTheme.typography.headlineMedium)
@@ -93,14 +97,17 @@ fun AdminDashboardScreen(
                         Text("Activos", style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                Card(modifier = Modifier.weight(1f).padding(4.dp)) {
+                Card(
+                    modifier = Modifier.weight(1f).padding(4.dp),
+                    onClick = onPendientesClick
+                ) {
                     Column(
-                        modifier = Modifier.padding(20.dp),
+                        modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("🔴", style = MaterialTheme.typography.headlineMedium)
-                        Text("${uiState.negocios.filter { !it.activo }.size}", style = MaterialTheme.typography.titleLarge)
-                        Text("Inactivos", style = MaterialTheme.typography.bodySmall)
+                        Text("⏳", style = MaterialTheme.typography.headlineMedium)
+                        Text("$pendientesCount", style = MaterialTheme.typography.titleLarge)
+                        Text("Pendientes", style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -128,7 +135,7 @@ fun AdminDashboardScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(20.dp),
+                                    .padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
