@@ -120,7 +120,7 @@ fun AdminLoginScreen(
                 Button(
                     onClick = {
                         if (isRecoveryMode) {
-                            viewModel.sendRecovery(email)
+                            viewModel.sendPasswordRecovery(email)
                         } else {
                             if (email.isNotEmpty() && password.isNotEmpty()) {
                                 viewModel.login(email, password)

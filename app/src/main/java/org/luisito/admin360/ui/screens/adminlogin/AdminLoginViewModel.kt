@@ -55,7 +55,7 @@ class AdminLoginViewModel(
         }
     }
 
-    fun sendRecovery(email: String) {
+    fun sendPasswordRecovery(email: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             val success = authRepository.sendPasswordRecovery(email)
