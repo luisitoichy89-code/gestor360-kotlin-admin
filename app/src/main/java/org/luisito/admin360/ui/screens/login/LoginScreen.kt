@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -24,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import org.luisito.admin360.ui.components.PrimaryBlackButton
 import org.luisito.admin360.ui.theme.Gestor360Theme
 
 @Composable
@@ -37,8 +37,7 @@ fun LoginScreen(
 
     Gestor360Theme {
         Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
+            modifier = Modifier.fillMaxSize(),            color = MaterialTheme.colorScheme.background
         ) {
             Column(
                 modifier = Modifier
@@ -87,14 +86,14 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = error,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
+                        color = MaterialTheme.colorScheme.error,                        style = MaterialTheme.typography.bodySmall
                     )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Button(
+                PrimaryBlackButton(
+                    text = if (isLoading) "" else "Iniciar Sesión",
                     onClick = {
                         if (username.isNotEmpty() && password.isNotEmpty()) {
                             onLoginSuccess()
@@ -108,8 +107,6 @@ fun LoginScreen(
                             modifier = Modifier.height(20.dp),
                             color = MaterialTheme.colorScheme.onPrimary
                         )
-                    } else {
-                        Text("Iniciar Sesión")
                     }
                 }
             }
