@@ -46,16 +46,13 @@ fun AdminUsersScreen(
                         Text("←", color = Color.White)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
+                colors = TopAppBarDefaults.topAppBarColors(                    containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = Color.White
                 )
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showDialog = true }
-            ) {
+            FloatingActionButton(onClick = { showDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Agregar")
             }
         }
@@ -71,13 +68,9 @@ fun AdminUsersScreen(
             } else if (uiState.error != null) {
                 Text(text = uiState.error ?: "Error", color = MaterialTheme.colorScheme.error)
             } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(uiState.users) { user ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                        Card(modifier = Modifier.fillMaxWidth()) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -85,7 +78,7 @@ fun AdminUsersScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column {
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = "${user.username} (${user.rol})",
                                         style = MaterialTheme.typography.titleMedium
@@ -94,43 +87,35 @@ fun AdminUsersScreen(
                                         text = "Local: ${user.almacen_id} | ${if (user.activo) "🟢 Activo" else "🔴 Inactivo"}",
                                         style = MaterialTheme.typography.bodySmall
                                     )
-                                    if (user.device_id_pendiente != null && !user.device_approved) {
+                                    if (!user.device_id.isNullOrEmpty()) {
                                         Text(
-                                            text = "📱 ID pendiente: ${user.device_id_pendiente?.take(12)}...",
+                                            text = "📱 Device: ${user.device_id?.take(12)}...",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.Cyan
+                                        )
+                                    }
+                                    if (user.reset_requested) {
+                                        Text(                                            text = "🔑 Reset solicitado",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = Color.Yellow
                                         )
                                         Button(
-                                            onClick = {
-                                                viewModel.approveUser(user.id)
-                                            },
-                                            modifier = Modifier.padding(top = 4.dp)
+                                            onClick = { viewModel.confirmPasswordReset(user.id) },
+                                            modifier = Modifier.padding(top = 4.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color.Green)
                                         ) {
-                                            Text("✅ Aceptar")
+                                            Text("✅ Confirmar Reset")
                                         }
-                                    }
-                                    if (user.device_approved) {
-                                        Text(
-                                            text = "✅ Dispositivo aprobado",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color.Green
-                                        )
                                     }
                                 }
                                 Row {
-                                    IconButton(
-                                        onClick = {
-                                            // TODO: Editar usuario
-                                        }
-                                    ) {
+                                    IconButton(onClick = { /* TODO: Editar usuario */ }) {
                                         Icon(Icons.Default.Edit, contentDescription = "Editar")
                                     }
-                                    IconButton(
-                                        onClick = {
-                                            deleteUserId = user.id
-                                            showDeleteDialog = true
-                                        }
-                                    ) {
+                                    IconButton(onClick = {
+                                        deleteUserId = user.id
+                                        showDeleteDialog = true
+                                    }) {
                                         Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                                     }
                                 }
@@ -148,21 +133,18 @@ fun AdminUsersScreen(
             title = { Text("⚠️ Eliminar usuario") },
             text = { Text("¿Estás seguro de que quieres eliminar este usuario?") },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteUser(deleteUserId!!, clienteId)
-                        showDeleteDialog = false
-                        deleteUserId = null
-                    }
-                ) {
+                TextButton(onClick = {
+                    viewModel.deleteUser(deleteUserId!!, clienteId)
+                    showDeleteDialog = false
+                    deleteUserId = null
+                }) {
                     Text("Eliminar", color = Color.Red)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false; deleteUserId = null }) {
                     Text("Cancelar")
-                }
-            }
+                }            }
         )
     }
 
@@ -172,6 +154,7 @@ fun AdminUsersScreen(
         var newNombre by remember { mutableStateOf("") }
         var newRol by remember { mutableStateOf("seller") }
         var newAlmacenId by remember { mutableStateOf("") }
+        var newDeviceId by remember { mutableStateOf("") }
 
         AlertDialog(
             onDismissRequest = { showDialog = false },
@@ -202,17 +185,24 @@ fun AdminUsersScreen(
                         label = { Text("Local ID") },
                         modifier = Modifier.fillMaxWidth()
                     )
+                    OutlinedTextField(
+                        value = newDeviceId,
+                        onValueChange = { newDeviceId = it },
+                        label = { Text("Android ID del dispositivo") },
+                        placeholder = { Text("Ej: G360-XXXXXXXXXXXX") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (newUsername.isNotEmpty() && newPassword.isNotEmpty()) {
-                            viewModel.createUser(clienteId, newUsername, newPassword, newNombre, newRol, newAlmacenId)
-                            showDialog = false
-                        }
+            },            confirmButton = {
+                TextButton(onClick = {
+                    if (newUsername.isNotEmpty() && newPassword.isNotEmpty()) {
+                        viewModel.createUser(
+                            clienteId, newUsername, newPassword,
+                            newNombre, newRol, newAlmacenId, newDeviceId
+                        )
+                        showDialog = false
                     }
-                ) {
+                }) {
                     Text("Crear")
                 }
             },
