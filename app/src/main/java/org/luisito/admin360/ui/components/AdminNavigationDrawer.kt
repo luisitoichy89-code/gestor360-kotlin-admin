@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -37,11 +37,10 @@ fun AdminNavigationDrawer(
     onItemClick: (String) -> Unit,
     clienteId: String? = null,
     content: @Composable () -> Unit
-) {    val scope = rememberCoroutineScope()
+) {
+    val scope = rememberCoroutineScope()
     val licenciaViewModel: LicenciaViewModel = viewModel()
     val uiState by licenciaViewModel.uiState.collectAsState()
-
-    // Estados de expansión para submenús
     var gestionExpanded by remember { mutableStateOf(true) }
     var adminExpanded by remember { mutableStateOf(true) }
 
@@ -55,9 +54,8 @@ fun AdminNavigationDrawer(
         licenciaViewModel.getDiasRestantes(clienteId)
     } else 0
 
-    // Colores semánticos tokenizados (heredan de Phase 1)
     val licenseColor = when {
-        diasRestantes > 25 -> MaterialTheme.colorScheme.primary // Blanco en tema oscuro
+        diasRestantes > 25 -> MaterialTheme.colorScheme.primary
         diasRestantes > 4 -> MaterialTheme.colorScheme.tertiary
         diasRestantes >= 0 -> MaterialTheme.colorScheme.error
         else -> MaterialTheme.colorScheme.outline
@@ -71,7 +69,6 @@ fun AdminNavigationDrawer(
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Encabezado con estado de licencia
                 Row(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = "🏢 Gestor360 Admin",
@@ -87,13 +84,12 @@ fun AdminNavigationDrawer(
                         )
                     }
                 }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                Divider(color = MaterialTheme.colorScheme.outlineVariant)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Column(modifier = Modifier.fillMaxSize()) {
-                    // --- GRUPO: GESTIÓN ---
-                    Text(
-                        text = "GESTIÓN",
+                    Text(                        text = "GESTIÓN",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -135,15 +131,14 @@ fun AdminNavigationDrawer(
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // --- GRUPO: ADMINISTRACIÓN ---
                     Text(
                         text = "ADMINISTRACIÓN",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
 
                     NavigationDrawerItem(
@@ -183,17 +178,16 @@ fun AdminNavigationDrawer(
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(8.dp))
-                    // --- CERRAR SESIÓN (separado visualmente) ---
+
                     NavigationDrawerItem(
                         label = { Text("🚪 Cerrar Sesión") },
                         selected = false,
                         onClick = { scope.launch { drawerState.close(); onItemClick("logout") } },
                         modifier = Modifier.padding(horizontal = 8.dp),
                         colors = NavigationDrawerItemDefaults.colors(
-                            unselectedTextColor = MaterialTheme.colorScheme.error
-                        )
+                            unselectedTextColor = MaterialTheme.colorScheme.error                        )
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
