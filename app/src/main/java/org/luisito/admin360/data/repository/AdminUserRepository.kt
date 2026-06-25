@@ -28,11 +28,16 @@ class AdminUserRepository {
         return try {
             val supabase = SupabaseClientProvider.client
             val email = "$username@gestor360.local"
-            val authRes = supabase.auth.signUpWith(Email) {
+            
+            // ✅ Usar signUpWith(Email) correctamente
+            val response = supabase.auth.signUpWith(Email) {
                 this.email = email
                 this.password = password
             }
-            val authId = authRes.user?.id ?: return false
+            
+            // ✅ Obtener el id del usuario de la respuesta
+            val authId = response.user?.id ?: return false
+            
             supabase.from("usuarios").insert(mapOf(
                 "auth_id" to authId,
                 "cliente_id" to clienteId,
