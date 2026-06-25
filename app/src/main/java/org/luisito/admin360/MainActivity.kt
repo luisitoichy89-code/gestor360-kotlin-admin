@@ -3,77 +3,39 @@ package org.luisito.admin360
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import org.luisito.admin360.ui.theme.Gestor360Theme
-import org.luisito.admin360.data.repository.AuthRepository
-import org.luisito.admin360.data.repository.LoginResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.luisito.admin360.ui.theme.Gestor360Theme
+import org.luisito.admin360.data.repository.AuthRepository
+import org.luisito.admin360.data.repository.LoginResult
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        setContent {
-            Gestor360Theme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    AppContent()
-                }
-            }
-        }
+        setContent { AppContent() }
     }
 }
 
 @Composable
 fun AppContent() {
     var isLoggedIn by remember { mutableStateOf(false) }
-    var currentScreen by remember { mutableStateOf("dashboard") }
-
-    if (!isLoggedIn) {
-        LoginScreen(
-            onLoginSuccess = {
-                isLoggedIn = true
-            }
-        )
-    } else {
-        DashboardScreen(
-            onLogout = {
-                isLoggedIn = false
-            }
-        )
-    }
+    if (!isLoggedIn) LoginScreen(onLoginSuccess = { isLoggedIn = true })
+    else AdminDashboard()
 }
 
 @Composable
@@ -82,241 +44,155 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-
     val authRepo = AuthRepository()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "🔐 Gestor360 Admin",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Acceso exclusivo para administradores",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Contraseña") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-        )
-
-        if (error != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = error ?: "",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(modifier = Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text("🔐 Gestor360 Admin", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.height(8.dp))
+            Text("Acceso exclusivo para administradores", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)
+            Spacer(Modifier.height(32.dp))
+            OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Contraseña") }, modifier = Modifier.fillMaxWidth(), singleLine = true, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+            if (error != null) { Spacer(Modifier.height(8.dp)); Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            Spacer(Modifier.height(24.dp))
+            Button(onClick = {
                 if (email.isNotEmpty() && password.isNotEmpty()) {
-                    isLoading = true
-                    error = null
-
+                    isLoading = true; error = null
                     CoroutineScope(Dispatchers.Main).launch {
                         val result = authRepo.login(email, password)
                         isLoading = false
-
                         when (result) {
-                            is LoginResult.Success -> {
-                                onLoginSuccess()
-                            }
-                            is LoginResult.Error -> {
-                                error = result.message
-                            }
+                            is LoginResult.Success -> onLoginSuccess()
+                            is LoginResult.Error -> error = result.message
                         }
                     }
                 }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.height(20.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            } else {
-                Text("Iniciar Sesión")
+            }, modifier = Modifier.fillMaxWidth(), enabled = !isLoading) {
+                if (isLoading) CircularProgressIndicator(modifier = Modifier.height(20.dp), color = MaterialTheme.colorScheme.onPrimary)
+                else Text("Iniciar Sesión")
             }
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
     }
 }
 
 @Composable
-fun DashboardScreen(onLogout: () -> Unit) {
-    val negocios = listOf(
-        "Cafetería La Esquina" to "Activo",
-        "Tienda El Centro" to "Inactivo",
-        "Farmacia Salud" to "Activo",
-        "Panadería El Trigal" to "Activo",
-        "Librería El Saber" to "Inactivo"
-    )
-    val locales = listOf("Local 1", "Local 2", "Local 3")
-    val usuarios = listOf("Admin", "Vendedor1", "Vendedor2")
+fun AdminDashboard() {
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    var selectedItem by remember { mutableStateOf("negocios") }
+    var selectedNegocioId by remember { mutableStateOf<String?>(null) }
 
-    var selectedTab by remember { mutableStateOf("negocios") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Text("Gestor360 Admin", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
+                Divider()
+                listOf("Negocios", "Locales", "Usuarios", "Licencias", "Cerrar Sesión").forEach { item ->
+                    NavigationDrawerItem(
+                        label = { Text(item) },
+                        selected = selectedItem == item.lowercase(),
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            when (item) {
+                                "Cerrar Sesión" -> { /* logout */ }
+                                else -> selectedItem = item.lowercase()
+                            }
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                }
+            }
+        }
     ) {
-        Text(
-            text = "📊 Panel de Control",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(
-                onClick = { selectedTab = "negocios" }
-            ) {
-                Text("🏢 Negocios")
-            }
-            Button(
-                onClick = { selectedTab = "locales" }
-            ) {
-                Text("🏪 Locales")
-            }
-            Button(
-                onClick = { selectedTab = "usuarios" }
-            ) {
-                Text("👥 Usuarios")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        when (selectedTab) {
-            "negocios" -> {
-                Text(
-                    text = "Lista de Negocios",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                LazyColumn {
-                    items(negocios) { (nombre, estado) ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(4.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text(
-                                    text = nombre,
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                                Text(
-                                    text = "Estado: $estado",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Gestor360 Admin") },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menú")
                         }
-                    }
-                }
-            }
-            "locales" -> {
-                Text(
-                    text = "Lista de Locales",
-                    style = MaterialTheme.typography.titleMedium
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary, titleContentColor = Color.White, navigationIconContentColor = Color.White)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                LazyColumn {
-                    items(locales) { local ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(4.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text(
-                                    text = local,
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                            }
-                        }
-                    }
-                }
             }
-            "usuarios" -> {
-                Text(
-                    text = "Lista de Usuarios",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                LazyColumn {
-                    items(usuarios) { usuario ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(4.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text(
-                                    text = usuario,
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                            }
-                        }
-                    }
+        ) { padding ->
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                when (selectedItem) {
+                    "negocios" -> NegociosList()
+                    "locales" -> LocalesList()
+                    "usuarios" -> UsuariosList()
+                    "licencias" -> LicenciasList()
+                    else -> Text("Selecciona una opción")
                 }
             }
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(32.dp))
+@Composable
+fun NegociosList() {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text("Negocios", style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(8.dp))
+        val negocios = listOf("Cafetería La Esquina", "Tienda El Centro", "Farmacia Salud")
+        LazyColumn {
+            items(negocios) { negocio ->
+                Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                    Text(negocio, modifier = Modifier.padding(16.dp))
+                }
+            }
+        }
+    }
+}
 
-        Button(
-            onClick = onLogout,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("🚪 Cerrar Sesión")
+@Composable
+fun LocalesList() {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text("Locales", style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(8.dp))
+        val locales = listOf("Local 1", "Local 2", "Local 3")
+        LazyColumn {
+            items(locales) { local ->
+                Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                    Text(local, modifier = Modifier.padding(16.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun UsuariosList() {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text("Usuarios", style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(8.dp))
+        val usuarios = listOf("Admin", "Vendedor1", "Vendedor2")
+        LazyColumn {
+            items(usuarios) { usuario ->
+                Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                    Text(usuario, modifier = Modifier.padding(16.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LicenciasList() {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text("Licencias", style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(8.dp))
+        val licencias = listOf("Licencia 1", "Licencia 2", "Licencia 3")
+        LazyColumn {
+            items(licencias) { licencia ->
+                Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                    Text(licencia, modifier = Modifier.padding(16.dp))
+                }
+            }
         }
     }
 }
