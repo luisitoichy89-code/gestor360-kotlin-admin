@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,9 +46,9 @@ import org.luisito.admin360.ui.viewmodels.LocalViewModel
 fun LocalesScreen(
     clienteId: String,
     onBack: () -> Unit,
-    viewModel: LocalViewModel = viewModel()
-) {
+    viewModel: LocalViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
+    var searchQuery by remember { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var deleteLocalId by remember { mutableStateOf<Int?>(null) }
@@ -56,87 +57,53 @@ fun LocalesScreen(
     var editNombre by remember { mutableStateOf("") }
     var editActivo by remember { mutableStateOf(true) }
 
-    LaunchedEffect(clienteId) {
-        viewModel.loadLocales(clienteId)
-    }
+    LaunchedEffect(clienteId) { viewModel.loadLocales(clienteId) }
+
+    val filteredLocales = uiState.locales
+        .filter { it.nombre.contains(searchQuery, ignoreCase = true) || it.id.toString().contains(searchQuery) }
+        .sortedByDescending { it.created_at }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("🏪 Locales") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Text("←", color = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White
-                )
+                navigationIcon = { IconButton(onClick = onBack) { Text("←", color = Color.White) } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary, titleContentColor = Color.White)
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showDialog = true }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Agregar")
-            }
-        }
+        floatingActionButton = { FloatingActionButton(onClick = { showDialog = true }) { Icon(Icons.Default.Add, "Agregar") } }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(20.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("🔍 Buscar local...") },
+                leadingIcon = { Icon(Icons.Default.Search, null) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
             if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally).padding(24.dp))
             } else if (uiState.error != null) {
-                Text(text = uiState.error ?: "Error", color = MaterialTheme.colorScheme.error)
+                Text(uiState.error ?: "Error", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
             } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(uiState.locales) { local ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
+                    items(filteredLocales, key = { it.id }) { local ->
+                        Card(modifier = Modifier.fillMaxWidth()) {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(20.dp),
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        text = local.nombre,
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Text(
-                                        text = "ID: ${local.id} | ${if (local.activo) "🟢 Activo" else "🔴 Inactivo"}",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
+                            ) {                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(local.nombre, style = MaterialTheme.typography.titleMedium)
+                                    Text("ID: ${local.id} | ${if (local.activo) "🟢 Activo" else "🔴 Inactivo"}", style = MaterialTheme.typography.bodySmall)
                                 }
                                 Row {
-                                    IconButton(
-                                        onClick = {
-                                            editLocalId = local.id
-                                            editNombre = local.nombre
-                                            editActivo = local.activo
-                                            showEditDialog = true
-                                        }
-                                    ) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Editar")
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            deleteLocalId = local.id
-                                            showDeleteDialog = true
-                                        }
-                                    ) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Eliminar")
-                                    }
+                                    IconButton(onClick = {
+                                        editLocalId = local.id; editNombre = local.nombre; editActivo = local.activo; showEditDialog = true
+                                    }) { Icon(Icons.Default.Edit, "Editar") }
+                                    IconButton(onClick = { deleteLocalId = local.id; showDeleteDialog = true }) { Icon(Icons.Default.Delete, "Eliminar") }
                                 }
                             }
                         }
@@ -146,96 +113,34 @@ fun LocalesScreen(
         }
     }
 
-    // Dialog para eliminar
     if (showDeleteDialog && deleteLocalId != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("⚠️ Eliminar local") },
-            text = { Text("¿Estás seguro de que quieres eliminar este local? Esta acción no se puede deshacer.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteLocal(deleteLocalId!!, clienteId)
-                        showDeleteDialog = false
-                        deleteLocalId = null
-                    }
-                ) {
-                    Text("Eliminar", color = Color.Red)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false; deleteLocalId = null }) {
-                    Text("Cancelar")
-                }
-            }
+            text = { Text("¿Estás seguro? Esta acción no se puede deshacer.") },
+            confirmButton = { TextButton(onClick = { viewModel.deleteLocal(deleteLocalId!!, clienteId); showDeleteDialog = false; deleteLocalId = null }) { Text("Eliminar", color = Color.Red) } },
+            dismissButton = { TextButton(onClick = { showDeleteDialog = false; deleteLocalId = null }) { Text("Cancelar") } }
         )
     }
 
-    // Dialog para editar
     if (showEditDialog && editLocalId != null) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
             title = { Text("✏️ Editar local") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = editNombre,
-                        onValueChange = { editNombre = it },
-                        label = { Text("Nombre") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.updateLocal(editLocalId!!, editNombre, editActivo)
-                        showEditDialog = false
-                        editLocalId = null
-                    }
-                ) {
-                    Text("Guardar")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showEditDialog = false; editLocalId = null }) {
-                    Text("Cancelar")
-                }
-            }
+            text = { OutlinedTextField(value = editNombre, onValueChange = { editNombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth()) },
+            confirmButton = { TextButton(onClick = { viewModel.updateLocal(editLocalId!!, editNombre, editActivo, clienteId); showEditDialog = false; editLocalId = null }) { Text("Guardar") } },
+            dismissButton = { TextButton(onClick = { showEditDialog = false; editLocalId = null }) { Text("Cancelar") } }
         )
     }
 
-    // Dialog para crear
     if (showDialog) {
         var newNombre by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text("🏪 Nuevo local") },
-            text = {
-                OutlinedTextField(
-                    value = newNombre,
-                    onValueChange = { newNombre = it },
-                    label = { Text("Nombre del local") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (newNombre.isNotEmpty()) {
-                            viewModel.createLocal(clienteId, newNombre)
-                            showDialog = false
-                        }
-                    }
-                ) {
-                    Text("Crear")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
+            text = { OutlinedTextField(value = newNombre, onValueChange = { newNombre = it }, label = { Text("Nombre del local") }, modifier = Modifier.fillMaxWidth()) },
+            confirmButton = { TextButton(onClick = { if (newNombre.isNotEmpty()) { viewModel.createLocal(clienteId, newNombre); showDialog = false } }) { Text("Crear") } },
+            dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Cancelar") } }
         )
     }
 }
