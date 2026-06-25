@@ -31,7 +31,14 @@ class AdminUserViewModel(
         }
     }
 
-    fun createUser(clienteId: String, username: String, password: String, nombre: String, rol: String, almacenId: String) {
+    fun createUser(
+        clienteId: String,
+        username: String,
+        password: String,
+        nombre: String,
+        rol: String,
+        almacenId: String
+    ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.createUser(clienteId, username, password, nombre, rol, almacenId)
@@ -42,6 +49,31 @@ class AdminUserViewModel(
                     it.copy(
                         isLoading = false,
                         error = "Error al crear usuario"
+                    )
+                }
+            }
+        }
+    }
+
+    fun updateUser(
+        id: Int,
+        username: String,
+        nombre: String,
+        rol: String,
+        almacenId: String,
+        activo: Boolean
+    ) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val success = repository.updateUser(id, username, nombre, rol, almacenId, activo)
+            if (success) {
+                val clienteId = _uiState.value.users.firstOrNull()?.cliente_id ?: ""
+                loadUsers(clienteId)
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Error al actualizar usuario"
                     )
                 }
             }
@@ -75,28 +107,3 @@ data class AdminUserUiState(
     val users: List<AdminUser> = emptyList(),
     val error: String? = null
 )
-
-    fun updateUser(
-        id: Int,
-        username: String,
-        nombre: String,
-        rol: String,
-        almacenId: String,
-        activo: Boolean
-    ) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val success = repository.updateUser(id, username, nombre, rol, almacenId, activo)
-            if (success) {
-                _uiState.update { it.copy(isLoading = false) }
-                loadUsers(_uiState.value.users.firstOrNull()?.cliente_id ?: "")
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al actualizar usuario"
-                    )
-                }
-            }
-        }
-    }
