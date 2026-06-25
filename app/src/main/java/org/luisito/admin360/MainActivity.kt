@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,8 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.luisito.admin360.ui.theme.Gestor360Theme
 import org.luisito.admin360.data.repository.*
-import org.luisito.admin360.data.repository.AuthRepository
-import org.luisito.admin360.data.repository.LoginResult
+import org.luisito.admin360.data.models.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,7 +85,6 @@ fun AdminDashboard() {
     val scope = rememberCoroutineScope()
     var selectedItem by remember { mutableStateOf("negocios") }
     var selectedNegocioId by remember { mutableStateOf<String?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
     var dialogTitle by remember { mutableStateOf("") }
     var dialogFields by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
@@ -96,10 +95,10 @@ fun AdminDashboard() {
     val userRepo = AdminUserRepository()
     val licenciaRepo = LicenciaRepository()
 
-    var negocios by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
-    var locales by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
-    var usuarios by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
-    var licencias by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var negocios by remember { mutableStateOf<List<Negocio>>(emptyList()) }
+    var locales by remember { mutableStateOf<List<Local>>(emptyList()) }
+    var usuarios by remember { mutableStateOf<List<AdminUser>>(emptyList()) }
+    var licencias by remember { mutableStateOf<List<Licencia>>(emptyList()) }
 
     fun loadNegocios() {
         CoroutineScope(Dispatchers.IO).launch {
@@ -176,7 +175,7 @@ fun AdminDashboard() {
             floatingActionButton = {
                 FloatingActionButton(onClick = {
                     when (selectedItem) {
-                        "negocios" -> { dialogTitle = "Crear Negocio"; dialogFields = listOf("Nombre" to ""); onDialogConfirm = { values -> 
+                        "negocios" -> { dialogTitle = "Crear Negocio"; dialogFields = listOf("Nombre" to ""); onDialogConfirm = { values ->
                             CoroutineScope(Dispatchers.IO).launch {
                                 negocioRepo.createNegocio(values["Nombre"] ?: "")
                                 loadNegocios()
@@ -201,32 +200,68 @@ fun AdminDashboard() {
                         "licencias" -> { dialogTitle = "Crear Licencia"; dialogFields = listOf("Device ID" to "", "Días" to "30"); onDialogConfirm = { values ->
                             if (selectedNegocioId != null) {
                                 CoroutineScope(Dispatchers.IO).launch {
-                                    licenciaRepo.createLicencia(selectedNegocioId!!, values["Device ID"] ?: "", values["Días"]?.toIntOrNull() ?: 30)
+                                    licenciaRepo.activateLicense(selectedNegocioId!!, values["Device ID"] ?: "", values["Días"]?.toIntOrNull() ?: 30)
                                     loadLicencias()
                                 }
                             }
                         }; showDialog = true }
                     }
-                }) { Icon(Icons.Default.Menu, contentDescription = "Crear") }
+                }) { Icon(Icons.Default.Add, contentDescription = "Crear") }
             }
         ) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
                 when (selectedItem) {
                     "negocios" -> {
                         Text("Negocios", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                        LazyColumn { items(negocios) { negocio -> Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) { Text(negocio["nombre_negocio"]?.toString() ?: "Sin nombre", modifier = Modifier.padding(16.dp)) } } }
+                        LazyColumn {
+                            items(negocios) { negocio ->
+                                Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                                    Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text(negocio.nombre_negocio)
+                                        Text(if (negocio.activo) "🟢 Activo" else "🔴 Inactivo")
+                                    }
+                                }
+                            }
+                        }
                     }
                     "locales" -> {
                         Text("Locales", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                        LazyColumn { items(locales) { local -> Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) { Text(local["nombre"]?.toString() ?: "Sin nombre", modifier = Modifier.padding(16.dp)) } } }
+                        LazyColumn {
+                            items(locales) { local ->
+                                Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                                    Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text(local.nombre)
+                                        Text(if (local.activo) "🟢 Activo" else "🔴 Inactivo")
+                                    }
+                                }
+                            }
+                        }
                     }
                     "usuarios" -> {
                         Text("Usuarios", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                        LazyColumn { items(usuarios) { usuario -> Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) { Text(usuario["username"]?.toString() ?: "Sin usuario", modifier = Modifier.padding(16.dp)) } } }
+                        LazyColumn {
+                            items(usuarios) { usuario ->
+                                Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                                    Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text(usuario.username)
+                                        Text(usuario.rol)
+                                    }
+                                }
+                            }
+                        }
                     }
                     "licencias" -> {
                         Text("Licencias", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                        LazyColumn { items(licencias) { licencia -> Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) { Text(licencia["device_id"]?.toString() ?: "Sin ID", modifier = Modifier.padding(16.dp)) } } }
+                        LazyColumn {
+                            items(licencias) { licencia ->
+                                Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                                    Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text(licencia.device_id.take(12))
+                                        Text(licencia.expiracion ?: "Sin fecha")
+                                    }
+                                }
+                            }
+                        }
                     }
                     else -> Text("Selecciona una opción", modifier = Modifier.padding(16.dp))
                 }
