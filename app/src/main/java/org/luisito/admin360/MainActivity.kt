@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,7 +37,6 @@ class MainActivity : ComponentActivity() {
                 Gestor360AdminApp()
             }
         } catch (e: Exception) {
-            // Guardar el error en un archivo
             val errorFile = java.io.File(filesDir, "gestor360_admin_crash.txt")
             errorFile.writeText("Error en onCreate: ${e.message}\n${e.stackTraceToString()}")
             finish()
@@ -55,7 +55,6 @@ fun Gestor360AdminApp() {
     val loginViewModel: AdminLoginViewModel = viewModel()
     val loginState by loginViewModel.uiState.collectAsState()
 
-    // Verificar sesión
     LaunchedEffect(Unit) {
         isLoggedIn = prefs.isLoggedIn()
     }
