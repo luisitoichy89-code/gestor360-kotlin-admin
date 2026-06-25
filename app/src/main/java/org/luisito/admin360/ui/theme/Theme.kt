@@ -1,25 +1,24 @@
 package org.luisito.admin360.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-private val GestorColorScheme = lightColorScheme(
-    primary = GoogleBlue,
-    onPrimary = SurfaceWhite,
-    background = BackgroundLight,
-    onBackground = TextDark,
-    surface = SurfaceWhite,
-    onSurface = TextDark,
-    error = ErrorRed,
-    onError = SurfaceWhite,
-    outline = BorderGray,
+private val Admin360DarkColorScheme = darkColorScheme(
+    primary = WhiteText,
+    onPrimary = BlackPrimary,
+    background = BlackPrimary,
+    onBackground = WhiteText,
+    surface = BlackPrimary,
+    onSurface = WhiteText,
+    outline = GrayBorder,
+    error = ErrorRed
 )
 
 @Composable
 fun Gestor360Theme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = GestorColorScheme,
+        colorScheme = Admin360DarkColorScheme,
         content = content
     )
 }
