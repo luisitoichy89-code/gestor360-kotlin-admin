@@ -9,6 +9,7 @@ data class Licencia(
     val id: Int,
     val cliente_id: String,
     val device_id: String,
+    val almacen_id: String? = null,
     val expiracion: String?,
     val activo: Boolean,
     val created_at: String?
