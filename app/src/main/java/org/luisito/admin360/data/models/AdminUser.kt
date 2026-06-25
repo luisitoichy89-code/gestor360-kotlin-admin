@@ -10,7 +10,6 @@ data class AdminUser(
     val username: String,
     val nombre: String? = null,
     val rol: String,
-    val pin: String? = null,
     val almacen_id: String,
     val activo: Boolean = true,
     val device_id: String? = null,
