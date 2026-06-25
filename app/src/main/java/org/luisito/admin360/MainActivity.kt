@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.luisito.admin360.ui.theme.Gestor360Theme
+import org.luisito.admin360.data.repository.*
 import org.luisito.admin360.data.repository.AuthRepository
 import org.luisito.admin360.data.repository.LoginResult
 
@@ -84,6 +85,58 @@ fun AdminDashboard() {
     val scope = rememberCoroutineScope()
     var selectedItem by remember { mutableStateOf("negocios") }
     var selectedNegocioId by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
+    var dialogTitle by remember { mutableStateOf("") }
+    var dialogFields by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+    var onDialogConfirm by remember { mutableStateOf<((Map<String, String>) -> Unit)?>(null) }
+
+    val negocioRepo = NegocioRepository()
+    val localRepo = LocalRepository()
+    val userRepo = AdminUserRepository()
+    val licenciaRepo = LicenciaRepository()
+
+    var negocios by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var locales by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var usuarios by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var licencias by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+
+    fun loadNegocios() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val result = negocioRepo.getNegocios()
+            negocios = result
+        }
+    }
+
+    fun loadLocales() {
+        if (selectedNegocioId != null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                val result = localRepo.getLocales(selectedNegocioId!!)
+                locales = result
+            }
+        }
+    }
+
+    fun loadUsuarios() {
+        if (selectedNegocioId != null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                val result = userRepo.getUsers(selectedNegocioId!!)
+                usuarios = result
+            }
+        }
+    }
+
+    fun loadLicencias() {
+        if (selectedNegocioId != null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                val result = licenciaRepo.getLicencias(selectedNegocioId!!)
+                licencias = result
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) { loadNegocios() }
+    LaunchedEffect(selectedNegocioId) { loadLocales(); loadUsuarios(); loadLicencias() }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -119,81 +172,94 @@ fun AdminDashboard() {
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary, titleContentColor = Color.White, navigationIconContentColor = Color.White)
                 )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = {
+                    when (selectedItem) {
+                        "negocios" -> { dialogTitle = "Crear Negocio"; dialogFields = listOf("Nombre" to ""); onDialogConfirm = { values -> 
+                            CoroutineScope(Dispatchers.IO).launch {
+                                negocioRepo.createNegocio(values["Nombre"] ?: "")
+                                loadNegocios()
+                            }
+                        }; showDialog = true }
+                        "locales" -> { dialogTitle = "Crear Local"; dialogFields = listOf("Nombre" to ""); onDialogConfirm = { values ->
+                            if (selectedNegocioId != null) {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    localRepo.createLocal(selectedNegocioId!!, values["Nombre"] ?: "")
+                                    loadLocales()
+                                }
+                            }
+                        }; showDialog = true }
+                        "usuarios" -> { dialogTitle = "Crear Usuario"; dialogFields = listOf("Usuario" to "", "Contraseña" to "", "Nombre" to "", "Rol" to "", "Local ID" to ""); onDialogConfirm = { values ->
+                            if (selectedNegocioId != null) {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    userRepo.createUser(selectedNegocioId!!, values["Usuario"] ?: "", values["Contraseña"] ?: "", values["Nombre"] ?: "", values["Rol"] ?: "seller", values["Local ID"] ?: "1")
+                                    loadUsuarios()
+                                }
+                            }
+                        }; showDialog = true }
+                        "licencias" -> { dialogTitle = "Crear Licencia"; dialogFields = listOf("Device ID" to "", "Días" to "30"); onDialogConfirm = { values ->
+                            if (selectedNegocioId != null) {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    licenciaRepo.createLicencia(selectedNegocioId!!, values["Device ID"] ?: "", values["Días"]?.toIntOrNull() ?: 30)
+                                    loadLicencias()
+                                }
+                            }
+                        }; showDialog = true }
+                    }
+                }) { Icon(Icons.Default.Menu, contentDescription = "Crear") }
             }
         ) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
                 when (selectedItem) {
-                    "negocios" -> NegociosList()
-                    "locales" -> LocalesList()
-                    "usuarios" -> UsuariosList()
-                    "licencias" -> LicenciasList()
-                    else -> Text("Selecciona una opción")
+                    "negocios" -> {
+                        Text("Negocios", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
+                        LazyColumn { items(negocios) { negocio -> Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) { Text(negocio["nombre_negocio"]?.toString() ?: "Sin nombre", modifier = Modifier.padding(16.dp)) } } }
+                    }
+                    "locales" -> {
+                        Text("Locales", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
+                        LazyColumn { items(locales) { local -> Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) { Text(local["nombre"]?.toString() ?: "Sin nombre", modifier = Modifier.padding(16.dp)) } } }
+                    }
+                    "usuarios" -> {
+                        Text("Usuarios", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
+                        LazyColumn { items(usuarios) { usuario -> Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) { Text(usuario["username"]?.toString() ?: "Sin usuario", modifier = Modifier.padding(16.dp)) } } }
+                    }
+                    "licencias" -> {
+                        Text("Licencias", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
+                        LazyColumn { items(licencias) { licencia -> Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) { Text(licencia["device_id"]?.toString() ?: "Sin ID", modifier = Modifier.padding(16.dp)) } } }
+                    }
+                    else -> Text("Selecciona una opción", modifier = Modifier.padding(16.dp))
                 }
             }
         }
     }
-}
 
-@Composable
-fun NegociosList() {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text("Negocios", style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(8.dp))
-        val negocios = listOf("Cafetería La Esquina", "Tienda El Centro", "Farmacia Salud")
-        LazyColumn {
-            items(negocios) { negocio ->
-                Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                    Text(negocio, modifier = Modifier.padding(16.dp))
+    if (showDialog) {
+        var values by remember { mutableStateOf(dialogFields.associate { it.first to "" }) }
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text(dialogTitle) },
+            text = {
+                Column {
+                    dialogFields.forEach { field ->
+                        OutlinedTextField(
+                            value = values[field.first] ?: "",
+                            onValueChange = { values = values + (field.first to it) },
+                            label = { Text(field.first) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Spacer(Modifier.height(8.dp))
+                    }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun LocalesList() {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text("Locales", style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(8.dp))
-        val locales = listOf("Local 1", "Local 2", "Local 3")
-        LazyColumn {
-            items(locales) { local ->
-                Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                    Text(local, modifier = Modifier.padding(16.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun UsuariosList() {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text("Usuarios", style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(8.dp))
-        val usuarios = listOf("Admin", "Vendedor1", "Vendedor2")
-        LazyColumn {
-            items(usuarios) { usuario ->
-                Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                    Text(usuario, modifier = Modifier.padding(16.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun LicenciasList() {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text("Licencias", style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(8.dp))
-        val licencias = listOf("Licencia 1", "Licencia 2", "Licencia 3")
-        LazyColumn {
-            items(licencias) { licencia ->
-                Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                    Text(licencia, modifier = Modifier.padding(16.dp))
-                }
-            }
-        }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDialogConfirm?.invoke(values)
+                    showDialog = false
+                }) { Text("Crear") }
+            },
+            dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Cancelar") } }
+        )
     }
 }

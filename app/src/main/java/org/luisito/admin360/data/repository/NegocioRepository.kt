@@ -2,90 +2,20 @@ package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
 import org.luisito.admin360.data.SupabaseClientProvider
-import org.luisito.admin360.data.models.Negocio
-import org.luisito.admin360.data.models.Licencia
 
 class NegocioRepository {
-
-    suspend fun getNegocios(): List<Negocio> {
+    suspend fun getNegocios(): List<Map<String, Any>> {
         return try {
             val supabase = SupabaseClientProvider.client
-            supabase.from("clientes")
-                .select()
-                .decodeAs<List<Negocio>>()
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    suspend fun getNegociosConLicencia(): List<Pair<Negocio, Int>> {
-        return try {
-            val supabase = SupabaseClientProvider.client
-            val negocios = supabase.from("clientes")
-                .select()
-                .decodeAs<List<Negocio>>()
-            
-            val licencias = supabase.from("licencias")
-                .select()
-                .decodeAs<List<Licencia>>()
-            
-            negocios.map { negocio ->
-                val licencia = licencias.find { it.cliente_id == negocio.id }
-                val dias = licencia?.getDiasRestantes() ?: 0
-                Pair(negocio, dias)
-            }.sortedBy { it.second }
-        } catch (e: Exception) {
-            emptyList()
-        }
+            supabase.from("clientes").select().decodeAs<List<Map<String, Any>>>()
+        } catch (e: Exception) { emptyList() }
     }
 
     suspend fun createNegocio(nombre: String): Boolean {
         return try {
             val supabase = SupabaseClientProvider.client
-            supabase.from("clientes").insert(
-                mapOf(
-                    "nombre_negocio" to nombre,
-                    "activo" to true
-                )
-            )
+            supabase.from("clientes").insert(mapOf("nombre_negocio" to nombre, "activo" to true))
             true
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    suspend fun updateNegocio(id: String, nombre: String, activo: Boolean): Boolean {
-        return try {
-            val supabase = SupabaseClientProvider.client
-            supabase.from("clientes")
-                .update(
-                    mapOf(
-                        "nombre_negocio" to nombre,
-                        "activo" to activo
-                    )
-                ) {
-                    filter {
-                        eq("id", id)
-                    }
-                }
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    suspend fun deleteNegocio(id: String): Boolean {
-        return try {
-            val supabase = SupabaseClientProvider.client
-            supabase.from("clientes")
-                .delete {
-                    filter {
-                        eq("id", id)
-                    }
-                }
-            true
-        } catch (e: Exception) {
-            false
-        }
+        } catch (e: Exception) { false }
     }
 }
