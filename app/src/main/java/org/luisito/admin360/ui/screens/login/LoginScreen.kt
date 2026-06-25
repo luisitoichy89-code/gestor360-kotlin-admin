@@ -37,10 +37,10 @@ fun LoginScreen(
 
     Gestor360Theme {
         Surface(
-            modifier = Modifier.fillMaxSize(),            color = MaterialTheme.colorScheme.background
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
         ) {
-            Column(
-                modifier = Modifier
+            Column(                modifier = Modifier
                     .fillMaxSize()
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -86,28 +86,28 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = error,
-                        color = MaterialTheme.colorScheme.error,                        style = MaterialTheme.typography.bodySmall
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
-
                 Spacer(modifier = Modifier.height(24.dp))
 
-                PrimaryBlackButton(
-                    text = if (isLoading) "" else "Iniciar Sesión",
-                    onClick = {
-                        if (username.isNotEmpty() && password.isNotEmpty()) {
-                            onLoginSuccess()
-                        }
-                    },
-                    modifier = Modifier.width(280.dp),
-                    enabled = !isLoading
-                ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.height(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.height(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    PrimaryBlackButton(
+                        text = "Iniciar Sesión",
+                        onClick = {
+                            if (username.isNotEmpty() && password.isNotEmpty()) {
+                                onLoginSuccess()
+                            }
+                        },
+                        modifier = Modifier.width(280.dp),
+                        enabled = !isLoading
+                    )
                 }
             }
         }
