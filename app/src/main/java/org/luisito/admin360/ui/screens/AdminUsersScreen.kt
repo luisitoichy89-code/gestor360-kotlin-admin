@@ -12,28 +12,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,27 +32,9 @@ fun AdminUsersScreen(
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var deleteUserId by remember { mutableStateOf<Int?>(null) }
-    var showEditDialog by remember { mutableStateOf(false) }
-    var editUserId by remember { mutableStateOf<Int?>(null) }
-    var editUsername by remember { mutableStateOf("") }
-    var editNombre by remember { mutableStateOf("") }
-    var editRol by remember { mutableStateOf("seller") }
-    var editAlmacenId by remember { mutableStateOf("") }
-    var editActivo by remember { mutableStateOf(true) }
-    var showCodeDialog by remember { mutableStateOf(false) }
-    var generatedCode by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(clienteId) {
         viewModel.loadUsers(clienteId)
-    }
-
-    // Mostrar código generado
-    LaunchedEffect(uiState.codigoGenerado) {
-        if (uiState.codigoGenerado != null) {
-            generatedCode = uiState.codigoGenerado!!
-            showCodeDialog = true
-            viewModel.clearEstado()
-        }
     }
 
     Scaffold(
@@ -134,7 +96,7 @@ fun AdminUsersScreen(
                                     )
                                     if (user.device_id_pendiente != null && !user.device_approved) {
                                         Text(
-                                            text = "📱 ID pendiente: ${user.device_id_pendiente.take(12)}...",
+                                            text = "📱 ID pendiente: ${user.device_id_pendiente?.take(12)}...",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = Color.Yellow
                                         )
@@ -147,9 +109,9 @@ fun AdminUsersScreen(
                                             Text("✅ Aceptar")
                                         }
                                     }
-                                    if (user.device_approved && user.device_id_pendiente != null) {
+                                    if (user.device_approved) {
                                         Text(
-                                            text = "✅ Dispositivo aprobado: ${user.device_id_pendiente?.take(12)}...",
+                                            text = "✅ Dispositivo aprobado",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = Color.Green
                                         )
@@ -158,13 +120,7 @@ fun AdminUsersScreen(
                                 Row {
                                     IconButton(
                                         onClick = {
-                                            editUserId = user.id
-                                            editUsername = user.username
-                                            editNombre = user.nombre ?: ""
-                                            editRol = user.rol
-                                            editAlmacenId = user.almacen_id
-                                            editActivo = user.activo
-                                            showEditDialog = true
+                                            // TODO: Editar usuario
                                         }
                                     ) {
                                         Icon(Icons.Default.Edit, contentDescription = "Editar")
@@ -186,31 +142,6 @@ fun AdminUsersScreen(
         }
     }
 
-    // Dialog para mostrar código generado
-    if (showCodeDialog) {
-        AlertDialog(
-            onDismissRequest = { showCodeDialog = false },
-            title = { Text("🔑 Código de activación") },
-            text = {
-                Column {
-                    Text("Código para el usuario:")
-                    Text(
-                        text = generatedCode,
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text("Comparte este código con el usuario para su primer acceso.")
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showCodeDialog = false }) {
-                    Text("Aceptar")
-                }
-            }
-        )
-    }
-
-    // Dialog para eliminar
     if (showDeleteDialog && deleteUserId != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -235,53 +166,6 @@ fun AdminUsersScreen(
         )
     }
 
-    // Dialog para editar
-    if (showEditDialog && editUserId != null) {
-        AlertDialog(
-            onDismissRequest = { showEditDialog = false },
-            title = { Text("✏️ Editar usuario") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = editUsername,
-                        onValueChange = { editUsername = it },
-                        label = { Text("Usuario") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = editNombre,
-                        onValueChange = { editNombre = it },
-                        label = { Text("Nombre") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = editAlmacenId,
-                        onValueChange = { editAlmacenId = it },
-                        label = { Text("Local ID") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.updateUser(editUserId!!, editUsername, editNombre, editRol, editAlmacenId, editActivo)
-                        showEditDialog = false
-                        editUserId = null
-                    }
-                ) {
-                    Text("Guardar")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showEditDialog = false; editUserId = null }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
-
-    // Dialog para crear
     if (showDialog) {
         var newUsername by remember { mutableStateOf("") }
         var newPassword by remember { mutableStateOf("") }
