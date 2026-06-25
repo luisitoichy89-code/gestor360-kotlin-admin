@@ -85,6 +85,21 @@ class LicenciaRepository {
         }
     }
 
+    suspend fun deleteLicense(id: Int): Boolean {
+        return try {
+            val supabase = SupabaseClientProvider.client
+            supabase.from("licencias")
+                .delete {
+                    filter {
+                        eq("id", id)
+                    }
+                }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     suspend fun deactivateLicense(clienteId: String): Boolean {
         return try {
             val supabase = SupabaseClientProvider.client
