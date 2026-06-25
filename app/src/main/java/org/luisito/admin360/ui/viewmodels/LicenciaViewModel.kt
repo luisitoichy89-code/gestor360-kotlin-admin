@@ -4,97 +4,52 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.data.repository.LicenciaRepository
 
-class LicenciaViewModel(
-    private val repository: LicenciaRepository = LicenciaRepository()
-) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(LicenciaUiState())
-    val uiState: StateFlow<LicenciaUiState> = _uiState.asStateFlow()
-
-    fun loadLicencias(clienteId: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val licencias = repository.getLicencias(clienteId)
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    licencias = licencias,
-                    error = if (licencias.isEmpty()) "Sin licencias" else null
-                )
-            }
-        }
-    }
-
-    fun activateLicense(clienteId: String, deviceId: String, dias: Int) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val success = repository.activateLicense(clienteId, deviceId, dias)
-            if (success) {
-                loadLicencias(clienteId)
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al activar licencia"
-                    )
-                }
-            }
-        }
-    }
-
-    fun renewLicense(clienteId: String, dias: Int) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val success = repository.renewLicense(clienteId, dias)
-            if (success) {
-                loadLicencias(clienteId)
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al renovar licencia"
-                    )
-                }
-            }
-        }
-    }
-
-    fun deleteLicense(id: Int) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val success = repository.deleteLicense(id)
-            if (success) {
-                val clienteId = _uiState.value.licencias.firstOrNull()?.cliente_id ?: ""
-                loadLicencias(clienteId)
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al eliminar licencia"
-                    )
-                }
-            }
-        }
-    }
-
-    fun getDiasRestantes(clienteId: String): Int {
-        val licencia = _uiState.value.licencias.find { it.cliente_id == clienteId }
-        return licencia?.getDiasRestantes() ?: 0
-    }
-
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
-    }
-}
-
 data class LicenciaUiState(
-    val isLoading: Boolean = false,
     val licencias: List<Licencia> = emptyList(),
+    val isLoading: Boolean = false,
     val error: String? = null
 )
+
+class LicenciaViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow(LicenciaUiState())
+    val uiState: StateFlow<LicenciaUiState> = _uiState
+    private val repo = LicenciaRepository()
+
+    fun loadLicencias() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                val lics = repo.getAllLicencias()
+                _uiState.value = _uiState.value.copy(licencias = lics, isLoading = false)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message, isLoading = false)
+            }
+        }
+    }
+
+    fun activateLicencia(deviceId: String, almacenId: String, dias: Int) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val ok = repo.activateLicencia(deviceId, almacenId, dias)
+            if (ok) loadLicencias() else _uiState.value = _uiState.value.copy(error = "Error al activar", isLoading = false)
+        }
+    }
+
+    fun renewLicencia(id: Int, dias: Int) {
+        viewModelScope.launch {
+            val ok = repo.renewLicencia(id, dias)
+            if (ok) loadLicencias()
+        }
+    }
+
+    fun deleteLicencia(id: Int) {
+        viewModelScope.launch {
+            val ok = repo.deleteLicencia(id)
+            if (ok) loadLicencias()
+        }
+    }
+}
