@@ -10,66 +10,57 @@ import kotlinx.coroutines.launch
 import org.luisito.admin360.data.models.Negocio
 import org.luisito.admin360.data.repository.NegocioRepository
 
-data class NegocioUiState(
-    val isLoading: Boolean = false,
-    val negocios: List<Negocio> = emptyList(),
-    val error: String? = null
-)
-
 class NegocioViewModel(
-    private val repository: NegocioRepository
+    private val repository: NegocioRepository = NegocioRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NegocioUiState())
     val uiState: StateFlow<NegocioUiState> = _uiState.asStateFlow()
 
-    init {
-        loadNegocios()
-    }
-
     fun loadNegocios() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            try {
-                val negocios = repository.getNegocios()
+            val negocios = repository.getNegocios()
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    negocios = negocios,
+                    error = if (negocios.isEmpty()) "No hay negocios" else null
+                )
+            }
+        }
+    }
+
+    fun createNegocio(nombre: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val success = repository.createNegocio(nombre)
+            if (success) {
+                loadNegocios()
+            } else {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        negocios = negocios,
-                        error = null
-                    )
-                }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message
+                        error = "Error al crear negocio"
                     )
                 }
             }
         }
     }
 
-    fun addNegocio(negocio: Negocio) {
+    fun updateNegocio(id: String, nombre: String, activo: Boolean) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val success = repository.addNegocio(negocio)
+            val success = repository.updateNegocio(id, nombre, activo)
             if (success) {
                 loadNegocios()
             } else {
-                _uiState.update { it.copy(isLoading = false, error = "Error al agregar") }
-            }
-        }
-    }
-
-    fun updateNegocio(negocio: Negocio) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val success = repository.updateNegocio(negocio)
-            if (success) {
-                loadNegocios()
-            } else {
-                _uiState.update { it.copy(isLoading = false, error = "Error al actualizar") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Error al actualizar negocio"
+                    )
+                }
             }
         }
     }
@@ -81,8 +72,23 @@ class NegocioViewModel(
             if (success) {
                 loadNegocios()
             } else {
-                _uiState.update { it.copy(isLoading = false, error = "Error al eliminar") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Error al eliminar negocio"
+                    )
+                }
             }
         }
     }
+
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
+    }
 }
+
+data class NegocioUiState(
+    val isLoading: Boolean = false,
+    val negocios: List<Negocio> = emptyList(),
+    val error: String? = null
+)
