@@ -272,6 +272,7 @@ fun AdminDashboard() {
                             dialogTitle = "Crear Negocio"
                             dialogFields = listOf("Nombre" to "")
                             onDialogConfirm = { values ->
+                Toast.makeText(context, "📦 Creando: ${values["Nombre"]}", Toast.LENGTH_SHORT).show()
                                 CoroutineScope(Dispatchers.IO).launch {
                                     try {
                                         val success = negocioRepo.createNegocio(values["Nombre"] ?: "")
@@ -296,6 +297,7 @@ fun AdminDashboard() {
                             dialogTitle = "Crear Local"
                             dialogFields = listOf("Nombre" to "")
                             onDialogConfirm = { values ->
+                Toast.makeText(context, "📦 Creando: ${values["Nombre"]}", Toast.LENGTH_SHORT).show()
                                 if (selectedNegocioId != null) {
                                     CoroutineScope(Dispatchers.IO).launch {
                                         try {
@@ -322,6 +324,7 @@ fun AdminDashboard() {
                             dialogTitle = "Crear Usuario"
                             dialogFields = listOf("Usuario" to "", "Contraseña" to "", "Nombre" to "", "Rol" to "", "Local ID" to "")
                             onDialogConfirm = { values ->
+                Toast.makeText(context, "📦 Creando: ${values["Nombre"]}", Toast.LENGTH_SHORT).show()
                                 if (selectedNegocioId != null) {
                                     CoroutineScope(Dispatchers.IO).launch {
                                         try {
@@ -355,6 +358,7 @@ fun AdminDashboard() {
                             dialogTitle = "Crear Licencia"
                             dialogFields = listOf("Device ID" to "", "Días" to "30")
                             onDialogConfirm = { values ->
+                Toast.makeText(context, "📦 Creando: ${values["Nombre"]}", Toast.LENGTH_SHORT).show()
                                 if (selectedNegocioId != null) {
                                     CoroutineScope(Dispatchers.IO).launch {
                                         try {
