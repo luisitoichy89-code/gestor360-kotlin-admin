@@ -1,0 +1,45 @@
+# Ignorar archivos locales sensibles
+local.properties
+*.keystore
+*.jks
+keystore.properties
+
+# Archivos generados por Gradle
+.gradle/
+build/
+*/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Archivos de IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Archivos de caché
+*.log
+*.tmp
+
+# Directorios de caché de Android
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Archivos de configuración local de Firebase/Supabase
+google-services.json
+supabase.properties
+
+# Archivos de secrets
+.env
+secrets.properties
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos temporales de Gradle
+.gradle/
+gradlew.bat
+
+# Node (si usas algún script)
+node_modules/

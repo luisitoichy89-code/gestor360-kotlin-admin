@@ -102,7 +102,7 @@ fun AdminDashboard() {
 
     fun loadNegocios() {
         CoroutineScope(Dispatchers.IO).launch {
-            val result = negocioRepo.getNegocios()
+            val result = try { negocioRepo.getNegocios() } catch (e: Exception) { e.printStackTrace(); emptyList() }
             negocios = result
         }
     }
