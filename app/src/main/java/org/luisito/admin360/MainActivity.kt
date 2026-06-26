@@ -27,6 +27,7 @@ import kotlinx.coroutines.withContext
 import org.luisito.admin360.ui.theme.Gestor360Theme
 import org.luisito.admin360.data.repository.*
 import org.luisito.admin360.data.models.*
+import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -115,6 +116,9 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
 @Composable
 fun AdminDashboard() {
     val context = LocalContext.current
+    val negocioViewModel: NegocioViewModel = viewModel()
+    val uiState by negocioViewModel.uiState.collectAsState()
+    
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var selectedItem by remember { mutableStateOf("negocios") }
@@ -129,31 +133,9 @@ fun AdminDashboard() {
     val userRepo = AdminUserRepository()
     val licenciaRepo = LicenciaRepository()
 
-    var negocios by remember { mutableStateOf<List<Negocio>>(emptyList()) }
     var locales by remember { mutableStateOf<List<Local>>(emptyList()) }
     var usuarios by remember { mutableStateOf<List<AdminUser>>(emptyList()) }
     var licencias by remember { mutableStateOf<List<Licencia>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    fun loadNegocios() {
-        CoroutineScope(Dispatchers.IO).launch {
-            isLoading = true
-            try {
-                negocios = negocioRepo.getNegocios()
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "✅ ${negocios.size} negocios cargados", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    errorMessage = e.message
-                    Toast.makeText(context, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-            } finally {
-                isLoading = false
-            }
-        }
-    }
 
     fun loadLocales() {
         if (selectedNegocioId != null) {
@@ -206,7 +188,11 @@ fun AdminDashboard() {
         }
     }
 
-    LaunchedEffect(Unit) { loadNegocios() }
+    // Cargar negocios al iniciar
+    LaunchedEffect(Unit) {
+        negocioViewModel.loadNegocios()
+    }
+
     LaunchedEffect(selectedNegocioId) {
         if (selectedNegocioId != null) {
             loadLocales()
@@ -231,7 +217,7 @@ fun AdminDashboard() {
                                 "Cerrar Sesión" -> { /* logout */ }
                                 else -> {
                                     selectedItem = item.lowercase()
-                                    if (item == "Negocios") loadNegocios()
+                                    if (item == "Negocios") negocioViewModel.loadNegocios()
                                 }
                             }
                         },
@@ -270,9 +256,10 @@ fun AdminDashboard() {
                                         withContext(Dispatchers.Main) {
                                             if (success) {
                                                 Toast.makeText(context, "✅ Negocio creado", Toast.LENGTH_SHORT).show()
-                                                loadNegocios()
+                                                negocioViewModel.loadNegocios()
                                             } else {
-                                                Toast.makeText(context, "❌ Error al crear negocio", Toast.LENGTH_SHORT).show()
+                                                val errorMsg = ErrorHolder.lastError.ifEmpty { "Error desconocido" }
+                                                Toast.makeText(context, "❌ Error: $errorMsg", Toast.LENGTH_LONG).show()
                                             }
                                         }
                                     } catch (e: Exception) {
@@ -380,65 +367,91 @@ fun AdminDashboard() {
             }
         ) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-                if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                } else if (errorMessage != null) {
-                    Text(errorMessage!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
-                } else {
-                    when (selectedItem) {
-                        "negocios" -> {
-                            Text("Negocios", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                            LazyColumn {
-                                items(negocios) { negocio ->
-                                    Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                                        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                            Text(negocio.nombre_negocio)
-                                            Text(if (negocio.activo) "🟢 Activo" else "🔴 Inactivo")
+                when {
+                    uiState.isLoading -> {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    }
+                    uiState.error != null -> {
+                        Text(uiState.error!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                    }
+                    else -> {
+                        when (selectedItem) {
+                            "negocios" -> {
+                                Text("Negocios", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
+                                if (uiState.negocios.isEmpty()) {
+                                    Text("No hay negocios. Presiona el botón + para crear.", modifier = Modifier.padding(16.dp))
+                                } else {
+                                    LazyColumn {
+                                        items(uiState.negocios) { negocio ->
+                                            Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                                                Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                    Text(negocio.nombre_negocio)
+                                                    Text(if (negocio.activo) "🟢 Activo" else "🔴 Inactivo")
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                        "locales" -> {
-                            Text("Locales", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                            LazyColumn {
-                                items(locales) { local ->
-                                    Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                                        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                            Text(local.nombre)
-                                            Text(if (local.activo) "🟢 Activo" else "🔴 Inactivo")
+                            "locales" -> {
+                                Text("Locales", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
+                                if (selectedNegocioId == null) {
+                                    Text("Selecciona un negocio primero", modifier = Modifier.padding(16.dp))
+                                } else if (locales.isEmpty()) {
+                                    Text("No hay locales para este negocio", modifier = Modifier.padding(16.dp))
+                                } else {
+                                    LazyColumn {
+                                        items(locales) { local ->
+                                            Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                                                Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                    Text(local.nombre)
+                                                    Text(if (local.activo) "🟢 Activo" else "🔴 Inactivo")
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                        "usuarios" -> {
-                            Text("Usuarios", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                            LazyColumn {
-                                items(usuarios) { usuario ->
-                                    Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                                        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                            Text(usuario.username)
-                                            Text(usuario.rol)
+                            "usuarios" -> {
+                                Text("Usuarios", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
+                                if (selectedNegocioId == null) {
+                                    Text("Selecciona un negocio primero", modifier = Modifier.padding(16.dp))
+                                } else if (usuarios.isEmpty()) {
+                                    Text("No hay usuarios para este negocio", modifier = Modifier.padding(16.dp))
+                                } else {
+                                    LazyColumn {
+                                        items(usuarios) { usuario ->
+                                            Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                                                Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                    Text(usuario.username)
+                                                    Text(usuario.rol)
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                        "licencias" -> {
-                            Text("Licencias", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                            LazyColumn {
-                                items(licencias) { licencia ->
-                                    Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                                        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                            Text(licencia.device_id.take(12))
-                                            Text(licencia.expiracion ?: "Sin fecha")
+                            "licencias" -> {
+                                Text("Licencias", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
+                                if (selectedNegocioId == null) {
+                                    Text("Selecciona un negocio primero", modifier = Modifier.padding(16.dp))
+                                } else if (licencias.isEmpty()) {
+                                    Text("No hay licencias para este negocio", modifier = Modifier.padding(16.dp))
+                                } else {
+                                    LazyColumn {
+                                        items(licencias) { licencia ->
+                                            Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                                                Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                    Text(licencia.device_id.take(12))
+                                                    Text(licencia.expiracion ?: "Sin fecha")
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
+                            else -> Text("Selecciona una opción", modifier = Modifier.padding(16.dp))
                         }
-                        else -> Text("Selecciona una opción", modifier = Modifier.padding(16.dp))
                     }
                 }
             }
