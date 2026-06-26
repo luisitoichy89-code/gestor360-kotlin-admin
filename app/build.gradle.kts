@@ -9,8 +9,8 @@ android {
     namespace = "org.luisito.admin360"
     compileSdk = 36
 
-    val supabaseUrl = (project.findProperty("SUPABASE_URL") as String?) ?: ""
-    val supabaseKey = (project.findProperty("SUPABASE_KEY") as String?) ?: ""
+    val supabaseUrl = (project.findProperty("SUPABASE_URL") as String?) ?: System.getenv("SUPABASE_URL") ?: ""
+    val supabaseKey = (project.findProperty("SUPABASE_KEY") as String?) ?: System.getenv("SUPABASE_KEY") ?: ""
 
     defaultConfig {
         applicationId = "org.luisito.admin360"
