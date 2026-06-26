@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.navigation.compose)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation(libs.lifecycle.viewmodel.compose)
 
     implementation(platform(libs.supabase.bom))
