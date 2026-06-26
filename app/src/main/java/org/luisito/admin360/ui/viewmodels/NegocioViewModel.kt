@@ -7,63 +7,69 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.luisito.admin360.data.models.Negocio
+import org.luisito.admin360.data.model.Negocio
 import org.luisito.admin360.data.repository.NegocioRepository
 
+data class NegocioUiState(
+    val isLoading: Boolean = false,
+    val negocios: List<Negocio> = emptyList(),
+    val error: String? = null
+)
+
 class NegocioViewModel(
-    private val repository: NegocioRepository = NegocioRepository()
+    private val repository: NegocioRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NegocioUiState())
     val uiState: StateFlow<NegocioUiState> = _uiState.asStateFlow()
 
-    fun loadNegocios()
-                _uiState.update { it.copy(isLoading = false) } {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val negocios = repository.getNegocios()
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    negocios = negocios,
-                    error = if (negocios.isEmpty()) "No hay negocios" else null
-                )
-            }
-        }
+    init {
+        loadNegocios()
     }
 
-    fun createNegocio(nombre: String) {
+    fun loadNegocios() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val success = repository.createNegocio(nombre)
-            if (success) {
-                loadNegocios()
-                _uiState.update { it.copy(isLoading = false) }
-            } else {
-                _uiState.update {
+            try {
+                val negocios = repository.getNegocios()
+                _uiState.update { 
                     it.copy(
-                        isLoading = false,
-                        error = "Error al crear negocio"
-                    )
+                        isLoading = false, 
+                        negocios = negocios,
+                        error = null
+                    ) 
+                }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false, 
+                        error = e.message 
+                    ) 
                 }
             }
         }
     }
 
-    fun updateNegocio(id: String, nombre: String, activo: Boolean) {
+    fun addNegocio(negocio: Negocio) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val success = repository.updateNegocio(id, nombre, activo)
+            val success = repository.addNegocio(negocio)
             if (success) {
                 loadNegocios()
-                _uiState.update { it.copy(isLoading = false) }
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al actualizar negocio"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al agregar") }
+            }
+        }
+    }
+
+    fun updateNegocio(negocio: Negocio) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val success = repository.updateNegocio(negocio)
+            if (success) {
+                loadNegocios()
+            } else {
+                _uiState.update { it.copy(isLoading = false, error = "Error al actualizar") }
             }
         }
     }
@@ -74,25 +80,9 @@ class NegocioViewModel(
             val success = repository.deleteNegocio(id)
             if (success) {
                 loadNegocios()
-                _uiState.update { it.copy(isLoading = false) }
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al eliminar negocio"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al eliminar") }
             }
         }
     }
-
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
-    }
 }
-
-data class NegocioUiState(
-    val isLoading: Boolean = false,
-    val negocios: List<Negocio> = emptyList(),
-    val error: String? = null
-)
