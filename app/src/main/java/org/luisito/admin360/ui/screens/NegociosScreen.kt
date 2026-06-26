@@ -1,149 +1,80 @@
 package org.luisito.admin360.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import org.luisito.admin360.ui.viewmodels.NegocioViewModel
+import org.luisito.admin360.data.model.Negocio
+import org.luisito.admin360.viewmodel.NegocioViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NegociosScreen(
-    onBack: () -> Unit,
-    onNegocioSeleccionado: (String) -> Unit,
-    viewModel: NegocioViewModel = viewModel()
+    viewModel: NegocioViewModel,
+    onNavigateBack: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val negocios by viewModel.negocios.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteNegocioId by remember { mutableStateOf<String?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
     var editNegocioId by remember { mutableStateOf<String?>(null) }
     var editNombre by remember { mutableStateOf("") }
     var editActivo by remember { mutableStateOf(true) }
-
-    LaunchedEffect(Unit) {
-        viewModel.loadNegocios()
-    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("🏢 Negocios") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Text("←", color = Color.White)
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White
-                )
+                actions = {
+                    IconButton(onClick = { showDialog = true }) {
+                        Icon(Icons.Default.Add, contentDescription = "Agregar")
+                    }
+                }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showDialog = true }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Agregar")
-            }
         }
-    ) { paddingValues ->
-        Column(
+    ) { padding ->
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(20.dp)
+                .padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            } else if (uiState.error != null) {
-                Text(text = uiState.error ?: "Error", color = MaterialTheme.colorScheme.error)
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+            items(negocios) { negocio ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        editNegocioId = negocio.id
+                        editNombre = negocio.nombre_negocio
+                        editActivo = negocio.activo
+                        showEditDialog = true
+                    }
                 ) {
-                    items(uiState.negocios) { negocio ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(20.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        text = negocio.nombre_negocio,
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Text(
-                                        text = "ID: ${negocio.id} | ${if (negocio.activo) "🟢 Activo" else "🔴 Inactivo"}",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                                Row {
-                                    IconButton(
-                                        onClick = { onNegocioSeleccionado(negocio.id) }
-                                    ) {
-                                        Text("📂")
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            editNegocioId = negocio.id
-                                            editNombre = negocio.nombre_negocio
-                                            editActivo = negocio.activo
-                                            showEditDialog = true
-                                        }
-                                    ) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Editar")
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            deleteNegocioId = negocio.id
-                                            showDeleteDialog = true
-                                        }
-                                    ) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Eliminar")
-                                    }
-                                }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(negocio.nombre_negocio, style = MaterialTheme.typography.titleMedium)
+                            Text("ID: ${negocio.id}", style = MaterialTheme.typography.bodySmall)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(if (negocio.activo) "🟢" else "🔴")
+                            IconButton(onClick = { viewModel.deleteNegocio(negocio.id) }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                             }
                         }
                     }
@@ -152,35 +83,10 @@ fun NegociosScreen(
         }
     }
 
-    // Dialog para eliminar
-    if (showDeleteDialog && deleteNegocioId != null) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("⚠️ Eliminar negocio") },
-            text = { Text("¿Estás seguro de que quieres eliminar este negocio? Esta acción no se puede deshacer.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteNegocio(deleteNegocioId!!)
-                        showDeleteDialog = false
-                        deleteNegocioId = null
-                    }
-                ) {
-                    Text("Eliminar", color = Color.Red)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false; deleteNegocioId = null }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
-
     // Dialog para editar
-    if (showEditDialog && editNegocioId != null) {
+    if (showEditDialog) {
         AlertDialog(
-            onDismissRequest = { showEditDialog = false },
+            onDismissRequest = { showEditDialog = false; editNegocioId = null },
             title = { Text("✏️ Editar negocio") },
             text = {
                 Column {
@@ -190,12 +96,25 @@ fun NegociosScreen(
                         label = { Text("Nombre") },
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = editActivo,
+                            onCheckedChange = { editActivo = it }
+                        )
+                        Text("Activo")
+                    }
                 }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.updateNegocio(editNegocioId!!, editNombre, editActivo)
+                        val negocio = Negocio(
+                            id = editNegocioId!!,
+                            nombre_negocio = editNombre,
+                            activo = editActivo
+                        )
+                        viewModel.updateNegocio(negocio)
                         showEditDialog = false
                         editNegocioId = null
                     }
@@ -229,7 +148,12 @@ fun NegociosScreen(
                 TextButton(
                     onClick = {
                         if (newNombre.isNotEmpty()) {
-                            viewModel.createNegocio(newNombre)
+                            val nuevoNegocio = Negocio(
+                                id = "",
+                                nombre_negocio = newNombre,
+                                activo = true
+                            )
+                            viewModel.addNegocio(nuevoNegocio)
                             showDialog = false
                         }
                     }
