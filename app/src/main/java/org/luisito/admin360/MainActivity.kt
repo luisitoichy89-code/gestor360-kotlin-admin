@@ -473,8 +473,8 @@ fun AdminDashboard() {
             },
             confirmButton = {
                 TextButton(onClick = {
-                    onDialogConfirm?.invoke(values)
-                    showDialog = false
+                            onDialogConfirm?.invoke(values)
+                            showDialog = false
                 }) { Text("Crear") }
             },
             dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Cancelar") } }
