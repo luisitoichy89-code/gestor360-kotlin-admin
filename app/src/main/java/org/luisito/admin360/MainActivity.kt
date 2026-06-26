@@ -266,8 +266,15 @@ fun AdminDashboard() {
                             onDialogConfirm = { values ->
                                 CoroutineScope(Dispatchers.IO).launch {
                                     try {
-                                        val success = negocioRepo.createNegocio(values["Nombre"] ?: "")
-                                        withContext(Dispatchers.Main) {
+                                val success = negocioRepo.createNegocio(values["Nombre"] ?: "")
+                                withContext(Dispatchers.Main) {
+                                    if (success) {
+                                        Toast.makeText(context, "✅ Negocio creado correctamente", Toast.LENGTH_LONG).show()
+                                        loadNegocios()
+                                    } else {
+                                        Toast.makeText(context, "❌ Error: ${ErrorHolder.lastError}", Toast.LENGTH_LONG).show()
+                                    }
+                                }
                                             if (success) {
                                                 Toast.makeText(context, "✅ Negocio creado", Toast.LENGTH_SHORT).show()
                                                 loadNegocios()
