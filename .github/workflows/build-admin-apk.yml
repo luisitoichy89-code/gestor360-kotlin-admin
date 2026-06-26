@@ -23,8 +23,8 @@ jobs:
 
       - name: Inject Supabase credentials
         run: |
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> gradle.properties
-          echo "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" >> gradle.properties
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > local.properties
+          echo "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" >> local.properties
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
