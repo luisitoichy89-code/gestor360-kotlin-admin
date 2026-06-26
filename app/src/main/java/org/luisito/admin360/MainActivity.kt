@@ -1,6 +1,7 @@
 package org.luisito.admin360
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.luisito.admin360.ui.theme.Gestor360Theme
 import org.luisito.admin360.data.repository.*
 import org.luisito.admin360.data.models.*
@@ -175,38 +177,99 @@ fun AdminDashboard() {
             floatingActionButton = {
                 FloatingActionButton(onClick = {
                     when (selectedItem) {
-                        "negocios" -> { dialogTitle = "Crear Negocio"; dialogFields = listOf("Nombre" to ""); onDialogConfirm = { values ->
-                            CoroutineScope(Dispatchers.IO).launch {
-                                negocioRepo.createNegocio(values["Nombre"] ?: "")
-                                loadNegocios()
-                            }
-                        }; showDialog = true }
-                        "locales" -> { dialogTitle = "Crear Local"; dialogFields = listOf("Nombre" to ""); onDialogConfirm = { values ->
-                            if (selectedNegocioId != null) {
+                        "negocios" -> {
+                            dialogTitle = "Crear Negocio"
+                            dialogFields = listOf("Nombre" to "")
+                            onDialogConfirm = { values ->
                                 CoroutineScope(Dispatchers.IO).launch {
-                                    localRepo.createLocal(selectedNegocioId!!, values["Nombre"] ?: "")
-                                    loadLocales()
+                                    val success = negocioRepo.createNegocio(values["Nombre"] ?: "")
+                                    withContext(Dispatchers.Main) {
+                                        if (success) {
+                                            Toast.makeText(this@MainActivity, "✅ Negocio creado", Toast.LENGTH_SHORT).show()
+                                            loadNegocios()
+                                        } else {
+                                            Toast.makeText(this@MainActivity, "❌ Error al crear negocio", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
                                 }
                             }
-                        }; showDialog = true }
-                        "usuarios" -> { dialogTitle = "Crear Usuario"; dialogFields = listOf("Usuario" to "", "Contraseña" to "", "Nombre" to "", "Rol" to "", "Local ID" to ""); onDialogConfirm = { values ->
-                            if (selectedNegocioId != null) {
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    userRepo.createUser(selectedNegocioId!!, values["Usuario"] ?: "", values["Contraseña"] ?: "", values["Nombre"] ?: "", values["Rol"] ?: "seller", values["Local ID"] ?: "1")
-                                    loadUsuarios()
+                            showDialog = true
+                        }
+                        "locales" -> {
+                            dialogTitle = "Crear Local"
+                            dialogFields = listOf("Nombre" to "")
+                            onDialogConfirm = { values ->
+                                if (selectedNegocioId != null) {
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        val success = localRepo.createLocal(selectedNegocioId!!, values["Nombre"] ?: "")
+                                        withContext(Dispatchers.Main) {
+                                            if (success) {
+                                                Toast.makeText(this@MainActivity, "✅ Local creado", Toast.LENGTH_SHORT).show()
+                                                loadLocales()
+                                            } else {
+                                                Toast.makeText(this@MainActivity, "❌ Error al crear local", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
                                 }
                             }
-                        }; showDialog = true }
-                        "licencias" -> { dialogTitle = "Crear Licencia"; dialogFields = listOf("Device ID" to "", "Días" to "30"); onDialogConfirm = { values ->
-                            if (selectedNegocioId != null) {
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    licenciaRepo.activateLicense(selectedNegocioId!!, values["Device ID"] ?: "", values["Días"]?.toIntOrNull() ?: 30)
-                                    loadLicencias()
+                            showDialog = true
+                        }
+                        "usuarios" -> {
+                            dialogTitle = "Crear Usuario"
+                            dialogFields = listOf("Usuario" to "", "Contraseña" to "", "Nombre" to "", "Rol" to "", "Local ID" to "")
+                            onDialogConfirm = { values ->
+                                if (selectedNegocioId != null) {
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        val success = userRepo.createUser(
+                                            selectedNegocioId!!,
+                                            values["Usuario"] ?: "",
+                                            values["Contraseña"] ?: "",
+                                            values["Nombre"] ?: "",
+                                            values["Rol"] ?: "seller",
+                                            values["Local ID"] ?: "1"
+                                        )
+                                        withContext(Dispatchers.Main) {
+                                            if (success) {
+                                                Toast.makeText(this@MainActivity, "✅ Usuario creado", Toast.LENGTH_SHORT).show()
+                                                loadUsuarios()
+                                            } else {
+                                                Toast.makeText(this@MainActivity, "❌ Error al crear usuario", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
                                 }
                             }
-                        }; showDialog = true }
+                            showDialog = true
+                        }
+                        "licencias" -> {
+                            dialogTitle = "Crear Licencia"
+                            dialogFields = listOf("Device ID" to "", "Días" to "30")
+                            onDialogConfirm = { values ->
+                                if (selectedNegocioId != null) {
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        val success = licenciaRepo.activateLicense(
+                                            selectedNegocioId!!,
+                                            values["Device ID"] ?: "",
+                                            values["Días"]?.toIntOrNull() ?: 30
+                                        )
+                                        withContext(Dispatchers.Main) {
+                                            if (success) {
+                                                Toast.makeText(this@MainActivity, "✅ Licencia creada", Toast.LENGTH_SHORT).show()
+                                                loadLicencias()
+                                            } else {
+                                                Toast.makeText(this@MainActivity, "❌ Error al crear licencia", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            showDialog = true
+                        }
                     }
-                }) { Icon(Icons.Default.Add, contentDescription = "Crear") }
+                }) {
+                    Icon(Icons.Default.Add, contentDescription = "Crear")
+                }
             }
         ) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
