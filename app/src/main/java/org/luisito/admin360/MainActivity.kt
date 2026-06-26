@@ -457,27 +457,51 @@ fun AdminDashboard() {
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text(dialogTitle) },
-            text = {
-                Column {
-                    dialogFields.forEach { field ->
-                        OutlinedTextField(
-                            value = values[field.first] ?: "",
-                            onValueChange = { values = values + (field.first to it) },
-                            label = { Text(field.first) },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-                        Spacer(Modifier.height(8.dp))
+                    text = {
+                        Column {
+                            dialogFields.forEach { field ->
+                                OutlinedTextField(
+                                    value = values[field.first] ?: "",
+                                    onValueChange = { newValue ->
+                                        values = values.toMutableMap().apply { put(field.first, newValue) }
+                                    },
+                                    label = { Text(field.first) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true
+                                )
+                                Spacer(Modifier.height(8.dp))
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                onDialogConfirm?.invoke(values)
+                                showDialog = false
+                            }
+                        ) { Text("Crear") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
                     }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                            onDialogConfirm?.invoke(values)
-                            showDialog = false
-                }) { Text("Crear") }
-            },
-            dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Cancelar") } }
-        )
-    }
-}
+                )
+            }
+        }
+                            }
+                        ) { Text("Crear") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
+                    }
+                )
+            }
+        }
+                            }
+                        ) { Text("Crear") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
+                    }
+                )
+            }
+        }

@@ -17,7 +17,8 @@ class NegocioViewModel(
     private val _uiState = MutableStateFlow(NegocioUiState())
     val uiState: StateFlow<NegocioUiState> = _uiState.asStateFlow()
 
-    fun loadNegocios() {
+    fun loadNegocios()
+                _uiState.update { it.copy(isLoading = false) } {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val negocios = repository.getNegocios()
@@ -37,6 +38,7 @@ class NegocioViewModel(
             val success = repository.createNegocio(nombre)
             if (success) {
                 loadNegocios()
+                _uiState.update { it.copy(isLoading = false) }
             } else {
                 _uiState.update {
                     it.copy(
@@ -54,6 +56,7 @@ class NegocioViewModel(
             val success = repository.updateNegocio(id, nombre, activo)
             if (success) {
                 loadNegocios()
+                _uiState.update { it.copy(isLoading = false) }
             } else {
                 _uiState.update {
                     it.copy(
@@ -71,6 +74,7 @@ class NegocioViewModel(
             val success = repository.deleteNegocio(id)
             if (success) {
                 loadNegocios()
+                _uiState.update { it.copy(isLoading = false) }
             } else {
                 _uiState.update {
                     it.copy(
