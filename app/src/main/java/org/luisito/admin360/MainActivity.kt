@@ -57,7 +57,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Text("🔐 Gestor360 Admin", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(8.dp))
@@ -81,7 +81,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
-            if (error != null) {
+            if (error!= null) {
                 Spacer(Modifier.height(8.dp))
                 Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
@@ -102,7 +102,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+                enabled =!isLoading,
             ) {
                 if (isLoading) CircularProgressIndicator(modifier = Modifier.height(20.dp), color = MaterialTheme.colorScheme.onPrimary)
                 else Text("Iniciar Sesión")
@@ -123,12 +123,10 @@ fun AdminDashboard() {
     var dialogTitle by remember { mutableStateOf("") }
     var dialogFields by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
     var onDialogConfirm by remember { mutableStateOf<((Map<String, String>) -> Unit)?>(null) }
-
     val negocioRepo = NegocioRepository()
     val localRepo = LocalRepository()
     val userRepo = AdminUserRepository()
     val licenciaRepo = LicenciaRepository()
-
     var negocios by remember { mutableStateOf<List<Negocio>>(emptyList()) }
     var locales by remember { mutableStateOf<List<Local>>(emptyList()) }
     var usuarios by remember { mutableStateOf<List<AdminUser>>(emptyList()) }
@@ -156,7 +154,7 @@ fun AdminDashboard() {
     }
 
     fun loadLocales() {
-        if (selectedNegocioId != null) {
+        if (selectedNegocioId!= null) {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     locales = localRepo.getLocales(selectedNegocioId!!)
@@ -173,7 +171,7 @@ fun AdminDashboard() {
     }
 
     fun loadUsuarios() {
-        if (selectedNegocioId != null) {
+        if (selectedNegocioId!= null) {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     usuarios = userRepo.getUsers(selectedNegocioId!!)
@@ -190,7 +188,7 @@ fun AdminDashboard() {
     }
 
     fun loadLicencias() {
-        if (selectedNegocioId != null) {
+        if (selectedNegocioId!= null) {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     licencias = licenciaRepo.getLicencias(selectedNegocioId!!)
@@ -208,7 +206,7 @@ fun AdminDashboard() {
 
     LaunchedEffect(Unit) { loadNegocios() }
     LaunchedEffect(selectedNegocioId) {
-        if (selectedNegocioId != null) {
+        if (selectedNegocioId!= null) {
             loadLocales()
             loadUsuarios()
             loadLicencias()
@@ -253,8 +251,8 @@ fun AdminDashboard() {
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White
-                    )
+                        navigationIconContentColor = Color.White,
+                    ),
                 )
             },
             floatingActionButton = {
@@ -266,20 +264,13 @@ fun AdminDashboard() {
                             onDialogConfirm = { values ->
                                 CoroutineScope(Dispatchers.IO).launch {
                                     try {
-                                val success = negocioRepo.createNegocio(values["Nombre"] ?: "")
-                                withContext(Dispatchers.Main) {
-                                    if (success) {
-                                        Toast.makeText(context, "✅ Negocio creado correctamente", Toast.LENGTH_LONG).show()
-                                        loadNegocios()
-                                    } else {
-                                        Toast.makeText(context, "❌ Error: ${ErrorHolder.lastError}", Toast.LENGTH_LONG).show()
-                                    }
-                                }
+                                        val success = negocioRepo.createNegocio(values["Nombre"]?: "")
+                                        withContext(Dispatchers.Main) {
                                             if (success) {
-                                                Toast.makeText(context, "✅ Negocio creado", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "✅ Negocio creado correctamente", Toast.LENGTH_LONG).show()
                                                 loadNegocios()
                                             } else {
-                                                Toast.makeText(context, "❌ Error al crear negocio", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "❌ Error: ${ErrorHolder.lastError}", Toast.LENGTH_LONG).show()
                                             }
                                         }
                                     } catch (e: Exception) {
@@ -295,10 +286,10 @@ fun AdminDashboard() {
                             dialogTitle = "Crear Local"
                             dialogFields = listOf("Nombre" to "")
                             onDialogConfirm = { values ->
-                                if (selectedNegocioId != null) {
+                                if (selectedNegocioId!= null) {
                                     CoroutineScope(Dispatchers.IO).launch {
                                         try {
-                                            val success = localRepo.createLocal(selectedNegocioId!!, values["Nombre"] ?: "")
+                                            val success = localRepo.createLocal(selectedNegocioId!!, values["Nombre"]?: "")
                                             withContext(Dispatchers.Main) {
                                                 if (success) {
                                                     Toast.makeText(context, "✅ Local creado", Toast.LENGTH_SHORT).show()
@@ -321,16 +312,16 @@ fun AdminDashboard() {
                             dialogTitle = "Crear Usuario"
                             dialogFields = listOf("Usuario" to "", "Contraseña" to "", "Nombre" to "", "Rol" to "", "Local ID" to "")
                             onDialogConfirm = { values ->
-                                if (selectedNegocioId != null) {
+                                if (selectedNegocioId!= null) {
                                     CoroutineScope(Dispatchers.IO).launch {
                                         try {
                                             val success = userRepo.createUser(
                                                 selectedNegocioId!!,
-                                                values["Usuario"] ?: "",
-                                                values["Contraseña"] ?: "",
-                                                values["Nombre"] ?: "",
-                                                values["Rol"] ?: "seller",
-                                                values["Local ID"] ?: "1"
+                                                values["Usuario"]?: "",
+                                                values["Contraseña"]?: "",
+                                                values["Nombre"]?: "",
+                                                values["Rol"]?: "seller",
+                                                values["Local ID"]?: "1"
                                             )
                                             withContext(Dispatchers.Main) {
                                                 if (success) {
@@ -354,13 +345,13 @@ fun AdminDashboard() {
                             dialogTitle = "Crear Licencia"
                             dialogFields = listOf("Device ID" to "", "Días" to "30")
                             onDialogConfirm = { values ->
-                                if (selectedNegocioId != null) {
+                                if (selectedNegocioId!= null) {
                                     CoroutineScope(Dispatchers.IO).launch {
                                         try {
                                             val success = licenciaRepo.activateLicense(
                                                 selectedNegocioId!!,
-                                                values["Device ID"] ?: "",
-                                                values["Días"]?.toIntOrNull() ?: 30
+                                                values["Device ID"]?: "",
+                                                values["Días"]?.toIntOrNull()?: 30
                                             )
                                             withContext(Dispatchers.Main) {
                                                 if (success) {
@@ -389,7 +380,7 @@ fun AdminDashboard() {
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                } else if (errorMessage != null) {
+                } else if (errorMessage!= null) {
                     Text(errorMessage!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
                 } else {
                     when (selectedItem) {
@@ -400,6 +391,20 @@ fun AdminDashboard() {
                                     Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
                                         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                             Text(negocio.nombre_negocio)
+                                            Text(if (negocio.activo) "🟢 Activo" else "🔴 Inactivo")
+    
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        "locales" -> {
+                            Text("Locales", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
+                            LazyColumn {
+                                items(locales) { local ->
+                                    Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                                        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text(local.nombre)
                                             Text(if (negocio.activo) "🟢 Activo" else "🔴 Inactivo")
                                         }
                                     }
@@ -457,51 +462,33 @@ fun AdminDashboard() {
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text(dialogTitle) },
-                    text = {
-                        Column {
-                            dialogFields.forEach { field ->
-                                OutlinedTextField(
-                                    value = values[field.first] ?: "",
-                                    onValueChange = { newValue ->
-                                        values = values.toMutableMap().apply { put(field.first, newValue) }
-                                    },
-                                    label = { Text(field.first) },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    singleLine = true
-                                )
-                                Spacer(Modifier.height(8.dp))
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                onDialogConfirm?.invoke(values)
-                                showDialog = false
-                            }
-                        ) { Text("Crear") }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
+            text = {
+                Column {
+                    dialogFields.forEach { field ->
+                        OutlinedTextField(
+                            value = values[field.first] ?: "",
+                            onValueChange = { newValue ->
+                                values = values.toMutableMap().apply { put(field.first, newValue) }
+                            },
+                            label = { Text(field.first) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Spacer(Modifier.height(8.dp))
                     }
-                )
-            }
-        }
-                            }
-                        ) { Text("Crear") }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDialogConfirm?.invoke(values)
+                        showDialog = false
                     }
-                )
+                ) { Text("Crear") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
             }
-        }
-                            }
-                        ) { Text("Crear") }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
-                    }
-                )
-            }
-        }
+        )
+    }
+}
