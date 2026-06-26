@@ -18,7 +18,7 @@ class NegocioRepository {
             val supabase = SupabaseClientProvider.client
             supabase.from("clientes").insert(mapOf("nombre_negocio" to nombre, "activo" to true))
             true
-        } catch (e: Exception) { false }
+        } catch (e: Exception) { e.printStackTrace(); false }
     }
 
     suspend fun updateNegocio(id: String, nombre: String, activo: Boolean): Boolean {
@@ -28,7 +28,7 @@ class NegocioRepository {
                 .update(mapOf("nombre_negocio" to nombre, "activo" to activo))
                 { filter { eq("id", id) } }
             true
-        } catch (e: Exception) { false }
+        } catch (e: Exception) { e.printStackTrace(); false }
     }
 
     suspend fun deleteNegocio(id: String): Boolean {
@@ -36,6 +36,6 @@ class NegocioRepository {
             val supabase = SupabaseClientProvider.client
             supabase.from("clientes").delete { filter { eq("id", id) } }
             true
-        } catch (e: Exception) { false }
+        } catch (e: Exception) { e.printStackTrace(); false }
     }
 }
