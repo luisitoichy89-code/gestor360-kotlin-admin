@@ -18,7 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import org.luisito.admin360.data.model.Local
+import org.luisito.admin360.data.models.Local
 import org.luisito.admin360.data.model.Negocio
 import org.luisito.admin360.ui.screens.*
 import org.luisito.admin360.ui.theme.Admin360Theme
