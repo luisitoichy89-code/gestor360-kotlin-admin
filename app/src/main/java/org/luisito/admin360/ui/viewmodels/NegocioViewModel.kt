@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.luisito.admin360.data.models.Negocio
+import org.luisito.admin360.data.repository.ErrorHolder
 import org.luisito.admin360.data.repository.NegocioRepository
 
 class NegocioViewModel(
