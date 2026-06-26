@@ -33,6 +33,34 @@ class NegocioRepository {
             false
         }
     }
+
+    suspend fun updateNegocio(id: String, nombre: String, activo: Boolean): Boolean {
+        return try {
+            SupabaseClientProvider.client
+                .from("clientes")
+                .update(mapOf("nombre_negocio" to nombre, "activo" to activo)) {
+                    filter { eq("id", id) }
+                }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun deleteNegocio(id: String): Boolean {
+        return try {
+            SupabaseClientProvider.client
+                .from("clientes")
+                .delete {
+                    filter { eq("id", id) }
+                }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 }
 
 object ErrorHolder {

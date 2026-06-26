@@ -41,7 +41,7 @@ class NegocioViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = "Error al crear negocio"
+                        error = ErrorHolder.lastError
                     )
                 }
             }
