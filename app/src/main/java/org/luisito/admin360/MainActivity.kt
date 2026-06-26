@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,12 +27,15 @@ import kotlinx.coroutines.withContext
 import org.luisito.admin360.ui.theme.Gestor360Theme
 import org.luisito.admin360.data.repository.*
 import org.luisito.admin360.data.models.*
-import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { Gestor360Theme { AppContent() } }
+        setContent {
+            Gestor360Theme {
+                AppContent()
+            }
+        }
     }
 }
 
@@ -63,31 +65,30 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
         ) {
             Text("🔐 Gestor360 Admin", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(8.dp))
-            Text("Acceso exclusivo para administradores", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)
+            Text("Acceso exclusivo para administradores", style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(32.dp))
+
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
+                value = email, onValueChange = { email = it },
+                label = { Text("Email") }, modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
             Spacer(Modifier.height(12.dp))
+
             OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Contraseña") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
+                value = password, onValueChange = { password = it },
+                label = { Text("Contraseña") }, modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
+
             if (error != null) {
                 Spacer(Modifier.height(8.dp))
-                Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                Text(error!!, color = MaterialTheme.colorScheme.error)
             }
+
             Spacer(Modifier.height(24.dp))
+
             Button(
                 onClick = {
                     if (email.isNotEmpty() && password.isNotEmpty()) {
@@ -117,9 +118,6 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
 @Composable
 fun AdminDashboard() {
     val context = LocalContext.current
-    val negocioViewModel: NegocioViewModel = viewModel()
-    val uiState by negocioViewModel.uiState.collectAsState()
-    
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var selectedItem by remember { mutableStateOf("negocios") }
@@ -130,77 +128,29 @@ fun AdminDashboard() {
     var onDialogConfirm by remember { mutableStateOf<((Map<String, String>) -> Unit)?>(null) }
 
     val negocioRepo = NegocioRepository()
-    val localRepo = LocalRepository()
-    val userRepo = AdminUserRepository()
-    val licenciaRepo = LicenciaRepository()
 
-    var locales by remember { mutableStateOf<List<Local>>(emptyList()) }
-    var usuarios by remember { mutableStateOf<List<AdminUser>>(emptyList()) }
-    var licencias by remember { mutableStateOf<List<Licencia>>(emptyList()) }
+    var negocios by remember { mutableStateOf<List<Negocio>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
 
-    fun loadLocales() {
-        if (selectedNegocioId != null) {
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    locales = localRepo.getLocales(selectedNegocioId!!)
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "✅ ${locales.size} locales cargados", Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show()
-                    }
+    fun loadNegocios() {
+        CoroutineScope(Dispatchers.IO).launch {
+            isLoading = true
+            try {
+                negocios = negocioRepo.getNegocios()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "✅ ${negocios.size} negocios cargados", Toast.LENGTH_SHORT).show()
                 }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            } finally {
+                isLoading = false
             }
         }
     }
 
-    fun loadUsuarios() {
-        if (selectedNegocioId != null) {
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    usuarios = userRepo.getUsers(selectedNegocioId!!)
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "✅ ${usuarios.size} usuarios cargados", Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
-        }
-    }
-
-    fun loadLicencias() {
-        if (selectedNegocioId != null) {
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    licencias = licenciaRepo.getLicencias(selectedNegocioId!!)
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "✅ ${licencias.size} licencias cargadas", Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
-        }
-    }
-
-    // Cargar negocios al iniciar
-    LaunchedEffect(Unit) {
-        negocioViewModel.loadNegocios()
-    }
-
-    LaunchedEffect(selectedNegocioId) {
-        if (selectedNegocioId != null) {
-            loadLocales()
-            loadUsuarios()
-            loadLicencias()
-        }
-    }
+    LaunchedEffect(Unit) { loadNegocios() }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -218,7 +168,7 @@ fun AdminDashboard() {
                                 "Cerrar Sesión" -> { /* logout */ }
                                 else -> {
                                     selectedItem = item.lowercase()
-                                    if (item == "Negocios") negocioViewModel.loadNegocios()
+                                    if (item == "Negocios") loadNegocios()
                                 }
                             }
                         },
@@ -256,11 +206,10 @@ fun AdminDashboard() {
                                         val success = negocioRepo.createNegocio(values["Nombre"] ?: "")
                                         withContext(Dispatchers.Main) {
                                             if (success) {
-                                                Toast.makeText(context, "✅ Negocio creado", Toast.LENGTH_SHORT).show()
-                                                negocioViewModel.loadNegocios()
+                                                Toast.makeText(context, "✅ Negocio creado correctamente", Toast.LENGTH_LONG).show()
+                                                loadNegocios()
                                             } else {
-                                                val errorMsg = ErrorHolder.lastError.ifEmpty { "Error desconocido" }
-                                                Toast.makeText(context, "❌ Error: $errorMsg", Toast.LENGTH_LONG).show()
+                                                Toast.makeText(context, "❌ Error: ${ErrorHolder.lastError}", Toast.LENGTH_LONG).show()
                                             }
                                         }
                                     } catch (e: Exception) {
@@ -272,94 +221,8 @@ fun AdminDashboard() {
                             }
                             showDialog = true
                         }
-                        "locales" -> {
-                            dialogTitle = "Crear Local"
-                            dialogFields = listOf("Nombre" to "")
-                            onDialogConfirm = { values ->
-                                if (selectedNegocioId != null) {
-                                    CoroutineScope(Dispatchers.IO).launch {
-                                        try {
-                                            val success = localRepo.createLocal(selectedNegocioId!!, values["Nombre"] ?: "")
-                                            withContext(Dispatchers.Main) {
-                                                if (success) {
-                                                    Toast.makeText(context, "✅ Local creado", Toast.LENGTH_SHORT).show()
-                                                    loadLocales()
-                                                } else {
-                                                    Toast.makeText(context, "❌ Error al crear local", Toast.LENGTH_SHORT).show()
-                                                }
-                                            }
-                                        } catch (e: Exception) {
-                                            withContext(Dispatchers.Main) {
-                                                Toast.makeText(context, "❌ Excepción: ${e.message}", Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            showDialog = true
-                        }
-                        "usuarios" -> {
-                            dialogTitle = "Crear Usuario"
-                            dialogFields = listOf("Usuario" to "", "Contraseña" to "", "Nombre" to "", "Rol" to "", "Local ID" to "")
-                            onDialogConfirm = { values ->
-                                if (selectedNegocioId != null) {
-                                    CoroutineScope(Dispatchers.IO).launch {
-                                        try {
-                                            val success = userRepo.createUser(
-                                                selectedNegocioId!!,
-                                                values["Usuario"] ?: "",
-                                                values["Contraseña"] ?: "",
-                                                values["Nombre"] ?: "",
-                                                values["Rol"] ?: "seller",
-                                                values["Local ID"] ?: "1"
-                                            )
-                                            withContext(Dispatchers.Main) {
-                                                if (success) {
-                                                    Toast.makeText(context, "✅ Usuario creado", Toast.LENGTH_SHORT).show()
-                                                    loadUsuarios()
-                                                } else {
-                                                    Toast.makeText(context, "❌ Error al crear usuario", Toast.LENGTH_SHORT).show()
-                                                }
-                                            }
-                                        } catch (e: Exception) {
-                                            withContext(Dispatchers.Main) {
-                                                Toast.makeText(context, "❌ Excepción: ${e.message}", Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            showDialog = true
-                        }
-                        "licencias" -> {
-                            dialogTitle = "Crear Licencia"
-                            dialogFields = listOf("Device ID" to "", "Días" to "30")
-                            onDialogConfirm = { values ->
-                                if (selectedNegocioId != null) {
-                                    CoroutineScope(Dispatchers.IO).launch {
-                                        try {
-                                            val success = licenciaRepo.activateLicense(
-                                                selectedNegocioId!!,
-                                                values["Device ID"] ?: "",
-                                                values["Días"]?.toIntOrNull() ?: 30
-                                            )
-                                            withContext(Dispatchers.Main) {
-                                                if (success) {
-                                                    Toast.makeText(context, "✅ Licencia creada", Toast.LENGTH_SHORT).show()
-                                                    loadLicencias()
-                                                } else {
-                                                    Toast.makeText(context, "❌ Error al crear licencia", Toast.LENGTH_SHORT).show()
-                                                }
-                                            }
-                                        } catch (e: Exception) {
-                                            withContext(Dispatchers.Main) {
-                                                Toast.makeText(context, "❌ Excepción: ${e.message}", Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            showDialog = true
+                        else -> {
+                            Toast.makeText(context, "Función en desarrollo", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }) {
@@ -368,91 +231,28 @@ fun AdminDashboard() {
             }
         ) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-                when {
-                    uiState.isLoading -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                    }
-                    uiState.error != null -> {
-                        Text(uiState.error!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
-                    }
-                    else -> {
-                        when (selectedItem) {
-                            "negocios" -> {
-                                Text("Negocios", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                                if (uiState.negocios.isEmpty()) {
-                                    Text("No hay negocios. Presiona el botón + para crear.", modifier = Modifier.padding(16.dp))
-                                } else {
-                                    LazyColumn {
-                                        items(uiState.negocios) { negocio ->
-                                            Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                                                Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                                    Text(negocio.nombre_negocio)
-                                                    Text(if (negocio.activo) "🟢 Activo" else "🔴 Inactivo")
-                                                }
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                } else {
+                    when (selectedItem) {
+                        "negocios" -> {
+                            Text("Negocios", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
+                            if (negocios.isEmpty()) {
+                                Text("No hay negocios. Presiona el botón + para crear.", modifier = Modifier.padding(16.dp))
+                            } else {
+                                LazyColumn {
+                                    items(negocios) { negocio ->
+                                        Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                                            Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                Text(negocio.nombre_negocio)
+                                                Text(if (negocio.activo) "🟢 Activo" else "🔴 Inactivo")
                                             }
                                         }
                                     }
                                 }
                             }
-                            "locales" -> {
-                                Text("Locales", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                                if (selectedNegocioId == null) {
-                                    Text("Selecciona un negocio primero", modifier = Modifier.padding(16.dp))
-                                } else if (locales.isEmpty()) {
-                                    Text("No hay locales para este negocio", modifier = Modifier.padding(16.dp))
-                                } else {
-                                    LazyColumn {
-                                        items(locales) { local ->
-                                            Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                                                Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                                    Text(local.nombre)
-                                                    Text(if (local.activo) "🟢 Activo" else "🔴 Inactivo")
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            "usuarios" -> {
-                                Text("Usuarios", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                                if (selectedNegocioId == null) {
-                                    Text("Selecciona un negocio primero", modifier = Modifier.padding(16.dp))
-                                } else if (usuarios.isEmpty()) {
-                                    Text("No hay usuarios para este negocio", modifier = Modifier.padding(16.dp))
-                                } else {
-                                    LazyColumn {
-                                        items(usuarios) { usuario ->
-                                            Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                                                Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                                    Text(usuario.username)
-                                                    Text(usuario.rol)
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            "licencias" -> {
-                                Text("Licencias", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                                if (selectedNegocioId == null) {
-                                    Text("Selecciona un negocio primero", modifier = Modifier.padding(16.dp))
-                                } else if (licencias.isEmpty()) {
-                                    Text("No hay licencias para este negocio", modifier = Modifier.padding(16.dp))
-                                } else {
-                                    LazyColumn {
-                                        items(licencias) { licencia ->
-                                            Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                                                Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                                    Text(licencia.device_id.take(12))
-                                                    Text(licencia.expiracion ?: "Sin fecha")
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            else -> Text("Selecciona una opción", modifier = Modifier.padding(16.dp))
                         }
+                        else -> Text("Selecciona una opción", modifier = Modifier.padding(16.dp))
                     }
                 }
             }
