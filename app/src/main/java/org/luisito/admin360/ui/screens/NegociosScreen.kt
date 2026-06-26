@@ -10,8 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.luisito.admin360.data.model.Negocio
-import org.luisito.admin360.viewmodel.NegocioViewModel
+import org.luisito.admin360.data.models.Negocio
+import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,7 +19,8 @@ fun NegociosScreen(
     viewModel: NegocioViewModel,
     onNavigateBack: () -> Unit
 ) {
-    val negocios by viewModel.negocios.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val negocios = uiState.negocios
     var showDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var editNegocioId by remember { mutableStateOf<String?>(null) }
@@ -43,47 +44,65 @@ fun NegociosScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(negocios) { negocio ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        editNegocioId = negocio.id
-                        editNombre = negocio.nombre_negocio
-                        editActivo = negocio.activo
-                        showEditDialog = true
-                    }
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(negocio.nombre_negocio, style = MaterialTheme.typography.titleMedium)
-                            Text("ID: ${negocio.id}", style = MaterialTheme.typography.bodySmall)
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(negocios) { negocio ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            editNegocioId = negocio.id
+                            editNombre = negocio.nombre_negocio
+                            editActivo = negocio.activo
+                            showEditDialog = true
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(if (negocio.activo) "🟢" else "🔴")
-                            IconButton(onClick = { viewModel.deleteNegocio(negocio.id) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Eliminar")
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(negocio.nombre_negocio, style = MaterialTheme.typography.titleMedium)
+                                Text("ID: ${negocio.id}", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(if (negocio.activo) "🟢" else "🔴")
+                                IconButton(onClick = { viewModel.deleteNegocio(negocio.id) }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Eliminar")
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        
+        uiState.error?.let { error ->
+            Snackbar(
+                modifier = Modifier.padding(16.dp),
+                action = {
+                    TextButton(onClick = { viewModel.loadNegocios() }) {
+                        Text("Reintentar")
+                    }
+                }
+            ) {
+                Text(error)
+            }
+        }
     }
 
-    // Dialog para editar
     if (showEditDialog) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false; editNegocioId = null },
@@ -130,7 +149,6 @@ fun NegociosScreen(
         )
     }
 
-    // Dialog para crear
     if (showDialog) {
         var newNombre by remember { mutableStateOf("") }
         AlertDialog(
