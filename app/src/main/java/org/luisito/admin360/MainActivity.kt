@@ -1,6 +1,7 @@
 package org.luisito.admin360
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -20,6 +21,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 import org.luisito.admin360.ui.theme.Gestor360Theme
 import org.luisito.admin360.data.repository.*
@@ -173,13 +175,27 @@ fun AdminDashboard() {
                 )
             },
             floatingActionButton = {
-                FloatingActionButton(onClick = {
-                    when (selectedItem) {
                         "negocios" -> { dialogTitle = "Crear Negocio"; dialogFields = listOf("Nombre" to ""); onDialogConfirm = { values ->
                             CoroutineScope(Dispatchers.IO).launch {
-                                negocioRepo.createNegocio(values["Nombre"] ?: "")
-                                loadNegocios()
+                                val success = negocioRepo.createNegocio(values["Nombre"] ?: "")
+                                withContext(Dispatchers.Main) {
+                                    if (success) {
+                                        Toast.makeText(this@MainActivity, "✅ Negocio creado", Toast.LENGTH_SHORT).show()
+                        "locales" -> { dialogTitle = "Crear Local"; dialogFields = listOf("Nombre" to ""); onDialogConfirm = { values ->
+                            if (selectedNegocioId != null) {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    val success = localRepo.createLocal(selectedNegocioId!!, values["Nombre"] ?: "")
+                                    withContext(Dispatchers.Main) {
+                                        if (success) {
+                                            Toast.makeText(this@MainActivity, "✅ Local creado", Toast.LENGTH_SHORT).show()
+                                            loadLocales()
+                                        } else {
+                                            Toast.makeText(this@MainActivity, "❌ Error al crear local", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }
                             }
+                        }; showDialog = true }
                         }; showDialog = true }
                         "locales" -> { dialogTitle = "Crear Local"; dialogFields = listOf("Nombre" to ""); onDialogConfirm = { values ->
                             if (selectedNegocioId != null) {
