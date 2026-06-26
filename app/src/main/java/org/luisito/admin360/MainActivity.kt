@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -83,6 +84,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminDashboard() {
+    val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var selectedItem by remember { mutableStateOf("negocios") }
@@ -185,10 +187,10 @@ fun AdminDashboard() {
                                     val success = negocioRepo.createNegocio(values["Nombre"] ?: "")
                                     withContext(Dispatchers.Main) {
                                         if (success) {
-                                            Toast.makeText(this@MainActivity, "✅ Negocio creado", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "✅ Negocio creado", Toast.LENGTH_SHORT).show()
                                             loadNegocios()
                                         } else {
-                                            Toast.makeText(this@MainActivity, "❌ Error al crear negocio", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "❌ Error al crear negocio", Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 }
@@ -204,10 +206,10 @@ fun AdminDashboard() {
                                         val success = localRepo.createLocal(selectedNegocioId!!, values["Nombre"] ?: "")
                                         withContext(Dispatchers.Main) {
                                             if (success) {
-                                                Toast.makeText(this@MainActivity, "✅ Local creado", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "✅ Local creado", Toast.LENGTH_SHORT).show()
                                                 loadLocales()
                                             } else {
-                                                Toast.makeText(this@MainActivity, "❌ Error al crear local", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "❌ Error al crear local", Toast.LENGTH_SHORT).show()
                                             }
                                         }
                                     }
@@ -231,10 +233,10 @@ fun AdminDashboard() {
                                         )
                                         withContext(Dispatchers.Main) {
                                             if (success) {
-                                                Toast.makeText(this@MainActivity, "✅ Usuario creado", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "✅ Usuario creado", Toast.LENGTH_SHORT).show()
                                                 loadUsuarios()
                                             } else {
-                                                Toast.makeText(this@MainActivity, "❌ Error al crear usuario", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "❌ Error al crear usuario", Toast.LENGTH_SHORT).show()
                                             }
                                         }
                                     }
@@ -255,10 +257,10 @@ fun AdminDashboard() {
                                         )
                                         withContext(Dispatchers.Main) {
                                             if (success) {
-                                                Toast.makeText(this@MainActivity, "✅ Licencia creada", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "✅ Licencia creada", Toast.LENGTH_SHORT).show()
                                                 loadLicencias()
                                             } else {
-                                                Toast.makeText(this@MainActivity, "❌ Error al crear licencia", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "❌ Error al crear licencia", Toast.LENGTH_SHORT).show()
                                             }
                                         }
                                     }
