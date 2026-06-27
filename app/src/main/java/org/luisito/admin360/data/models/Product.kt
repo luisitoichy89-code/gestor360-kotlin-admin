@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Product(
-    val id: String? = null,  // UUID generado por Supabase
+    val id: Int = 0,
     val nombre: String,
     val precio: Double,
     val stock: Int,
