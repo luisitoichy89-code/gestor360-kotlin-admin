@@ -2,8 +2,8 @@ package org.luisito.admin360.data
 
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
-import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.postgrest.Postgrest
 import org.luisito.admin360.BuildConfig
 
 object SupabaseClientProvider {
@@ -13,6 +13,7 @@ object SupabaseClientProvider {
             supabaseKey = BuildConfig.SUPABASE_KEY
         ) {
             install(Auth)
+            install(io.github.jan.supabase.serializer.KotlinxSerializer)
             install(Postgrest)
         }
     }
