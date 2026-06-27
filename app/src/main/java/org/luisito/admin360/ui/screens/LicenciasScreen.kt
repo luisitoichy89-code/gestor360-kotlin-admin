@@ -49,7 +49,7 @@ fun LicenciasScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteLicenciaId by remember { mutableStateOf<Int?>(null) }
+    var deleteLicenciaId by remember { mutableStateOf<String?>(null) }  // ← CORREGIDO: String?
 
     LaunchedEffect(Unit) {
         viewModel.loadLicencias(clienteId)
@@ -114,7 +114,7 @@ fun LicenciasScreen(
                                 Row {
                                     IconButton(
                                         onClick = {
-                                            deleteLicenciaId = licencia.id
+                                            deleteLicenciaId = licencia.id  // ← CORREGIDO: String
                                             showDeleteDialog = true
                                         }
                                     ) {
@@ -137,7 +137,7 @@ fun LicenciasScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteLicense(deleteLicenciaId!!, clienteId)
+                        viewModel.deleteLicense(deleteLicenciaId!!, clienteId)  // ← CORREGIDO: String
                         showDeleteDialog = false
                         deleteLicenciaId = null
                     }

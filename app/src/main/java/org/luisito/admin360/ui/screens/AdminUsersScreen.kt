@@ -31,7 +31,7 @@ fun AdminUsersScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteUserId by remember { mutableStateOf<Int?>(null) }
+    var deleteUserId by remember { mutableStateOf<String?>(null) }  // ← CORREGIDO: String?
 
     LaunchedEffect(clienteId) {
         viewModel.loadUsers(clienteId)
@@ -102,7 +102,7 @@ fun AdminUsersScreen(
                                         )
                                         Button(
                                             onClick = {
-                                                viewModel.approveUser(user.id)
+                                                viewModel.approveUser(user.id, clienteId)  // ← CORREGIDO: pasa clienteId
                                             },
                                             modifier = Modifier.padding(top = 4.dp)
                                         ) {
@@ -127,7 +127,7 @@ fun AdminUsersScreen(
                                     }
                                     IconButton(
                                         onClick = {
-                                            deleteUserId = user.id
+                                            deleteUserId = user.id  // ← CORREGIDO: String
                                             showDeleteDialog = true
                                         }
                                     ) {
@@ -150,7 +150,7 @@ fun AdminUsersScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteUser(deleteUserId!!, clienteId)
+                        viewModel.deleteUser(deleteUserId!!, clienteId)  // ← CORREGIDO: String
                         showDeleteDialog = false
                         deleteUserId = null
                     }

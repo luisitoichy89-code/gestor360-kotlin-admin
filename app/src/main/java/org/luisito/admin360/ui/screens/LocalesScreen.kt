@@ -50,9 +50,9 @@ fun LocalesScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteLocalId by remember { mutableStateOf<Int?>(null) }
+    var deleteLocalId by remember { mutableStateOf<String?>(null) }  // ← CORREGIDO: String?
     var showEditDialog by remember { mutableStateOf(false) }
-    var editLocalId by remember { mutableStateOf<Int?>(null) }
+    var editLocalId by remember { mutableStateOf<String?>(null) }  // ← CORREGIDO: String?
     var editNombre by remember { mutableStateOf("") }
     var editActivo by remember { mutableStateOf(true) }
 
@@ -119,7 +119,7 @@ fun LocalesScreen(
                                 Row {
                                     IconButton(
                                         onClick = {
-                                            editLocalId = local.id
+                                            editLocalId = local.id  // ← CORREGIDO: String
                                             editNombre = local.nombre
                                             editActivo = local.activo
                                             showEditDialog = true
@@ -129,7 +129,7 @@ fun LocalesScreen(
                                     }
                                     IconButton(
                                         onClick = {
-                                            deleteLocalId = local.id
+                                            deleteLocalId = local.id  // ← CORREGIDO: String
                                             showDeleteDialog = true
                                         }
                                     ) {
@@ -152,7 +152,7 @@ fun LocalesScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteLocal(deleteLocalId!!, clienteId)
+                        viewModel.deleteLocal(deleteLocalId!!, clienteId)  // ← CORREGIDO: String
                         showDeleteDialog = false
                         deleteLocalId = null
                     }
@@ -185,7 +185,7 @@ fun LocalesScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.updateLocal(editLocalId!!, editNombre, editActivo, clienteId)
+                        viewModel.updateLocal(editLocalId!!, editNombre, editActivo, clienteId)  // ← CORREGIDO: String
                         showEditDialog = false
                         editLocalId = null
                     }

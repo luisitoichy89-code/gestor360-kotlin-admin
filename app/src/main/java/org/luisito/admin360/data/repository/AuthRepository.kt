@@ -23,6 +23,7 @@ class AuthRepository {
                 password = hash("admin"),
                 rol = "superadmin",
                 cliente_id = "00000000-0000-0000-0000-000000000000",
+                almacen_id = "0",  // ← CORREGIDO
                 activo = true
             )
             return LoginResult.Success("0", defaultUser)
@@ -59,7 +60,7 @@ class AuthRepository {
                 return LoginResult.Error("Usuario desactivado. Contacte al administrador.")
             }
 
-            // 4. VERIFICAR LICENCIA ACTIVA (NUEVO)
+            // 4. VERIFICAR LICENCIA ACTIVA
             val canLogin = verifyLicense(user.auth_id ?: "")
             if (!canLogin) {
                 return LoginResult.Error("Licencia expirada. Contacte al administrador.")
@@ -73,15 +74,15 @@ class AuthRepository {
         }
     }
 
-    // NUEVA FUNCIÓN: Verificar licencia activa llamando a la función SQL
+    // FUNCIÓN CORREGIDA: Verificar licencia activa usando .postgrest.rpc()
     private suspend fun verifyLicense(authId: String): Boolean {
         return try {
             val supabase = SupabaseClientProvider.client
-            val result = supabase
-                .from("usuarios")  // No importa, solo necesitamos la función
-                .rpc("usuario_puede_loguearse", mapOf("p_auth_uid" to authId))
-                .decodeAs<Boolean>()
-            result
+            val result = supabase.postgrest.rpc(
+                function = "usuario_puede_loguearse",
+                parameters = mapOf("p_auth_uid" to authId)
+            )
+            result.decodeAs<Boolean>()
         } catch (e: Exception) {
             // Si falla la verificación, asumimos que NO puede loguearse
             false
