@@ -6,7 +6,7 @@ import java.time.temporal.ChronoUnit
 
 @Serializable
 data class Licencia(
-    val id: Int,
+    val id: String,  // UUID de Supabase
     val cliente_id: String,
     val device_id: String,
     val expiracion: String?,

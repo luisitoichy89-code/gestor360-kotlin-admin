@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Local(
-    val id: Int,
+    val id: String,  // UUID de Supabase
     val cliente_id: String,
     val nombre: String,
     val activo: Boolean = true,
