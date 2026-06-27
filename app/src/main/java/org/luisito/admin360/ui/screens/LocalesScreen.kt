@@ -50,9 +50,9 @@ fun LocalesScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteLocalId by remember { mutableStateOf<String?>(null) }
+    var deleteLocalId by remember { mutableStateOf<Int?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
-    var editLocalId by remember { mutableStateOf<String?>(null) }
+    var editLocalId by remember { mutableStateOf<Int?>(null) }
     var editNombre by remember { mutableStateOf("") }
     var editActivo by remember { mutableStateOf(true) }
 

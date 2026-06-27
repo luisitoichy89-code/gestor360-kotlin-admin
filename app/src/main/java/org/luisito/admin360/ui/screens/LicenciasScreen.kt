@@ -49,7 +49,7 @@ fun LicenciasScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteLicenciaId by remember { mutableStateOf<String?>(null) }
+    var deleteLicenciaId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.loadLicencias(clienteId)
