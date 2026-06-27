@@ -1,6 +1,5 @@
 package org.luisito.admin360.ui.viewmodels
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,18 +9,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.luisito.admin360.data.models.Product
 import org.luisito.admin360.data.repository.ProductRepository
-import org.luisito.admin360.utils.SyncAction
-import org.luisito.admin360.utils.SyncManager
+
+data class ProductUiState(
+    val isLoading: Boolean = false,
+    val products: List<Product> = emptyList(),
+    val error: String? = null
+)
 
 class ProductsViewModel(
-    private val context: Context,
     private val repository: ProductRepository = ProductRepository()
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ProductsUiState())
-    val uiState: StateFlow<ProductsUiState> = _uiState.asStateFlow()
-
-    private val syncManager = SyncManager(context)
+    private val _uiState = MutableStateFlow(ProductUiState())
+    val uiState: StateFlow<ProductUiState> = _uiState.asStateFlow()
 
     fun loadProducts(almacenId: String) {
         viewModelScope.launch {
@@ -37,70 +37,39 @@ class ProductsViewModel(
         }
     }
 
-    fun createProduct(nombre: String, precio: Double, stock: Double, almacenId: String) {
+    fun createProduct(product: Product) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val success = repository.createProduct(nombre, precio, stock, almacenId)
+            val success = repository.createProduct(product)
             if (success) {
-                syncManager.syncAfterAction(almacenId, SyncAction.PRODUCT_ADDED)
-                loadProducts(almacenId)
-                _uiState.update { it.copy(isLoading = false) }
+                loadProducts(product.almacen_id)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al crear producto"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al crear producto") }
             }
         }
     }
 
-    fun updateProduct(id: Int, nombre: String, precio: Double, stock: Double) {
+    fun updateProduct(id: String, product: Product) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val success = repository.updateProduct(id, nombre, precio, stock)
+            val success = repository.updateProduct(id, product)
             if (success) {
-                val almacenId = _uiState.value.products.firstOrNull()?.almacen_id ?: "1"
-                syncManager.syncAfterAction(almacenId, SyncAction.PRODUCT_UPDATED)
-                loadProducts(almacenId)
-                _uiState.update { it.copy(isLoading = false) }
+                loadProducts(product.almacen_id)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al actualizar producto"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al actualizar") }
             }
         }
     }
 
-    fun deleteProduct(id: Int, almacenId: String) {
+    fun deleteProduct(id: String, almacenId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.deleteProduct(id)
             if (success) {
-                syncManager.syncAfterAction(almacenId, SyncAction.PRODUCT_DELETED)
                 loadProducts(almacenId)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al eliminar producto"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al eliminar") }
             }
         }
     }
-
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
-    }
 }
-
-data class ProductsUiState(
-    val isLoading: Boolean = false,
-    val products: List<Product> = emptyList(),
-    val error: String? = null
-)

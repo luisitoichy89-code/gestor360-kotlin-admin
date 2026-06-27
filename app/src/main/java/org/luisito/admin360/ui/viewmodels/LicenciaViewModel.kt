@@ -10,6 +10,12 @@ import kotlinx.coroutines.launch
 import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.data.repository.LicenciaRepository
 
+data class LicenciaUiState(
+    val isLoading: Boolean = false,
+    val licencias: List<Licencia> = emptyList(),
+    val error: String? = null
+)
+
 class LicenciaViewModel(
     private val repository: LicenciaRepository = LicenciaRepository()
 ) : ViewModel() {
@@ -25,7 +31,7 @@ class LicenciaViewModel(
                 it.copy(
                     isLoading = false,
                     licencias = licencias,
-                    error = if (licencias.isEmpty()) "Sin licencias" else null
+                    error = if (licencias.isEmpty()) "No hay licencias" else null
                 )
             }
         }
@@ -38,12 +44,7 @@ class LicenciaViewModel(
             if (success) {
                 loadLicencias(clienteId)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al activar licencia"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al activar licencia") }
             }
         }
     }
@@ -55,46 +56,20 @@ class LicenciaViewModel(
             if (success) {
                 loadLicencias(clienteId)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al renovar licencia"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al renovar licencia") }
             }
         }
     }
 
-    fun deleteLicense(id: Int) {
+    fun deleteLicense(id: String, clienteId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.deleteLicense(id)
             if (success) {
-                val clienteId = _uiState.value.licencias.firstOrNull()?.cliente_id ?: ""
                 loadLicencias(clienteId)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al eliminar licencia"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al eliminar licencia") }
             }
         }
     }
-
-    fun getDiasRestantes(clienteId: String): Int {
-        val licencia = _uiState.value.licencias.find { it.cliente_id == clienteId }
-        return licencia?.getDiasRestantes() ?: 0
-    }
-
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
-    }
 }
-
-data class LicenciaUiState(
-    val isLoading: Boolean = false,
-    val licencias: List<Licencia> = emptyList(),
-    val error: String? = null
-)

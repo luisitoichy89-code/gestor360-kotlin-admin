@@ -10,6 +10,12 @@ import kotlinx.coroutines.launch
 import org.luisito.admin360.data.models.Local
 import org.luisito.admin360.data.repository.LocalRepository
 
+data class LocalUiState(
+    val isLoading: Boolean = false,
+    val locales: List<Local> = emptyList(),
+    val error: String? = null
+)
+
 class LocalViewModel(
     private val repository: LocalRepository = LocalRepository()
 ) : ViewModel() {
@@ -38,58 +44,32 @@ class LocalViewModel(
             if (success) {
                 loadLocales(clienteId)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al crear local"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al crear local") }
             }
         }
     }
 
-    fun updateLocal(id: Int, nombre: String, activo: Boolean) {
+    fun updateLocal(id: String, nombre: String, activo: Boolean, clienteId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.updateLocal(id, nombre, activo)
             if (success) {
-                val clienteId = _uiState.value.locales.firstOrNull()?.cliente_id ?: ""
                 loadLocales(clienteId)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al actualizar local"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al actualizar") }
             }
         }
     }
 
-    fun deleteLocal(id: Int, clienteId: String) {
+    fun deleteLocal(id: String, clienteId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.deleteLocal(id)
             if (success) {
                 loadLocales(clienteId)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al eliminar local"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al eliminar") }
             }
         }
     }
-
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
-    }
 }
-
-data class LocalUiState(
-    val isLoading: Boolean = false,
-    val locales: List<Local> = emptyList(),
-    val error: String? = null
-)
