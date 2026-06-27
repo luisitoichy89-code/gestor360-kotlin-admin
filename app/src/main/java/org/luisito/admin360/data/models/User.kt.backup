@@ -9,7 +9,6 @@ data class User(
     val username: String,
     val nombre: String? = null,
     val rol: String,
-    val cliente_id: String,  // ← NUEVO: ID del negocio al que pertenece
-    val almacen_id: String,  // ID del local
+    val almacen_id: String,
     val activo: Boolean
 )
