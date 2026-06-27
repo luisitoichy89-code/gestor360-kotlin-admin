@@ -78,7 +78,7 @@ class AuthRepository {
     private suspend fun verifyLicense(authId: String): Boolean {
         return try {
             val supabase = SupabaseClientProvider.client
-            val result = supabase.postgrest.rpc(
+            val result = supabase.rpc(
                 function = "usuario_puede_loguearse",
                 parameters = mapOf("p_auth_uid" to authId)
             )

@@ -21,12 +21,11 @@ object SupabaseClientProvider {
                     encodeDefaults = true
                     coerceInputValues = true
                     allowStructuredMapKeys = true
-                    // ✅ Ignorar cualquier campo desconocido
                     classDiscriminator = "type"
                 }
             )
             install(Auth)
-            install(Postgrest)
+            install(Postgrest)  // ← AGREGADO: necesario para usar .postgrest.rpc()
         }
     }
 }
