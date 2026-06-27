@@ -45,15 +45,15 @@ import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 @Composable
 fun NegociosScreen(
     onBack: () -> Unit,
-    onNegocioSeleccionado: (String) -> Unit,
+    onNegocioSeleccionado: (Int) -> Unit,
     viewModel: NegocioViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteNegocioId by remember { mutableStateOf<String?>(null) }
+    var deleteNegocioId by remember { mutableStateOf<Int?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
-    var editNegocioId by remember { mutableStateOf<String?>(null) }
+    var editNegocioId by remember { mutableStateOf<Int?>(null) }
     var editNombre by remember { mutableStateOf("") }
     var editActivo by remember { mutableStateOf(true) }
 
