@@ -6,8 +6,8 @@ import java.time.temporal.ChronoUnit
 
 @Serializable
 data class Licencia(
-    val id: Int,  // ← AHORA INT
-    val cliente_id: Int,  // ← AHORA INT
+    val id: String,  // ← STRING
+    val cliente_id: String,  // ← STRING
     val device_id: String,
     val expiracion: String?,
     val activo: Boolean,
