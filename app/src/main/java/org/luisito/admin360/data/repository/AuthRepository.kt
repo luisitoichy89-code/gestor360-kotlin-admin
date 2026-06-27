@@ -1,5 +1,6 @@
 package org.luisito.admin360.data.repository
 
+import io.github.jan.supabase.postgrest.from
 import org.luisito.admin360.data.SupabaseClientProvider
 
 sealed class LoginResult {
@@ -14,12 +15,11 @@ class AuthRepository {
             val response = supabase.from("usuarios")
                 .select()
                 .eq("username", username)
-                .execute()
-            val users = response.dataAs<List<Map<String, Any>>>()
-            if (users.isEmpty()) {
+                .decodeAs<List<Map<String, Any>>>()
+            if (response.isEmpty()) {
                 return LoginResult.Error("Usuario no encontrado")
             }
-            val user = users.first()
+            val user = response.first()
             val storedHash = user["password"] as? String ?: ""
             val inputHash = hash(password)
             if (storedHash == inputHash) {
