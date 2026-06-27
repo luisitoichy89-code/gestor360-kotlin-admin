@@ -257,7 +257,7 @@ fun ProductsScreen(
                     onClick = {
                         if (newNombre.isNotEmpty()) {
                             val product = Product(
-                                id = "",
+                                id = null,  // ← CORRECTO: null para que Supabase genere el UUID
                                 nombre = newNombre,
                                 precio = newPrecio.toDoubleOrNull() ?: 0.0,
                                 stock = newStock.toIntOrNull() ?: 0,
