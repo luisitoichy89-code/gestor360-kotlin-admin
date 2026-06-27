@@ -12,11 +12,10 @@ class NegocioRepository {
 
     suspend fun getNegocios(): List<Negocio> {
         return try {
-            val response = SupabaseClientProvider.client
+            SupabaseClientProvider.client
                 .from("clientes")
                 .select()
                 .decodeAs<List<Negocio>>()
-            response
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
@@ -27,12 +26,8 @@ class NegocioRepository {
         return try {
             SupabaseClientProvider.client
                 .from("clientes")
-                .insert(
-                    mapOf(
-                        "nombre_negocio" to nombre,
-                        "activo" to true
-                    )
-                )
+                .insert(mapOf("nombre_negocio" to nombre, "activo" to true))
+                .select()
             true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -45,12 +40,7 @@ class NegocioRepository {
         return try {
             SupabaseClientProvider.client
                 .from("clientes")
-                .update(
-                    mapOf(
-                        "nombre_negocio" to nombre,
-                        "activo" to activo
-                    )
-                ) {
+                .update(mapOf("nombre_negocio" to nombre, "activo" to activo)) {
                     filter { eq("id", id) }
                 }
             true

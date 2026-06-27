@@ -5,6 +5,7 @@ import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.Local
 
 class LocalRepository {
+
     suspend fun getLocales(clienteId: String): List<Local> {
         return try {
             SupabaseClientProvider.client
@@ -19,6 +20,7 @@ class LocalRepository {
             SupabaseClientProvider.client
                 .from("locales")
                 .insert(mapOf("cliente_id" to clienteId, "nombre" to nombre, "activo" to true))
+                .select()
             true
         } catch (e: Exception) { false }
     }
@@ -27,7 +29,9 @@ class LocalRepository {
         return try {
             SupabaseClientProvider.client
                 .from("locales")
-                .update(mapOf("nombre" to nombre, "activo" to activo)) { filter { eq("id", id) } }
+                .update(mapOf("nombre" to nombre, "activo" to activo)) {
+                    filter { eq("id", id) }
+                }
             true
         } catch (e: Exception) { false }
     }
@@ -36,7 +40,9 @@ class LocalRepository {
         return try {
             SupabaseClientProvider.client
                 .from("locales")
-                .delete { filter { eq("id", id) } }
+                .delete {
+                    filter { eq("id", id) }
+                }
             true
         } catch (e: Exception) { false }
     }
