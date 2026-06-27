@@ -147,7 +147,6 @@ fun ProductsScreen(
         }
     }
 
-    // Dialog para eliminar
     if (showDeleteDialog && deleteProductId != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -172,7 +171,6 @@ fun ProductsScreen(
         )
     }
 
-    // Dialog para editar
     if (showEditDialog && editProductId != null) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
@@ -225,7 +223,6 @@ fun ProductsScreen(
         )
     }
 
-    // Dialog para crear
     if (showDialog) {
         var newNombre by remember { mutableStateOf("") }
         var newPrecio by remember { mutableStateOf("") }
