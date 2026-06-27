@@ -108,7 +108,7 @@ fun LicenciasScreen(
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                     Text(
-                                        text = "Expira: ${licencia.expiracion ?: "N/A"} | ${if (licencia.activa) "🟢 Activa" else "🔴 Inactiva"}",
+                                        text = "Expira: ${licencia.expiracion ?: "N/A"} | ${if (licencia.activo) "🟢 Activa" else "🔴 Inactiva"}",
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
