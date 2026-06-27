@@ -5,11 +5,12 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class User(
     val id: Int,
-    val auth_id: String,
+    val auth_id: String? = null,
     val username: String,
     val nombre: String? = null,
+    val password: String? = null,  // Campo necesario para AuthRepository
     val rol: String,
-    val cliente_id: String,  // ← NUEVO: ID del negocio al que pertenece
-    val almacen_id: String,  // ID del local
+    val cliente_id: String,
+    val almacen_id: String,
     val activo: Boolean
 )
