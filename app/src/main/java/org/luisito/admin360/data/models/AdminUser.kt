@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AdminUser(
-    val id: Int,
+    val id: String,  // UUID de Supabase
     val auth_id: String? = null,
     val cliente_id: String,
     val username: String,
