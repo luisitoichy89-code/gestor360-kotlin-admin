@@ -50,18 +50,16 @@ fun LicenciasScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteLicenciaId by remember { mutableStateOf<Int?>(null) }
-    var showRenewDialog by remember { mutableStateOf(false) }
-    var renewLicenciaId by remember { mutableStateOf<Int?>(null) }
+    var deleteLicenciaId by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(clienteId) {
+    LaunchedEffect(Unit) {
         viewModel.loadLicencias(clienteId)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("🔑 Licencias") },
+                title = { Text("📜 Licencias") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Text("←", color = Color.White)
@@ -74,10 +72,8 @@ fun LicenciasScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showDialog = true }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Activar")
+            FloatingActionButton(onClick = { showDialog = true }) {
+                Icon(Icons.Default.Add, contentDescription = "Agregar")
             }
         }
     ) { paddingValues ->
@@ -95,7 +91,7 @@ fun LicenciasScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.licencias) { lic ->
+                    items(uiState.licencias) { licencia ->
                         Card(
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -108,26 +104,18 @@ fun LicenciasScreen(
                             ) {
                                 Column {
                                     Text(
-                                        text = "📱 ${lic.device_id.take(12)}...",
-                                        style = MaterialTheme.typography.titleSmall
+                                        text = "Device: ${licencia.device_id}",
+                                        style = MaterialTheme.typography.titleMedium
                                     )
                                     Text(
-                                        text = "${lic.getEstado()} | ${lic.getDiasRestantes()} días",
+                                        text = "Expira: ${licencia.expiracion ?: "N/A"} | ${if (licencia.activa) "🟢 Activa" else "🔴 Inactiva"}",
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
                                 Row {
                                     IconButton(
                                         onClick = {
-                                            renewLicenciaId = lic.id
-                                            showRenewDialog = true
-                                        }
-                                    ) {
-                                        Text("🔄")
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            deleteLicenciaId = lic.id
+                                            deleteLicenciaId = licencia.id
                                             showDeleteDialog = true
                                         }
                                     ) {
@@ -142,16 +130,15 @@ fun LicenciasScreen(
         }
     }
 
-    // Dialog para eliminar
     if (showDeleteDialog && deleteLicenciaId != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("⚠️ Eliminar licencia") },
-            text = { Text("¿Estás seguro de que quieres eliminar esta licencia? Esta acción no se puede deshacer.") },
+            text = { Text("¿Estás seguro?") },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteLicense(deleteLicenciaId!!)
+                        viewModel.deleteLicense(deleteLicenciaId!!, clienteId)
                         showDeleteDialog = false
                         deleteLicenciaId = null
                     }
@@ -167,51 +154,24 @@ fun LicenciasScreen(
         )
     }
 
-    // Dialog para renovar
-    if (showRenewDialog && renewLicenciaId != null) {
-        AlertDialog(
-            onDismissRequest = { showRenewDialog = false },
-            title = { Text("🔄 Renovar licencia") },
-            text = { Text("¿Cuántos días quieres renovar esta licencia?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.renewLicense(clienteId, 30)
-                        showRenewDialog = false
-                        renewLicenciaId = null
-                    }
-                ) {
-                    Text("Renovar 30 días")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showRenewDialog = false; renewLicenciaId = null }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
-
-    // Dialog para activar nueva
     if (showDialog) {
         var newDeviceId by remember { mutableStateOf("") }
-        var newDias by remember { mutableStateOf("30") }
-
+        var newDias by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("🔑 Activar licencia") },
+            title = { Text("📜 Nueva licencia") },
             text = {
                 Column {
                     OutlinedTextField(
                         value = newDeviceId,
                         onValueChange = { newDeviceId = it },
-                        label = { Text("Android ID") },
+                        label = { Text("Device ID") },
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = newDias,
                         onValueChange = { newDias = it },
-                        label = { Text("Días") },
+                        label = { Text("Días de validez") },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -219,7 +179,7 @@ fun LicenciasScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        if (newDeviceId.isNotEmpty()) {
+                        if (newDeviceId.isNotEmpty() && newDias.isNotEmpty()) {
                             viewModel.activateLicense(clienteId, newDeviceId, newDias.toIntOrNull() ?: 30)
                             showDialog = false
                         }
