@@ -28,32 +28,63 @@ class AuthRepository {
             return LoginResult.Success("0", defaultUser)
         }
 
-        // 🔐 LOGIN CONTRA SUPABASE
+        // 🔐 LOGIN CONTRA SUPABASE CON VALIDACIÓN DE LICENCIA
         return try {
             val supabase = SupabaseClientProvider.client
-            
+
+            // 1. Buscar usuario por username
             val users = supabase
                 .from("usuarios")
                 .select {
                     filter { eq("username", username) }
                 }
                 .decodeAs<List<User>>()
-            
+
             if (users.isEmpty()) {
                 return LoginResult.Error("Usuario no encontrado")
             }
-            
+
             val user = users.first()
+
+            // 2. Verificar contraseña
             val storedHash = user.password ?: ""
             val inputHash = hash(password)
-            
-            if (storedHash == inputHash) {
-                LoginResult.Success(user.id, user)
-            } else {
-                LoginResult.Error("Contraseña incorrecta")
+
+            if (storedHash != inputHash) {
+                return LoginResult.Error("Contraseña incorrecta")
             }
+
+            // 3. Verificar que el usuario esté activo
+            if (!user.activo) {
+                return LoginResult.Error("Usuario desactivado. Contacte al administrador.")
+            }
+
+            // 4. VERIFICAR LICENCIA ACTIVA (NUEVO)
+            val canLogin = verifyLicense(user.auth_id ?: "")
+            if (!canLogin) {
+                return LoginResult.Error("Licencia expirada. Contacte al administrador.")
+            }
+
+            // 5. Login exitoso
+            LoginResult.Success(user.id, user)
+
         } catch (e: Exception) {
             LoginResult.Error(e.message ?: "Error de conexión")
+        }
+    }
+
+    // NUEVA FUNCIÓN: Verificar licencia activa llamando a la función SQL
+    private suspend fun verifyLicense(authId: String): Boolean {
+        return try {
+            val supabase = SupabaseClientProvider.client
+            val result = supabase
+                .from("usuarios")  // No importa, solo necesitamos la función
+                .rpc("usuario_puede_loguearse", mapOf("p_auth_uid" to authId))
+                .decodeAs<Boolean>()
+            result
+        } catch (e: Exception) {
+            // Si falla la verificación, asumimos que NO puede loguearse
+            false
         }
     }
 
