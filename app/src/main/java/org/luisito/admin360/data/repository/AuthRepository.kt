@@ -1,8 +1,6 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.filter
-import io.github.jan.supabase.postgrest.query.eq
 import org.luisito.admin360.data.SupabaseClientProvider
 
 sealed class LoginResult {
@@ -16,9 +14,7 @@ class AuthRepository {
             val supabase = SupabaseClientProvider.client
             val response = supabase.from("usuarios")
                 .select()
-                .filter {
-                    eq("username", username)
-                }
+                .eq("username", username)
                 .decodeAs<List<Map<String, Any>>>()
 
             if (response.isEmpty()) {
@@ -43,5 +39,10 @@ class AuthRepository {
         val bytes = java.security.MessageDigest.getInstance("SHA-256")
             .digest(password.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+    suspend fun sendPasswordRecovery(email: String): Boolean {
+        // TODO: implementar recuperación de contraseña
+        return false
     }
 }
