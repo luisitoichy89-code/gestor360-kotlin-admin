@@ -3,85 +3,50 @@ package org.luisito.admin360.data.repository
 import io.github.jan.supabase.postgrest.from
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.Product
-import kotlinx.serialization.json.Json
 
 class ProductRepository {
-
     suspend fun getProducts(almacenId: String): List<Product> {
         return try {
-            val supabase = SupabaseClientProvider.client
-            supabase.from("productos")
-                .select {
-                    filter {
-                        eq("almacen_id", almacenId)
-                    }
-                }
+            SupabaseClientProvider.client
+                .from("productos")
+                .select { filter { eq("almacen_id", almacenId) } }
                 .decodeAs<List<Product>>()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        } catch (e: Exception) { emptyList() }
     }
 
-    suspend fun createProduct(
-        nombre: String,
-        precio: Double,
-        stock: Double,
-        almacenId: String
-    ): Boolean {
+    suspend fun createProduct(product: Product): Boolean {
         return try {
-            val supabase = SupabaseClientProvider.client
-            supabase.from("productos").insert(
-                mapOf(
-                    "nombre" to nombre,
-                    "precio" to precio,
-                    "stock" to stock,
-                    "almacen_id" to almacenId
-                )
-            )
+            SupabaseClientProvider.client
+                .from("productos")
+                .insert(mapOf(
+                    "nombre" to product.nombre,
+                    "precio" to product.precio,
+                    "stock" to product.stock,
+                    "almacen_id" to product.almacen_id
+                ))
             true
-        } catch (e: Exception) {
-            false
-        }
+        } catch (e: Exception) { false }
     }
 
-    suspend fun updateProduct(
-        id: Int,
-        nombre: String,
-        precio: Double,
-        stock: Double
-    ): Boolean {
+    suspend fun updateProduct(id: String, product: Product): Boolean {
         return try {
-            val supabase = SupabaseClientProvider.client
-            supabase.from("productos")
-                .update(
-                    mapOf(
-                        "nombre" to nombre,
-                        "precio" to precio,
-                        "stock" to stock
-                    )
-                ) {
-                    filter {
-                        eq("id", id)
-                    }
-                }
+            SupabaseClientProvider.client
+                .from("productos")
+                .update(mapOf(
+                    "nombre" to product.nombre,
+                    "precio" to product.precio,
+                    "stock" to product.stock
+                )) { filter { eq("id", id) } }
             true
-        } catch (e: Exception) {
-            false
-        }
+        } catch (e: Exception) { false }
     }
 
-    suspend fun deleteProduct(id: Int): Boolean {
+    suspend fun deleteProduct(id: String): Boolean {
         return try {
-            val supabase = SupabaseClientProvider.client
-            supabase.from("productos")
-                .delete {
-                    filter {
-                        eq("id", id)
-                    }
-                }
+            SupabaseClientProvider.client
+                .from("productos")
+                .delete { filter { eq("id", id) } }
             true
-        } catch (e: Exception) {
-            false
-        }
+        } catch (e: Exception) { false }
     }
 }
