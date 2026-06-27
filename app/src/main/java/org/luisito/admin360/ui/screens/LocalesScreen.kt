@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -145,7 +144,6 @@ fun LocalesScreen(
         }
     }
 
-    // Dialog para eliminar
     if (showDeleteDialog && deleteLocalId != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -170,7 +168,6 @@ fun LocalesScreen(
         )
     }
 
-    // Dialog para editar
     if (showEditDialog && editLocalId != null) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
@@ -204,7 +201,6 @@ fun LocalesScreen(
         )
     }
 
-    // Dialog para crear
     if (showDialog) {
         var newNombre by remember { mutableStateOf("") }
         AlertDialog(
