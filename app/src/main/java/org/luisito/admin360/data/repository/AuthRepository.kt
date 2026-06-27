@@ -1,6 +1,5 @@
 package org.luisito.admin360.data.repository
 
-import io.github.jan.supabase.postgrest.from
 import org.luisito.admin360.data.SupabaseClientProvider
 
 sealed class LoginResult {
@@ -12,20 +11,18 @@ class AuthRepository {
     suspend fun login(username: String, password: String): LoginResult {
         return try {
             val supabase = SupabaseClientProvider.client
+            // Consulta simple sin filtros complejos
             val response = supabase.from("usuarios")
                 .select()
-                .eq("username", username)
-                .decodeAs<List<Map<String, Any>>>()
-
-            if (response.isEmpty()) {
+                .execute()
+            val users = response.dataAs<List<Map<String, Any>>>()
+            val user = users.find { it["username"] == username }
+            if (user == null) {
                 return LoginResult.Error("Usuario no encontrado")
             }
-
-            val user = response.first()
             val storedHash = user["password"] as? String ?: ""
             val inputHash = hash(password)
-
-            return if (storedHash == inputHash) {
+            if (storedHash == inputHash) {
                 LoginResult.Success(user["id"] as? String ?: "")
             } else {
                 LoginResult.Error("Contraseña incorrecta")
@@ -42,7 +39,6 @@ class AuthRepository {
     }
 
     suspend fun sendPasswordRecovery(email: String): Boolean {
-        // TODO: implementar recuperación de contraseña
         return false
     }
 }
