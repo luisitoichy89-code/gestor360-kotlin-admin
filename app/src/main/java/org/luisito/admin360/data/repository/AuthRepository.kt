@@ -13,10 +13,25 @@ sealed class LoginResult {
 class AuthRepository {
 
     suspend fun login(username: String, password: String): LoginResult {
+        // 🔓 LOGIN POR DEFECTO (solo para pruebas)
+        if (username == "admin" && password == "admin") {
+            val defaultUser = User(
+                id = "00000000-0000-0000-0000-000000000000",
+                auth_id = "default",
+                username = "admin",
+                nombre = "Administrador",
+                password = hash("admin"),
+                rol = "superadmin",
+                cliente_id = "00000000-0000-0000-0000-000000000000",
+                activo = true
+            )
+            return LoginResult.Success("0", defaultUser)
+        }
+
+        // 🔐 LOGIN CONTRA SUPABASE
         return try {
             val supabase = SupabaseClientProvider.client
             
-            // Buscar usuario por username
             val users = supabase
                 .from("usuarios")
                 .select {
@@ -33,7 +48,7 @@ class AuthRepository {
             val inputHash = hash(password)
             
             if (storedHash == inputHash) {
-                LoginResult.Success(user.id.toString(), user)
+                LoginResult.Success(user.id, user)
             } else {
                 LoginResult.Error("Contraseña incorrecta")
             }
