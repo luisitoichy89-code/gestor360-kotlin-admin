@@ -10,6 +10,12 @@ import kotlinx.coroutines.launch
 import org.luisito.admin360.data.models.AdminUser
 import org.luisito.admin360.data.repository.AdminUserRepository
 
+data class AdminUserUiState(
+    val isLoading: Boolean = false,
+    val users: List<AdminUser> = emptyList(),
+    val error: String? = null
+)
+
 class AdminUserViewModel(
     private val repository: AdminUserRepository = AdminUserRepository()
 ) : ViewModel() {
@@ -45,72 +51,51 @@ class AdminUserViewModel(
             if (success) {
                 loadUsers(clienteId)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al crear usuario"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al crear usuario") }
             }
         }
     }
 
     fun updateUser(
-        id: Int,
+        id: String,
         username: String,
         nombre: String,
         rol: String,
         almacenId: String,
-        activo: Boolean
+        activo: Boolean,
+        clienteId: String
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.updateUser(id, username, nombre, rol, almacenId, activo)
             if (success) {
-                val clienteId = _uiState.value.users.firstOrNull()?.cliente_id ?: ""
                 loadUsers(clienteId)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al actualizar usuario"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al actualizar usuario") }
             }
         }
     }
 
-    fun deleteUser(id: Int, clienteId: String) {
+    fun deleteUser(id: String, clienteId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.deleteUser(id)
             if (success) {
                 loadUsers(clienteId)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al eliminar usuario"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al eliminar usuario") }
             }
         }
     }
 
-    fun approveUser(id: Int) {
+    fun approveUser(id: String, clienteId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.approveUser(id)
             if (success) {
-                val clienteId = _uiState.value.users.firstOrNull()?.cliente_id ?: ""
                 loadUsers(clienteId)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al aprobar usuario"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al aprobar usuario") }
             }
         }
     }
@@ -119,9 +104,3 @@ class AdminUserViewModel(
         _uiState.update { it.copy(error = null) }
     }
 }
-
-data class AdminUserUiState(
-    val isLoading: Boolean = false,
-    val users: List<AdminUser> = emptyList(),
-    val error: String? = null
-)
