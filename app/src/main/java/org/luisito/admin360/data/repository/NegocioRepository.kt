@@ -26,8 +26,9 @@ class NegocioRepository {
         return try {
             SupabaseClientProvider.client
                 .from("clientes")
-                .insert(mapOf("nombre_negocio" to nombre, "activo" to true))
-                .select()
+                .insert(mapOf("nombre_negocio" to nombre, "activo" to true)) {
+                    select()
+                }
             true
         } catch (e: Exception) {
             e.printStackTrace()

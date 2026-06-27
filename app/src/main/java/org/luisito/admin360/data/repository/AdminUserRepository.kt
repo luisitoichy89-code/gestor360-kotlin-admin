@@ -87,8 +87,9 @@ class AdminUserRepository {
                     "rol" to rol,
                     "almacen_id" to almacenId,
                     "activo" to true
-                ))
-                .select()
+                )) {
+                    select()
+                }
             true
         } catch (e: Exception) { false }
     }

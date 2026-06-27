@@ -19,8 +19,9 @@ class LocalRepository {
         return try {
             SupabaseClientProvider.client
                 .from("locales")
-                .insert(mapOf("cliente_id" to clienteId, "nombre" to nombre, "activo" to true))
-                .select()
+                .insert(mapOf("cliente_id" to clienteId, "nombre" to nombre, "activo" to true)) {
+                    select()
+                }
             true
         } catch (e: Exception) { false }
     }
