@@ -1,6 +1,7 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.rpc
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.User
 import java.security.MessageDigest
