@@ -19,11 +19,13 @@ object SupabaseClientProvider {
                     ignoreUnknownKeys = true
                     isLenient = true
                     encodeDefaults = true
+                    coerceInputValues = true
+                    allowStructuredMapKeys = true
+                    // ✅ Ignorar cualquier campo desconocido
+                    classDiscriminator = "type"
                 }
             )
-            install(Auth) {
-                // Configuración opcional de Auth
-            }
+            install(Auth)
             install(Postgrest)
         }
     }

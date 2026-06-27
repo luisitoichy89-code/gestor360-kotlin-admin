@@ -4,14 +4,19 @@ import io.github.jan.supabase.postgrest.from
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.Negocio
 
+object ErrorHolder {
+    var lastError: String = ""
+}
+
 class NegocioRepository {
 
     suspend fun getNegocios(): List<Negocio> {
         return try {
-            SupabaseClientProvider.client
+            val response = SupabaseClientProvider.client
                 .from("clientes")
                 .select()
                 .decodeAs<List<Negocio>>()
+            response
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
@@ -22,10 +27,12 @@ class NegocioRepository {
         return try {
             SupabaseClientProvider.client
                 .from("clientes")
-                .insert(mapOf(
-                    "nombre_negocio" to nombre,
-                    "activo" to true
-                ))
+                .insert(
+                    mapOf(
+                        "nombre_negocio" to nombre,
+                        "activo" to true
+                    )
+                )
             true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -38,7 +45,12 @@ class NegocioRepository {
         return try {
             SupabaseClientProvider.client
                 .from("clientes")
-                .update(mapOf("nombre_negocio" to nombre, "activo" to activo)) {
+                .update(
+                    mapOf(
+                        "nombre_negocio" to nombre,
+                        "activo" to activo
+                    )
+                ) {
                     filter { eq("id", id) }
                 }
             true
@@ -61,8 +73,4 @@ class NegocioRepository {
             false
         }
     }
-}
-
-object ErrorHolder {
-    var lastError: String = ""
 }
