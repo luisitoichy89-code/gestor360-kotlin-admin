@@ -1,6 +1,7 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.eq
 import org.luisito.admin360.data.SupabaseClientProvider
 
 sealed class LoginResult {
