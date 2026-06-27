@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,20 +51,20 @@ fun LocalesScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteLocalId by remember { mutableStateOf<Int?>(null) }
+    var deleteLocalId by remember { mutableStateOf<String?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
-    var editLocalId by remember { mutableStateOf<Int?>(null) }
+    var editLocalId by remember { mutableStateOf<String?>(null) }
     var editNombre by remember { mutableStateOf("") }
     var editActivo by remember { mutableStateOf(true) }
 
-    LaunchedEffect(clienteId) {
+    LaunchedEffect(Unit) {
         viewModel.loadLocales(clienteId)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("🏪 Locales") },
+                title = { Text("📋 Locales") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Text("←", color = Color.White)
@@ -76,9 +77,7 @@ fun LocalesScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showDialog = true }
-            ) {
+            FloatingActionButton(onClick = { showDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Agregar")
             }
         }
@@ -151,7 +150,7 @@ fun LocalesScreen(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("⚠️ Eliminar local") },
-            text = { Text("¿Estás seguro de que quieres eliminar este local? Esta acción no se puede deshacer.") },
+            text = { Text("¿Estás seguro?") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -189,7 +188,7 @@ fun LocalesScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.updateLocal(editLocalId!!, editNombre, editActivo)
+                        viewModel.updateLocal(editLocalId!!, editNombre, editActivo, clienteId)
                         showEditDialog = false
                         editLocalId = null
                     }
@@ -210,7 +209,7 @@ fun LocalesScreen(
         var newNombre by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("🏪 Nuevo local") },
+            title = { Text("🏢 Nuevo local") },
             text = {
                 OutlinedTextField(
                     value = newNombre,
