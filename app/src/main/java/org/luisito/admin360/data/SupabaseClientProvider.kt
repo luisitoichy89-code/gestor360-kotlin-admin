@@ -21,7 +21,9 @@ object SupabaseClientProvider {
                     encodeDefaults = true
                 }
             )
-            install(Auth)
+            install(Auth) {
+                // Configuración opcional de Auth
+            }
             install(Postgrest)
         }
     }
