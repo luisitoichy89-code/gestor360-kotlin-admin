@@ -26,12 +26,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.luisito.admin360.ui.viewmodels.NegocioViewModel
+import org.luisito.admin360.ui.viewmodels.LicenciaViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,16 +43,37 @@ fun AdminDashboardScreen(
     onMenuClick: () -> Unit,
     onNegocioClick: (String) -> Unit,
     onPendientesClick: () -> Unit,
-    viewModel: NegocioViewModel = viewModel()
+    negocioViewModel: NegocioViewModel = viewModel(),
+    licenciaViewModel: LicenciaViewModel = viewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val negocioUiState by negocioViewModel.uiState.collectAsState()
+    val licenciaUiState by licenciaViewModel.uiState.collectAsState()
+    var selectedNegocioId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        viewModel.loadNegocios()
+        negocioViewModel.loadNegocios()
     }
 
-    // Contar usuarios pendientes (simulado)
-    val pendientesCount = 3 // TODO: obtener de la API
+    // Cuando se selecciona un negocio, cargar su licencia
+    LaunchedEffect(selectedNegocioId) {
+        selectedNegocioId?.let {
+            licenciaViewModel.loadLicencias(it)
+        }
+    }
+
+    // Tomar el primer negocio si hay y no hay seleccionado
+    LaunchedEffect(negocioUiState.negocios) {
+        if (selectedNegocioId == null && negocioUiState.negocios.isNotEmpty()) {
+            selectedNegocioId = negocioUiState.negocios.first().id
+        }
+    }
+
+    // Obtener la licencia activa (la primera de la lista)
+    val licenciaActiva = licenciaUiState.licencias.firstOrNull()
+    val estadoLicencia = licenciaActiva?.getEstado() ?: "Sin licencia"
+    val diasRestantes = licenciaActiva?.getDiasRestantes() ?: 0
+
+    val pendientesCount = 0 // TODO: Implementar contador real
 
     Scaffold(
         topBar = {
@@ -83,7 +108,7 @@ fun AdminDashboardScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("🏢", style = MaterialTheme.typography.headlineMedium)
-                        Text("${uiState.negocios.size}", style = MaterialTheme.typography.titleLarge)
+                        Text("${negocioUiState.negocios.size}", style = MaterialTheme.typography.titleLarge)
                         Text("Negocios", style = MaterialTheme.typography.bodySmall)
                     }
                 }
@@ -93,7 +118,7 @@ fun AdminDashboardScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("✅", style = MaterialTheme.typography.headlineMedium)
-                        Text("${uiState.negocios.filter { it.activo }.size}", style = MaterialTheme.typography.titleLarge)
+                        Text("${negocioUiState.negocios.filter { it.activo }.size}", style = MaterialTheme.typography.titleLarge)
                         Text("Activos", style = MaterialTheme.typography.bodySmall)
                     }
                 }
@@ -112,6 +137,66 @@ fun AdminDashboardScreen(
                 }
             }
 
+            // 📜 Estado de la licencia (NUEVO)
+            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = androidx.compose.material3.CardDefaults.cardColors(
+                    containerColor = when {
+                        licenciaUiState.licencias.isEmpty() -> Color(0xFFFF9800) // Naranja - Sin licencia
+                        diasRestantes > 25 -> Color(0xFF4CAF50) // Verde - Vigente
+                        diasRestantes > 4 -> Color(0xFFFFC107) // Amarillo - Próximo a vencer
+                        else -> Color(0xFFF44336) // Rojo - Expirada
+                    }
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "🔐 Licencia",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
+                        )
+                        Text(
+                            text = when {
+                                licenciaUiState.licencias.isEmpty() -> "⚠️ Sin licencia registrada"
+                                diasRestantes > 25 -> "✅ Vigente ($diasRestantes días)"
+                                diasRestantes > 4 -> "⚠️ Próxima a vencer ($diasRestantes días)"
+                                diasRestantes > 0 -> "🔴 Por vencer ($diasRestantes días)"
+                                else -> "❌ EXPIRADA"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                        if (licenciaActiva != null) {
+                            Text(
+                                text = "Device: ${licenciaActiva.device_id.take(8)}...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                    if (licenciaUiState.licencias.isNotEmpty()) {
+                        Text(
+                            text = when {
+                                diasRestantes > 25 -> "✅"
+                                diasRestantes > 4 -> "⚠️"
+                                diasRestantes > 0 -> "🔴"
+                                else -> "❌"
+                            },
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
@@ -121,16 +206,15 @@ fun AdminDashboardScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (uiState.isLoading) {
+            if (negocioUiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.negocios.take(10)) { negocio ->
+                    items(negocioUiState.negocios.take(10)) { negocio ->
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
                                 modifier = Modifier
@@ -150,7 +234,10 @@ fun AdminDashboardScreen(
                                     )
                                 }
                                 IconButton(
-                                    onClick = { onNegocioClick(negocio.id) }
+                                    onClick = {
+                                        selectedNegocioId = negocio.id
+                                        onNegocioClick(negocio.id)
+                                    }
                                 ) {
                                     Text("📂")
                                 }
