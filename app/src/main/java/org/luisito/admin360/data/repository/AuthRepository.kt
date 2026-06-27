@@ -1,29 +1,39 @@
 package org.luisito.admin360.data.repository
 
+import io.github.jan.supabase.postgrest.from
 import org.luisito.admin360.data.SupabaseClientProvider
+import org.luisito.admin360.data.models.User
+import java.security.MessageDigest
 
 sealed class LoginResult {
-    data class Success(val userId: String) : LoginResult()
+    data class Success(val userId: String, val user: User) : LoginResult()
     data class Error(val message: String) : LoginResult()
 }
 
 class AuthRepository {
+
     suspend fun login(username: String, password: String): LoginResult {
         return try {
             val supabase = SupabaseClientProvider.client
-            // Consulta simple sin filtros complejos
-            val response = supabase.from("usuarios")
-                .select()
-                .execute()
-            val users = response.dataAs<List<Map<String, Any>>>()
-            val user = users.find { it["username"] == username }
-            if (user == null) {
+            
+            // Buscar usuario por username
+            val users = supabase
+                .from("usuarios")
+                .select {
+                    filter { eq("username", username) }
+                }
+                .decodeAs<List<User>>()
+            
+            if (users.isEmpty()) {
                 return LoginResult.Error("Usuario no encontrado")
             }
-            val storedHash = user["password"] as? String ?: ""
+            
+            val user = users.first()
+            val storedHash = user.password ?: ""
             val inputHash = hash(password)
+            
             if (storedHash == inputHash) {
-                LoginResult.Success(user["id"] as? String ?: "")
+                LoginResult.Success(user.id.toString(), user)
             } else {
                 LoginResult.Error("Contraseña incorrecta")
             }
@@ -33,7 +43,7 @@ class AuthRepository {
     }
 
     private fun hash(password: String): String {
-        val bytes = java.security.MessageDigest.getInstance("SHA-256")
+        val bytes = MessageDigest.getInstance("SHA-256")
             .digest(password.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }
     }
