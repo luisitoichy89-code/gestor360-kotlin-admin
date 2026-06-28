@@ -1,44 +1,40 @@
 package org.luisito.admin360.data.repository
 
-import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.from
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.User
-import org.luisito.admin360.data.models.LoginResult
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-a import java.util.UUID
 import java.security.MessageDigest
-import java.util.UUID
+
+sealed class LoginResult {
+    data class Success(val userId: String, val user: User) : LoginResult()
+    data class Error(val message: String) : LoginResult()
+}
 
 class AuthRepository {
 
     suspend fun login(username: String, password: String): LoginResult {
-        // 🔓 LOGIN POR DEFECTO (solo para pruebas)
+        // Login por defecto para pruebas
         if (username == "admin" && password == "admin") {
             val defaultUser = User(
-                id = 0,
-                auth_id = null,
+                id = "0",
+                auth_id = "default",
                 username = "admin",
                 nombre = "Administrador",
                 password = hash("admin"),
                 rol = "superadmin",
-                cliente_id = 0,
-                almacen_id = 0,
+                cliente_id = "0",
+                almacen_id = "0",
                 activo = true
             )
-            return LoginResult.Success(0, defaultUser)
+            return LoginResult.Success("0", defaultUser)
         }
 
-        // 🔐 LOGIN CONTRA SUPABASE CON VALIDACIÓN DE LICENCIA
         return try {
             val supabase = SupabaseClientProvider.client
 
-            // 1. Buscar usuario por username
-            val users = supabase.postgrest.from("usuarios")
-                .select(Columns.ALL) {
-                    filter { eq("username", username) }
-                }
+            val users = supabase
+                .from("usuarios")
+                .select { filter { eq("username", username) } }
                 .decodeAs<List<User>>()
 
             if (users.isEmpty()) {
@@ -46,8 +42,6 @@ class AuthRepository {
             }
 
             val user = users.first()
-
-            // 2. Verificar contraseña
             val storedHash = user.password ?: ""
             val inputHash = hash(password)
 
@@ -55,18 +49,16 @@ class AuthRepository {
                 return LoginResult.Error("Contraseña incorrecta")
             }
 
-            // 3. Verificar que el usuario esté activo
             if (!user.activo) {
-                return LoginResult.Error("Usuario desactivado. Contacte al administrador.")
+                return LoginResult.Error("Usuario desactivado")
             }
 
-            // 4. VERIFICAR LICENCIA ACTIVA
-            val canLogin = verifyLicense(user.auth_id)
+            // Verificar licencia
+            val canLogin = verifyLicense(user.auth_id ?: "")
             if (!canLogin) {
-                return LoginResult.Error("Licencia expirada. Contacte al administrador.")
+                return LoginResult.Error("Licencia expirada")
             }
 
-            // 5. Login exitoso
             LoginResult.Success(user.id, user)
 
         } catch (e: Exception) {
@@ -74,16 +66,12 @@ class AuthRepository {
         }
     }
 
-    private suspend fun verifyLicense(authId: UUID?): Boolean {
-        if (authId == null) return false
+    private suspend fun verifyLicense(authId: String): Boolean {
         return try {
             val supabase = SupabaseClientProvider.client
-            val params = buildJsonObject {
-                put("p_auth_uid", authId.toString())
-            }
             val result = supabase.postgrest.rpc(
                 function = "usuario_puede_loguearse",
-                parameters = params
+                parameters = mapOf("p_auth_uid" to authId)
             )
             result.decodeAs<Boolean>()
         } catch (e: Exception) {
@@ -95,9 +83,5 @@ class AuthRepository {
         val bytes = MessageDigest.getInstance("SHA-256")
             .digest(password.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }
-    }
-
-    suspend fun sendPasswordRecovery(email: String): Boolean {
-        return false
     }
 }
