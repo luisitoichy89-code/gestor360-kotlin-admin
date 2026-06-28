@@ -6,11 +6,11 @@ import java.time.temporal.ChronoUnit
 
 @Serializable
 data class Licencia(
-    val id: Int,
-    val cliente_id: Int,
+    val id: String,
+    val cliente_id: String,
     val device_id: String,
     val expiracion: String?,
-    val activo: Boolean,
+    val activo: Boolean = true,
     val created_at: String? = null
 ) {
     fun getDiasRestantes(): Int {
