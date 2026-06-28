@@ -2,10 +2,11 @@ package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.filter.Filter
-import io.github.jan.supabase.postgrest.query.filter.FilterOperation
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.User
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.security.MessageDigest
 
 sealed class LoginResult {
@@ -82,9 +83,12 @@ class AuthRepository {
     private suspend fun verifyLicense(authId: String): Boolean {
         return try {
             val supabase = SupabaseClientProvider.client
+            val params = buildJsonObject {
+                put("p_auth_uid", authId)
+            }
             val result = supabase.postgrest.rpc(
                 function = "usuario_puede_loguearse",
-                parameters = mapOf("p_auth_uid" to authId)
+                parameters = params
             )
             result.decodeAs<Boolean>()
         } catch (e: Exception) {
