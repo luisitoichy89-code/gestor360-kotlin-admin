@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -96,6 +95,7 @@ fun AdminDashboardScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
+            // Tarjeta de Licencia
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = androidx.compose.material3.CardDefaults.cardColors(
@@ -148,6 +148,7 @@ fun AdminDashboardScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Módulos rápidos - SIN WEIGHT
             Text(
                 text = "📋 Módulos",
                 style = MaterialTheme.typography.titleMedium
@@ -195,6 +196,7 @@ fun AdminDashboardScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Lista de negocios
             Text(
                 text = "📋 Últimos negocios",
                 style = MaterialTheme.typography.titleMedium
@@ -253,7 +255,7 @@ fun ModuloCard(
 ) {
     Card(
         modifier = Modifier
-            .weight(1f)
+            .fillMaxWidth()
             .padding(4.dp),
         onClick = onClick
     ) {
