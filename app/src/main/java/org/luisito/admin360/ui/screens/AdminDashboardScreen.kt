@@ -95,7 +95,6 @@ fun AdminDashboardScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // Tarjeta de Licencia
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = androidx.compose.material3.CardDefaults.cardColors(
@@ -148,7 +147,6 @@ fun AdminDashboardScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Módulos rápidos - SIN WEIGHT
             Text(
                 text = "📋 Módulos",
                 style = MaterialTheme.typography.titleMedium
@@ -196,7 +194,6 @@ fun AdminDashboardScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Lista de negocios
             Text(
                 text = "📋 Últimos negocios",
                 style = MaterialTheme.typography.titleMedium

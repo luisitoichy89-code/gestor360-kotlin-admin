@@ -13,7 +13,7 @@ class TrazaRepository {
                 .select()
             
             if (almacenId != null && almacenId.isNotEmpty()) {
-                query.filter { eq("almacen_id", almacenId) }
+                query.eq("almacen_id", almacenId)
             }
             
             query.decodeAs<List<Traza>>()
