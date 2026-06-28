@@ -19,6 +19,7 @@ import org.luisito.admin360.ui.screens.LicenciasScreen
 import org.luisito.admin360.ui.screens.LocalesScreen
 import org.luisito.admin360.ui.screens.NegociosScreen
 import org.luisito.admin360.ui.screens.TrazaScreen
+import org.luisito.admin360.ui.screens.login.LoginScreen
 import org.luisito.admin360.ui.theme.Gestor360Theme
 import org.luisito.admin360.ui.viewmodels.LocalViewModel
 import org.luisito.admin360.ui.viewmodels.NegocioViewModel
@@ -42,7 +43,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AppNavigation() {
-    var currentScreen by remember { mutableStateOf<Screen>(Screen.Dashboard) }
+    var isLoggedIn by remember { mutableStateOf(false) }
+    var currentScreen by remember { mutableStateOf<Screen>(Screen.Login) }
     var selectedClienteId by remember { mutableStateOf<String?>(null) }
     var selectedAlmacenId by remember { mutableStateOf<String?>(null) }
 
@@ -50,7 +52,27 @@ fun AppNavigation() {
     val localViewModel: LocalViewModel = viewModel()
     val userViewModel: UserViewModel = viewModel()
 
+    // Si no está logueado, mostrar Login
+    if (!isLoggedIn) {
+        LoginScreen(
+            onLoginSuccess = {
+                isLoggedIn = true
+                currentScreen = Screen.Dashboard
+            }
+        )
+        return
+    }
+
+    // Si está logueado, mostrar la navegación normal
     when (currentScreen) {
+        is Screen.Login -> {
+            LoginScreen(
+                onLoginSuccess = {
+                    isLoggedIn = true
+                    currentScreen = Screen.Dashboard
+                }
+            )
+        }
         is Screen.Dashboard -> {
             AdminDashboardScreen(
                 onMenuClick = { /* Abrir drawer */ },
@@ -77,7 +99,6 @@ fun AppNavigation() {
                 }
             )
         }
-
         is Screen.Negocios -> {
             NegociosScreen(
                 onBack = { currentScreen = Screen.Dashboard },
@@ -87,7 +108,6 @@ fun AppNavigation() {
                 }
             )
         }
-
         is Screen.Locales -> {
             LocalesScreen(
                 clienteId = selectedClienteId ?: "",
@@ -95,9 +115,7 @@ fun AppNavigation() {
                 viewModel = localViewModel
             )
         }
-
         is Screen.Usuarios -> {
-            // Cargar locales para el selector
             val locales = localViewModel.uiState.value.locales
             AdminUsersScreen(
                 clienteId = selectedClienteId ?: "",
@@ -106,14 +124,12 @@ fun AppNavigation() {
                 viewModel = userViewModel
             )
         }
-
         is Screen.Licencias -> {
             LicenciasScreen(
                 clienteId = selectedClienteId ?: "",
                 onBack = { currentScreen = Screen.Dashboard }
             )
         }
-
         is Screen.Trazas -> {
             TrazaScreen(
                 almacenId = selectedAlmacenId,
@@ -124,6 +140,7 @@ fun AppNavigation() {
 }
 
 sealed class Screen {
+    object Login : Screen()
     object Dashboard : Screen()
     object Negocios : Screen()
     object Locales : Screen()
