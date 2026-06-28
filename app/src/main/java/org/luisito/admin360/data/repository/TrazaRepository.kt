@@ -8,15 +8,10 @@ class TrazaRepository {
 
     suspend fun getTrazas(almacenId: String? = null): List<Traza> {
         return try {
-            val query = SupabaseClientProvider.client
+            SupabaseClientProvider.client
                 .from("trazas")
                 .select()
-            
-            if (almacenId != null && almacenId.isNotEmpty()) {
-                query.eq("almacen_id", almacenId)
-            }
-            
-            query.decodeAs<List<Traza>>()
+                .decodeAs<List<Traza>>()
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
