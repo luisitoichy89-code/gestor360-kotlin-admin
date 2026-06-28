@@ -15,12 +15,17 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     viewModel: LoginViewModel = viewModel()
 ) {
-    Admin360Theme {
-        var username by remember { mutableStateOf("") }
-        var password by remember { mutableStateOf("") }
-        var isLoading by remember { mutableStateOf(false) }
-        var errorMessage by remember { mutableStateOf<String?>(null) }
+    val uiState by viewModel.uiState.collectAsState()
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
+    LaunchedEffect(uiState.isLoggedIn) {
+        if (uiState.isLoggedIn) {
+            onLoginSuccess()
+        }
+    }
+
+    Admin360Theme {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -29,7 +34,7 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Gestor360",
+                text = "Gestor360 Admin",
                 style = MaterialTheme.typography.headlineLarge
             )
             Spacer(modifier = Modifier.height(32.dp))
@@ -51,9 +56,9 @@ fun LoginScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (errorMessage != null) {
+            if (uiState.error != null) {
                 Text(
-                    text = errorMessage ?: "",
+                    text = uiState.error ?: "",
                     color = MaterialTheme.colorScheme.error
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -61,19 +66,12 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-                    isLoading = true
-                    // TODO: Implementar login real
-                    if (username == "admin" && password == "admin") {
-                        onLoginSuccess()
-                    } else {
-                        errorMessage = "Usuario o contraseña incorrectos"
-                    }
-                    isLoading = false
+                    viewModel.login(username, password)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             ) {
-                Text(if (isLoading) "Cargando..." else "Iniciar sesión")
+                Text(if (uiState.isLoading) "Cargando..." else "Iniciar sesión")
             }
         }
     }
