@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.luisito.admin360.data.repository.AuthRepository
-import org.luisito.admin360.data.repository.AuthRepository.LoginResult
 
 data class LoginUiState(
     val isLoading: Boolean = false,
