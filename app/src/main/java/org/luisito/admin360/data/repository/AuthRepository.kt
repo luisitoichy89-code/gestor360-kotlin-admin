@@ -1,7 +1,9 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.postgrest.rpc
+import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.filter.Filter
+import io.github.jan.supabase.postgrest.query.filter.FilterOperation
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.User
 import java.security.MessageDigest
@@ -35,10 +37,11 @@ class AuthRepository {
             val supabase = SupabaseClientProvider.client
 
             // 1. Buscar usuario por username
-            val users = supabase
-                .from("usuarios")
-                .select {
-                    filter { eq("username", username) }
+            val users = supabase.postgrest.from("usuarios")
+                .select(Columns.ALL) {
+                    filter {
+                        eq("username", username)
+                    }
                 }
                 .decodeAs<List<User>>()
 
