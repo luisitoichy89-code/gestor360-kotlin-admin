@@ -8,13 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.luisito.admin360.data.repository.AuthRepository
-import org.luisito.admin360.data.models.LoginResult
-
-data class LoginUiState(
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val isLoggedIn: Boolean = false
-)
+import org.luisito.admin360.data.repository.LoginResult
 
 class LoginViewModel(
     private val authRepository: AuthRepository = AuthRepository()
@@ -26,14 +20,17 @@ class LoginViewModel(
     fun login(username: String, password: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
+
             val result = authRepository.login(username, password)
+
             when (result) {
                 is LoginResult.Success -> {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             isLoggedIn = true,
-                            error = null
+                            userId = result.userId,
+                            user = result.user
                         )
                     }
                 }
@@ -41,8 +38,7 @@ class LoginViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = result.message,
-                            isLoggedIn = false
+                            error = result.message
                         )
                     }
                 }
@@ -50,7 +46,15 @@ class LoginViewModel(
         }
     }
 
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
+    fun resetState() {
+        _uiState.update { LoginUiState() }
     }
 }
+
+data class LoginUiState(
+    val isLoading: Boolean = false,
+    val isLoggedIn: Boolean = false,
+    val userId: String = "",
+    val user: org.luisito.admin360.data.models.User? = null,
+    val error: String? = null
+)

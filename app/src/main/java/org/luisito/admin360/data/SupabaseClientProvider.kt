@@ -25,7 +25,7 @@ object SupabaseClientProvider {
                 }
             )
             install(Auth)
-            install(Postgrest)  // ← AGREGADO: necesario para usar .postgrest.rpc()
+            install(Postgrest)
         }
     }
 }

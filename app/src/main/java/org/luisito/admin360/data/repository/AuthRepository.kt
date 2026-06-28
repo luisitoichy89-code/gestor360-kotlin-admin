@@ -13,7 +13,6 @@ sealed class LoginResult {
 class AuthRepository {
 
     suspend fun login(username: String, password: String): LoginResult {
-        // Login por defecto para pruebas
         if (username == "admin" && password == "admin") {
             val defaultUser = User(
                 id = "0",
@@ -55,29 +54,10 @@ class AuthRepository {
                 return LoginResult.Error("Usuario desactivado")
             }
 
-            // Verificar licencia usando rpc con postgrest
-            val canLogin = verifyLicense(user.auth_id ?: "")
-            if (!canLogin) {
-                return LoginResult.Error("Licencia expirada")
-            }
-
             LoginResult.Success(user.id, user)
 
         } catch (e: Exception) {
             LoginResult.Error(e.message ?: "Error de conexión")
-        }
-    }
-
-    private suspend fun verifyLicense(authId: String): Boolean {
-        return try {
-            val supabase = SupabaseClientProvider.client
-            val result = supabase.postgrest.rpc(
-                function = "usuario_puede_loguearse",
-                parameters = mapOf("p_auth_uid" to authId)
-            )
-            result.decodeAs<Boolean>()
-        } catch (e: Exception) {
-            false
         }
     }
 
