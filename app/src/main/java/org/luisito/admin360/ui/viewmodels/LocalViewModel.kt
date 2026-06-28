@@ -23,7 +23,7 @@ class LocalViewModel(
     private val _uiState = MutableStateFlow(LocalUiState())
     val uiState: StateFlow<LocalUiState> = _uiState.asStateFlow()
 
-    fun loadLocales(clienteId: String) {
+    fun loadLocales(clienteId: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val locales = repository.getLocales(clienteId)
@@ -37,7 +37,7 @@ class LocalViewModel(
         }
     }
 
-    fun createLocal(clienteId: String, nombre: String) {
+    fun createLocal(clienteId: Int, nombre: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.createLocal(clienteId, nombre)
@@ -49,7 +49,7 @@ class LocalViewModel(
         }
     }
 
-    fun updateLocal(id: String, nombre: String, activo: Boolean, clienteId: String) {
+    fun updateLocal(id: Int, nombre: String, activo: Boolean, clienteId: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.updateLocal(id, nombre, activo)
@@ -61,7 +61,7 @@ class LocalViewModel(
         }
     }
 
-    fun deleteLocal(id: String, clienteId: String) {
+    fun deleteLocal(id: Int, clienteId: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.deleteLocal(id)

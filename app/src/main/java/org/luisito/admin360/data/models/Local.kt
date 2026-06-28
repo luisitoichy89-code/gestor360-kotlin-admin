@@ -4,9 +4,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Local(
-    val id: String,  // ← STRING
-    val cliente_id: String,  // ← STRING
+    val id: Int,
+    val cliente_id: Int,
     val nombre: String,
+    val direccion: String? = null,
     val activo: Boolean = true,
     val created_at: String? = null
 )

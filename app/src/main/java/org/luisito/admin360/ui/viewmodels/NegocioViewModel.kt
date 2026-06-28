@@ -49,7 +49,7 @@ class NegocioViewModel(
         }
     }
 
-    fun updateNegocio(id: String, nombre: String, activo: Boolean) {
+    fun updateNegocio(id: Int, nombre: String, activo: Boolean) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.updateNegocio(id, nombre, activo)
@@ -66,7 +66,7 @@ class NegocioViewModel(
         }
     }
 
-    fun deleteNegocio(id: String) {
+    fun deleteNegocio(id: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.deleteNegocio(id)

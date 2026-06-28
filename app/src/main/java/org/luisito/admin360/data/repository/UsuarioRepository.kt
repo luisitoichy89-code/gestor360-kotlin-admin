@@ -7,10 +7,11 @@ import org.luisito.admin360.data.models.User
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.security.MessageDigest
+import java.util.UUID
 
 class UsuarioRepository {
 
-    suspend fun getUsuarios(clienteId: String): List<User> {
+    suspend fun getUsuarios(clienteId: Int): List<User> {
         return try {
             SupabaseClientProvider.client
                 .postgrest.from("usuarios")
@@ -24,7 +25,7 @@ class UsuarioRepository {
         }
     }
 
-    suspend fun getUsuariosByLocal(almacenId: String): List<User> {
+    suspend fun getUsuariosByLocal(almacenId: Int): List<User> {
         return try {
             SupabaseClientProvider.client
                 .postgrest.from("usuarios")
@@ -43,8 +44,8 @@ class UsuarioRepository {
         nombre: String,
         password: String,
         rol: String,
-        clienteId: String,
-        almacenId: String
+        clienteId: Int,
+        almacenId: Int
     ): Boolean {
         return try {
             val hashedPassword = hash(password)
@@ -71,11 +72,11 @@ class UsuarioRepository {
     }
 
     suspend fun updateUsuario(
-        id: String,
+        id: Int,
         username: String,
         nombre: String,
         rol: String,
-        almacenId: String,
+        almacenId: Int,
         activo: Boolean
     ): Boolean {
         return try {
@@ -98,7 +99,7 @@ class UsuarioRepository {
         }
     }
 
-    suspend fun resetPassword(id: String): Boolean {
+    suspend fun resetPassword(id: Int): Boolean {
         return try {
             val defaultPassword = hash("123456")
             val data = buildJsonObject {
@@ -116,7 +117,7 @@ class UsuarioRepository {
         }
     }
 
-    suspend fun deleteUsuario(id: String): Boolean {
+    suspend fun deleteUsuario(id: Int): Boolean {
         return try {
             SupabaseClientProvider.client
                 .postgrest.from("usuarios")

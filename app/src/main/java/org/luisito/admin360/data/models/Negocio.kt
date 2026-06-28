@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Negocio(
-    val id: String,
+    val id: Int,
     val nombre_negocio: String,
     val ruc: String? = null,
     val telefono: String? = null,

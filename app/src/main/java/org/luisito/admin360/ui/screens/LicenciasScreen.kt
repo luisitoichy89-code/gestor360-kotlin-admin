@@ -42,14 +42,14 @@ import org.luisito.admin360.ui.viewmodels.LicenciaViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LicenciasScreen(
-    clienteId: String,
+    clienteId: Int,
     onBack: () -> Unit,
     viewModel: LicenciaViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteLicenciaId by remember { mutableStateOf<String?>(null) }  // ← CORREGIDO: String?
+    var deleteLicenciaId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.loadLicencias(clienteId)
@@ -107,14 +107,18 @@ fun LicenciasScreen(
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                     Text(
-                                        text = "Expira: ${licencia.expiracion ?: "N/A"} | ${if (licencia.activo) "🟢 Activa" else "🔴 Inactiva"}",
+                                        text = "Expira: ${licencia.expiracion ?: "N/A"} | ${licencia.getEstado()}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    Text(
+                                        text = "ID: ${licencia.id} | ${if (licencia.activo) "🟢 Activa" else "🔴 Inactiva"}",
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
                                 Row {
                                     IconButton(
                                         onClick = {
-                                            deleteLicenciaId = licencia.id  // ← CORREGIDO: String
+                                            deleteLicenciaId = licencia.id
                                             showDeleteDialog = true
                                         }
                                     ) {
@@ -129,6 +133,7 @@ fun LicenciasScreen(
         }
     }
 
+    // Dialog: Eliminar
     if (showDeleteDialog && deleteLicenciaId != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -137,7 +142,7 @@ fun LicenciasScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteLicense(deleteLicenciaId!!, clienteId)  // ← CORREGIDO: String
+                        viewModel.deleteLicense(deleteLicenciaId!!, clienteId)
                         showDeleteDialog = false
                         deleteLicenciaId = null
                     }
@@ -153,6 +158,7 @@ fun LicenciasScreen(
         )
     }
 
+    // Dialog: Crear licencia
     if (showDialog) {
         var newDeviceId by remember { mutableStateOf("") }
         var newDias by remember { mutableStateOf("") }

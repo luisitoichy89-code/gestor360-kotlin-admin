@@ -4,13 +4,13 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.User
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.security.MessageDigest
+import java.util.UUID
 
 sealed class LoginResult {
-    data class Success(val userId: String, val user: User) : LoginResult()
+    data class Success(val userId: Int, val user: User) : LoginResult()
     data class Error(val message: String) : LoginResult()
 }
 
@@ -20,17 +20,17 @@ class AuthRepository {
         // 🔓 LOGIN POR DEFECTO (solo para pruebas)
         if (username == "admin" && password == "admin") {
             val defaultUser = User(
-                id = "00000000-0000-0000-0000-000000000000",
-                auth_id = "default",
+                id = 0,
+                auth_id = null,
                 username = "admin",
                 nombre = "Administrador",
                 password = hash("admin"),
                 rol = "superadmin",
-                cliente_id = "00000000-0000-0000-0000-000000000000",
-                almacen_id = "0",
+                cliente_id = 0,
+                almacen_id = 0,
                 activo = true
             )
-            return LoginResult.Success("0", defaultUser)
+            return LoginResult.Success(0, defaultUser)
         }
 
         // 🔐 LOGIN CONTRA SUPABASE CON VALIDACIÓN DE LICENCIA
@@ -40,9 +40,7 @@ class AuthRepository {
             // 1. Buscar usuario por username
             val users = supabase.postgrest.from("usuarios")
                 .select(Columns.ALL) {
-                    filter {
-                        eq("username", username)
-                    }
+                    filter { eq("username", username) }
                 }
                 .decodeAs<List<User>>()
 
@@ -66,7 +64,7 @@ class AuthRepository {
             }
 
             // 4. VERIFICAR LICENCIA ACTIVA
-            val canLogin = verifyLicense(user.auth_id ?: "")
+            val canLogin = verifyLicense(user.auth_id)
             if (!canLogin) {
                 return LoginResult.Error("Licencia expirada. Contacte al administrador.")
             }
@@ -79,12 +77,13 @@ class AuthRepository {
         }
     }
 
-    // FUNCIÓN CORREGIDA: Verificar licencia activa usando .postgrest.rpc()
-    private suspend fun verifyLicense(authId: String): Boolean {
+    // FUNCIÓN CORREGIDA: Verificar licencia activa usando .postgrest.rpc() con UUID
+    private suspend fun verifyLicense(authId: UUID?): Boolean {
+        if (authId == null) return false
         return try {
             val supabase = SupabaseClientProvider.client
             val params = buildJsonObject {
-                put("p_auth_uid", authId)
+                put("p_auth_uid", authId.toString())
             }
             val result = supabase.postgrest.rpc(
                 function = "usuario_puede_loguearse",

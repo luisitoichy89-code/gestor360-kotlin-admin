@@ -47,18 +47,18 @@ import org.luisito.admin360.ui.viewmodels.UsuarioViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UsuariosScreen(
-    clienteId: String,
+    clienteId: Int,
     onBack: () -> Unit,
     viewModel: UsuarioViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteUsuarioId by remember { mutableStateOf<String?>(null) }
+    var deleteUsuarioId by remember { mutableStateOf<Int?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
-    var editUsuarioId by remember { mutableStateOf<String?>(null) }
+    var editUsuarioId by remember { mutableStateOf<Int?>(null) }
     var showResetDialog by remember { mutableStateOf(false) }
-    var resetUsuarioId by remember { mutableStateOf<String?>(null) }
+    var resetUsuarioId by remember { mutableStateOf<Int?>(null) }
 
     // Campos para nuevo usuario
     var newUsername by remember { mutableStateOf("") }
@@ -144,7 +144,7 @@ fun UsuariosScreen(
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                     Text(
-                                        text = "Local ID: ${usuario.almacen_id}",
+                                        text = "Local ID: ${usuario.almacen_id} | Auth ID: ${usuario.auth_id?.toString()?.take(8) ?: "Sin auth"}",
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
@@ -163,7 +163,7 @@ fun UsuariosScreen(
                                             editUsername = usuario.username
                                             editNombre = usuario.nombre ?: ""
                                             editRol = usuario.rol
-                                            editAlmacenId = usuario.almacen_id
+                                            editAlmacenId = usuario.almacen_id.toString()
                                             editActivo = usuario.activo
                                             showEditDialog = true
                                         }
@@ -250,7 +250,7 @@ fun UsuariosScreen(
                                 password = newPassword,
                                 rol = newRol,
                                 clienteId = clienteId,
-                                almacenId = newAlmacenId
+                                almacenId = newAlmacenId.toIntOrNull() ?: 0
                             )
                             showDialog = false
                             newUsername = ""
@@ -383,7 +383,7 @@ fun UsuariosScreen(
                             username = editUsername,
                             nombre = editNombre,
                             rol = editRol,
-                            almacenId = editAlmacenId,
+                            almacenId = editAlmacenId.toIntOrNull() ?: 0,
                             activo = editActivo,
                             clienteId = clienteId
                         )

@@ -45,15 +45,15 @@ import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 @Composable
 fun NegociosScreen(
     onBack: () -> Unit,
-    onNegocioSeleccionado: (String) -> Unit,
+    onNegocioSeleccionado: (Int) -> Unit,
     viewModel: NegocioViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteNegocioId by remember { mutableStateOf<String?>(null) }
+    var deleteNegocioId by remember { mutableStateOf<Int?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
-    var editNegocioId by remember { mutableStateOf<String?>(null) }
+    var editNegocioId by remember { mutableStateOf<Int?>(null) }
     var editNombre by remember { mutableStateOf("") }
     var editActivo by remember { mutableStateOf(true) }
 
@@ -77,9 +77,7 @@ fun NegociosScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showDialog = true }
-            ) {
+            FloatingActionButton(onClick = { showDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Agregar")
             }
         }
@@ -93,7 +91,12 @@ fun NegociosScreen(
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else if (uiState.error != null) {
-                Text(text = uiState.error ?: "Error", color = MaterialTheme.colorScheme.error)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = uiState.error ?: "Error", color = MaterialTheme.colorScheme.error)
+                    Button(onClick = { viewModel.clearError() }) {
+                        Text("Reintentar")
+                    }
+                }
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -152,11 +155,12 @@ fun NegociosScreen(
         }
     }
 
+    // Dialog: Eliminar
     if (showDeleteDialog && deleteNegocioId != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("⚠️ Eliminar negocio") },
-            text = { Text("¿Estás seguro de que quieres eliminar este negocio? Esta acción no se puede deshacer.") },
+            text = { Text("¿Estás seguro de que quieres eliminar este negocio?") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -176,6 +180,7 @@ fun NegociosScreen(
         )
     }
 
+    // Dialog: Editar
     if (showEditDialog && editNegocioId != null) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
@@ -209,6 +214,7 @@ fun NegociosScreen(
         )
     }
 
+    // Dialog: Crear
     if (showDialog) {
         var newNombre by remember { mutableStateOf("") }
         AlertDialog(

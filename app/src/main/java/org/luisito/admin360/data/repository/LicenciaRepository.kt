@@ -10,7 +10,7 @@ import java.time.LocalDate
 
 class LicenciaRepository {
 
-    suspend fun getLicencias(clienteId: String): List<Licencia> {
+    suspend fun getLicencias(clienteId: Int): List<Licencia> {
         return try {
             SupabaseClientProvider.client
                 .postgrest.from("licencias")
@@ -24,7 +24,7 @@ class LicenciaRepository {
         }
     }
 
-    suspend fun activateLicense(clienteId: String, deviceId: String, dias: Int): Boolean {
+    suspend fun activateLicense(clienteId: Int, deviceId: String, dias: Int): Boolean {
         return try {
             val expiracion = LocalDate.now().plusDays(dias.toLong()).toString()
             val data = buildJsonObject {
@@ -46,7 +46,7 @@ class LicenciaRepository {
         }
     }
 
-    suspend fun renewLicense(clienteId: String, dias: Int): Boolean {
+    suspend fun renewLicense(clienteId: Int, dias: Int): Boolean {
         return try {
             val expiracion = LocalDate.now().plusDays(dias.toLong()).toString()
             val data = buildJsonObject {
@@ -65,7 +65,7 @@ class LicenciaRepository {
         }
     }
 
-    suspend fun deleteLicense(id: String): Boolean {
+    suspend fun deleteLicense(id: Int): Boolean {
         return try {
             SupabaseClientProvider.client
                 .postgrest.from("licencias")

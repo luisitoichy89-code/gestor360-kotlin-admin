@@ -23,7 +23,7 @@ class UsuarioViewModel(
     private val _uiState = MutableStateFlow(UsuarioUiState())
     val uiState: StateFlow<UsuarioUiState> = _uiState.asStateFlow()
 
-    fun loadUsuarios(clienteId: String) {
+    fun loadUsuarios(clienteId: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val usuarios = repository.getUsuarios(clienteId)
@@ -37,7 +37,7 @@ class UsuarioViewModel(
         }
     }
 
-    fun loadUsuariosByLocal(almacenId: String) {
+    fun loadUsuariosByLocal(almacenId: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val usuarios = repository.getUsuariosByLocal(almacenId)
@@ -56,8 +56,8 @@ class UsuarioViewModel(
         nombre: String,
         password: String,
         rol: String,
-        clienteId: String,
-        almacenId: String
+        clienteId: Int,
+        almacenId: Int
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
@@ -73,13 +73,13 @@ class UsuarioViewModel(
     }
 
     fun updateUsuario(
-        id: String,
+        id: Int,
         username: String,
         nombre: String,
         rol: String,
-        almacenId: String,
+        almacenId: Int,
         activo: Boolean,
-        clienteId: String
+        clienteId: Int
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
@@ -94,7 +94,7 @@ class UsuarioViewModel(
         }
     }
 
-    fun resetPassword(id: String, clienteId: String) {
+    fun resetPassword(id: Int, clienteId: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.resetPassword(id)
@@ -108,7 +108,7 @@ class UsuarioViewModel(
         }
     }
 
-    fun deleteUsuario(id: String, clienteId: String) {
+    fun deleteUsuario(id: Int, clienteId: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.deleteUsuario(id)

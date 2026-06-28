@@ -9,7 +9,7 @@ import kotlinx.serialization.json.put
 
 class LocalRepository {
 
-    suspend fun getLocales(clienteId: String): List<Local> {
+    suspend fun getLocales(clienteId: Int): List<Local> {
         return try {
             SupabaseClientProvider.client
                 .postgrest.from("locales")
@@ -23,7 +23,7 @@ class LocalRepository {
         }
     }
 
-    suspend fun createLocal(clienteId: String, nombre: String): Boolean {
+    suspend fun createLocal(clienteId: Int, nombre: String): Boolean {
         return try {
             val data = buildJsonObject {
                 put("cliente_id", clienteId)
@@ -43,7 +43,7 @@ class LocalRepository {
         }
     }
 
-    suspend fun updateLocal(id: String, nombre: String, activo: Boolean): Boolean {
+    suspend fun updateLocal(id: Int, nombre: String, activo: Boolean): Boolean {
         return try {
             val data = buildJsonObject {
                 put("nombre", nombre)
@@ -61,7 +61,7 @@ class LocalRepository {
         }
     }
 
-    suspend fun deleteLocal(id: String): Boolean {
+    suspend fun deleteLocal(id: Int): Boolean {
         return try {
             SupabaseClientProvider.client
                 .postgrest.from("locales")

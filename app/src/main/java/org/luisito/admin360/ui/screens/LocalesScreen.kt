@@ -43,16 +43,16 @@ import org.luisito.admin360.ui.viewmodels.LocalViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocalesScreen(
-    clienteId: String,
+    clienteId: Int,
     onBack: () -> Unit,
     viewModel: LocalViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteLocalId by remember { mutableStateOf<String?>(null) }  // ← CORREGIDO: String?
+    var deleteLocalId by remember { mutableStateOf<Int?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
-    var editLocalId by remember { mutableStateOf<String?>(null) }  // ← CORREGIDO: String?
+    var editLocalId by remember { mutableStateOf<Int?>(null) }
     var editNombre by remember { mutableStateOf("") }
     var editActivo by remember { mutableStateOf(true) }
 
@@ -119,7 +119,7 @@ fun LocalesScreen(
                                 Row {
                                     IconButton(
                                         onClick = {
-                                            editLocalId = local.id  // ← CORREGIDO: String
+                                            editLocalId = local.id
                                             editNombre = local.nombre
                                             editActivo = local.activo
                                             showEditDialog = true
@@ -129,7 +129,7 @@ fun LocalesScreen(
                                     }
                                     IconButton(
                                         onClick = {
-                                            deleteLocalId = local.id  // ← CORREGIDO: String
+                                            deleteLocalId = local.id
                                             showDeleteDialog = true
                                         }
                                     ) {
@@ -144,6 +144,7 @@ fun LocalesScreen(
         }
     }
 
+    // Dialog: Eliminar
     if (showDeleteDialog && deleteLocalId != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -152,7 +153,7 @@ fun LocalesScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteLocal(deleteLocalId!!, clienteId)  // ← CORREGIDO: String
+                        viewModel.deleteLocal(deleteLocalId!!, clienteId)
                         showDeleteDialog = false
                         deleteLocalId = null
                     }
@@ -168,6 +169,7 @@ fun LocalesScreen(
         )
     }
 
+    // Dialog: Editar
     if (showEditDialog && editLocalId != null) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
@@ -185,7 +187,7 @@ fun LocalesScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.updateLocal(editLocalId!!, editNombre, editActivo, clienteId)  // ← CORREGIDO: String
+                        viewModel.updateLocal(editLocalId!!, editNombre, editActivo, clienteId)
                         showEditDialog = false
                         editLocalId = null
                     }
@@ -201,6 +203,7 @@ fun LocalesScreen(
         )
     }
 
+    // Dialog: Crear
     if (showDialog) {
         var newNombre by remember { mutableStateOf("") }
         AlertDialog(
