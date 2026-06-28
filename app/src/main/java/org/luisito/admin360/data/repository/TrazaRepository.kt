@@ -1,5 +1,9 @@
 package org.luisito.admin360.data.repository
 
+import io.github.jan.supabase.postgrest.filter.eq
+import io.github.jan.supabase.postgrest.filter.filter
+import io.github.jan.supabase.postgrest.filter.eq
+import io.github.jan.supabase.postgrest.filter.filter
 import io.github.jan.supabase.postgrest.from
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.Traza

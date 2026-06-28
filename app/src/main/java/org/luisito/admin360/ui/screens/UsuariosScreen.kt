@@ -54,11 +54,11 @@ fun UsuariosScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteUsuarioId by remember { mutableStateOf<Int?>(null) }
+    var deleteUsuarioId by remember { mutableStateOf<String?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
-    var editUsuarioId by remember { mutableStateOf<Int?>(null) }
+    var editUsuarioId by remember { mutableStateOf<String?>(null) }
     var showResetDialog by remember { mutableStateOf(false) }
-    var resetUsuarioId by remember { mutableStateOf<Int?>(null) }
+    var resetUsuarioId by remember { mutableStateOf<String?>(null) }
 
     // Campos para nuevo usuario
     var newUsername by remember { mutableStateOf("") }

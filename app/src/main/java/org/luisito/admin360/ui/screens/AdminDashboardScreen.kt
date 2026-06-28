@@ -1,5 +1,7 @@
 package org.luisito.admin360.ui.screens
 
+import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
