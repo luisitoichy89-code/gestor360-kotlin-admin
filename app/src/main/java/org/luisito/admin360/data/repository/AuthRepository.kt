@@ -1,7 +1,7 @@
 package org.luisito.admin360.data.repository
 
-import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.rpc
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.User
 import java.security.MessageDigest
@@ -24,7 +24,7 @@ class AuthRepository {
                 password = hash("admin"),
                 rol = "superadmin",
                 cliente_id = "00000000-0000-0000-0000-000000000000",
-                almacen_id = "0",  // ← CORREGIDO
+                almacen_id = "0",
                 activo = true
             )
             return LoginResult.Success("0", defaultUser)
@@ -79,7 +79,7 @@ class AuthRepository {
     private suspend fun verifyLicense(authId: String): Boolean {
         return try {
             val supabase = SupabaseClientProvider.client
-            val result = supabase.rpc(
+            val result = supabase.postgrest.rpc(
                 function = "usuario_puede_loguearse",
                 parameters = mapOf("p_auth_uid" to authId)
             )
