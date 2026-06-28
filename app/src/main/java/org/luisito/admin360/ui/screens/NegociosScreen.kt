@@ -1,5 +1,6 @@
 package org.luisito.admin360.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,7 +14,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.luisito.admin360.ui.viewmodels.NegocioViewModel
@@ -45,15 +46,16 @@ import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 @Composable
 fun NegociosScreen(
     onBack: () -> Unit,
-    onNegocioSeleccionado: (Int) -> Unit,
+    onNegocioSeleccionado: (String) -> Unit,
     viewModel: NegocioViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteNegocioId by remember { mutableStateOf<Int?>(null) }
+    var deleteNegocioId by remember { mutableStateOf<String?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
-    var editNegocioId by remember { mutableStateOf<Int?>(null) }
+    var editNegocioId by remember { mutableStateOf<String?>(null) }
     var editNombre by remember { mutableStateOf("") }
     var editActivo by remember { mutableStateOf(true) }
 
@@ -91,12 +93,7 @@ fun NegociosScreen(
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else if (uiState.error != null) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = uiState.error ?: "Error", color = MaterialTheme.colorScheme.error)
-                    Button(onClick = { viewModel.clearError() }) {
-                        Text("Reintentar")
-                    }
-                }
+                Text(text = uiState.error ?: "Error", color = MaterialTheme.colorScheme.error)
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -123,9 +120,7 @@ fun NegociosScreen(
                                     )
                                 }
                                 Row {
-                                    IconButton(
-                                        onClick = { onNegocioSeleccionado(negocio.id) }
-                                    ) {
+                                    IconButton(onClick = { onNegocioSeleccionado(negocio.id) }) {
                                         Text("📂")
                                     }
                                     IconButton(
@@ -155,7 +150,6 @@ fun NegociosScreen(
         }
     }
 
-    // Dialog: Eliminar
     if (showDeleteDialog && deleteNegocioId != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -165,6 +159,7 @@ fun NegociosScreen(
                 TextButton(
                     onClick = {
                         viewModel.deleteNegocio(deleteNegocioId!!)
+                        Toast.makeText(context, "✅ Negocio eliminado", Toast.LENGTH_SHORT).show()
                         showDeleteDialog = false
                         deleteNegocioId = null
                     }
@@ -180,7 +175,6 @@ fun NegociosScreen(
         )
     }
 
-    // Dialog: Editar
     if (showEditDialog && editNegocioId != null) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
@@ -199,6 +193,7 @@ fun NegociosScreen(
                 TextButton(
                     onClick = {
                         viewModel.updateNegocio(editNegocioId!!, editNombre, editActivo)
+                        Toast.makeText(context, "✅ Negocio actualizado", Toast.LENGTH_SHORT).show()
                         showEditDialog = false
                         editNegocioId = null
                     }
@@ -214,25 +209,28 @@ fun NegociosScreen(
         )
     }
 
-    // Dialog: Crear
     if (showDialog) {
         var newNombre by remember { mutableStateOf("") }
+
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text("🏢 Nuevo negocio") },
             text = {
-                OutlinedTextField(
-                    value = newNombre,
-                    onValueChange = { newNombre = it },
-                    label = { Text("Nombre del negocio") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+                    OutlinedTextField(
+                        value = newNombre,
+                        onValueChange = { newNombre = it },
+                        label = { Text("Nombre del negocio *") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
                         if (newNombre.isNotEmpty()) {
                             viewModel.createNegocio(newNombre)
+                            Toast.makeText(context, "✅ Negocio creado", Toast.LENGTH_SHORT).show()
                             showDialog = false
                         }
                     }

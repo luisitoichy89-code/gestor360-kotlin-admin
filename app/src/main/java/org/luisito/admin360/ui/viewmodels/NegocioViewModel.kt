@@ -11,6 +11,12 @@ import org.luisito.admin360.data.models.Negocio
 import org.luisito.admin360.data.repository.ErrorHolder
 import org.luisito.admin360.data.repository.NegocioRepository
 
+data class NegocioUiState(
+    val isLoading: Boolean = false,
+    val negocios: List<Negocio> = emptyList(),
+    val error: String? = null
+)
+
 class NegocioViewModel(
     private val repository: NegocioRepository = NegocioRepository()
 ) : ViewModel() {
@@ -40,56 +46,33 @@ class NegocioViewModel(
                 loadNegocios()
             } else {
                 _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = ErrorHolder.lastError
-                    )
+                    it.copy(isLoading = false, error = ErrorHolder.lastError)
                 }
             }
         }
     }
 
-    fun updateNegocio(id: Int, nombre: String, activo: Boolean) {
+    fun updateNegocio(id: String, nombre: String, activo: Boolean) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.updateNegocio(id, nombre, activo)
             if (success) {
                 loadNegocios()
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al actualizar negocio"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al actualizar") }
             }
         }
     }
 
-    fun deleteNegocio(id: Int) {
+    fun deleteNegocio(id: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.deleteNegocio(id)
             if (success) {
                 loadNegocios()
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Error al eliminar negocio"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = "Error al eliminar") }
             }
         }
     }
-
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
-    }
 }
-
-data class NegocioUiState(
-    val isLoading: Boolean = false,
-    val negocios: List<Negocio> = emptyList(),
-    val error: String? = null
-)

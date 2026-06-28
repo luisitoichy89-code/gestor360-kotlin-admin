@@ -23,7 +23,7 @@ class LicenciaViewModel(
     private val _uiState = MutableStateFlow(LicenciaUiState())
     val uiState: StateFlow<LicenciaUiState> = _uiState.asStateFlow()
 
-    fun loadLicencias(clienteId: Int) {
+    fun loadLicencias(clienteId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val licencias = repository.getLicencias(clienteId)
@@ -37,7 +37,7 @@ class LicenciaViewModel(
         }
     }
 
-    fun activateLicense(clienteId: Int, deviceId: String, dias: Int) {
+    fun activateLicense(clienteId: String, deviceId: String, dias: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.activateLicense(clienteId, deviceId, dias)
@@ -49,7 +49,7 @@ class LicenciaViewModel(
         }
     }
 
-    fun renewLicense(clienteId: Int, dias: Int) {
+    fun renewLicense(clienteId: String, dias: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.renewLicense(clienteId, dias)
@@ -61,7 +61,7 @@ class LicenciaViewModel(
         }
     }
 
-    fun deleteLicense(id: Int, clienteId: Int) {
+    fun deleteLicense(id: String, clienteId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val success = repository.deleteLicense(id)

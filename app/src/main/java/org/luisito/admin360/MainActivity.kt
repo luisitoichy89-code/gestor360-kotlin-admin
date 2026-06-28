@@ -7,22 +7,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.compose.viewModel
 import org.luisito.admin360.ui.screens.AdminDashboardScreen
+import org.luisito.admin360.ui.screens.AdminUsersScreen
 import org.luisito.admin360.ui.screens.LicenciasScreen
 import org.luisito.admin360.ui.screens.LocalesScreen
 import org.luisito.admin360.ui.screens.NegociosScreen
-import org.luisito.admin360.ui.screens.UsuariosScreen
-import org.luisito.admin360.ui.theme.Admin360Theme
+import org.luisito.admin360.ui.screens.TrazaScreen
+import org.luisito.admin360.ui.theme.Gestor360Theme
+import org.luisito.admin360.ui.viewmodels.LocalViewModel
+import org.luisito.admin360.ui.viewmodels.NegocioViewModel
+import org.luisito.admin360.ui.viewmodels.UserViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Admin360Theme {
+            Gestor360Theme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -36,45 +42,92 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AppNavigation() {
-    val navController = rememberNavController()
+    var currentScreen by remember { mutableStateOf<Screen>(Screen.Dashboard) }
+    var selectedClienteId by remember { mutableStateOf<String?>(null) }
+    var selectedAlmacenId by remember { mutableStateOf<String?>(null) }
 
-    NavHost(navController = navController, startDestination = "negocios") {
-        composable("negocios") {
-            NegociosScreen(
-                onBack = { /* Cerrar app */ },
-                onNegocioSeleccionado = { negocioId ->
-                    navController.navigate("dashboard/$negocioId")
+    val negocioViewModel: NegocioViewModel = viewModel()
+    val localViewModel: LocalViewModel = viewModel()
+    val userViewModel: UserViewModel = viewModel()
+
+    when (currentScreen) {
+        is Screen.Dashboard -> {
+            AdminDashboardScreen(
+                onMenuClick = { /* Abrir drawer */ },
+                onNegocioClick = { negocioId ->
+                    selectedClienteId = negocioId
+                    currentScreen = Screen.Negocios
+                },
+                onPendientesClick = { /* TODO */ },
+                onLocalesClick = { clienteId ->
+                    selectedClienteId = clienteId
+                    currentScreen = Screen.Locales
+                },
+                onUsuariosClick = { clienteId ->
+                    selectedClienteId = clienteId
+                    currentScreen = Screen.Usuarios
+                },
+                onLicenciasClick = { clienteId ->
+                    selectedClienteId = clienteId
+                    currentScreen = Screen.Licencias
+                },
+                onTrazasClick = { almacenId ->
+                    selectedAlmacenId = almacenId
+                    currentScreen = Screen.Trazas
                 }
             )
         }
-        composable("dashboard/{negocioId}") { backStackEntry ->
-            val negocioId = backStackEntry.arguments?.getString("negocioId")?.toIntOrNull() ?: 0
-            AdminDashboardScreen(
-                onMenuClick = { /* Abrir drawer */ },
-                onNegocioClick = { /* Navegar a detalle */ },
-                onPendientesClick = { /* Navegar a pendientes */ }
+
+        is Screen.Negocios -> {
+            NegociosScreen(
+                onBack = { currentScreen = Screen.Dashboard },
+                onNegocioSeleccionado = { negocioId ->
+                    selectedClienteId = negocioId
+                    currentScreen = Screen.Dashboard
+                }
             )
         }
-        composable("locales/{clienteId}") { backStackEntry ->
-            val clienteId = backStackEntry.arguments?.getString("clienteId")?.toIntOrNull() ?: 0
+
+        is Screen.Locales -> {
             LocalesScreen(
-                clienteId = clienteId,
-                onBack = { navController.popBackStack() }
+                clienteId = selectedClienteId ?: "",
+                onBack = { currentScreen = Screen.Dashboard },
+                viewModel = localViewModel
             )
         }
-        composable("usuarios/{clienteId}") { backStackEntry ->
-            val clienteId = backStackEntry.arguments?.getString("clienteId")?.toIntOrNull() ?: 0
-            UsuariosScreen(
-                clienteId = clienteId,
-                onBack = { navController.popBackStack() }
+
+        is Screen.Usuarios -> {
+            // Cargar locales para el selector
+            val locales = localViewModel.uiState.value.locales
+            AdminUsersScreen(
+                clienteId = selectedClienteId ?: "",
+                locales = locales,
+                onBack = { currentScreen = Screen.Dashboard },
+                viewModel = userViewModel
             )
         }
-        composable("licencias/{clienteId}") { backStackEntry ->
-            val clienteId = backStackEntry.arguments?.getString("clienteId")?.toIntOrNull() ?: 0
+
+        is Screen.Licencias -> {
             LicenciasScreen(
-                clienteId = clienteId,
-                onBack = { navController.popBackStack() }
+                clienteId = selectedClienteId ?: "",
+                onBack = { currentScreen = Screen.Dashboard }
+            )
+        }
+
+        is Screen.Trazas -> {
+            TrazaScreen(
+                almacenId = selectedAlmacenId,
+                onBack = { currentScreen = Screen.Dashboard }
             )
         }
     }
+}
+
+sealed class Screen {
+    object Dashboard : Screen()
+    object Negocios : Screen()
+    object Locales : Screen()
+    object Usuarios : Screen()
+    object Licencias : Screen()
+    object Trazas : Screen()
 }

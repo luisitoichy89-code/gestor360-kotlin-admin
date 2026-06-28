@@ -3,8 +3,10 @@ package org.luisito.admin360.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,14 +14,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -30,14 +28,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import org.luisito.admin360.ui.viewmodels.LicenciaViewModel
 import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 
@@ -45,16 +41,18 @@ import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 @Composable
 fun AdminDashboardScreen(
     onMenuClick: () -> Unit,
-    onNegocioClick: (Int) -> Unit,
+    onNegocioClick: (String) -> Unit,
     onPendientesClick: () -> Unit,
+    onLocalesClick: (String) -> Unit,
+    onUsuariosClick: (String) -> Unit,
+    onLicenciasClick: (String) -> Unit,
+    onTrazasClick: (String?) -> Unit,
     negocioViewModel: NegocioViewModel = viewModel(),
     licenciaViewModel: LicenciaViewModel = viewModel()
 ) {
     val negocioUiState by negocioViewModel.uiState.collectAsState()
     val licenciaUiState by licenciaViewModel.uiState.collectAsState()
-    var selectedNegocioId by remember { mutableStateOf<Int?>(null) }
-    val scope = rememberCoroutineScope()
-    val drawerState = androidx.compose.material3.rememberDrawerState(initialValue = DrawerValue.Closed)
+    var selectedNegocioId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         negocioViewModel.loadNegocios()
@@ -76,114 +74,204 @@ fun AdminDashboardScreen(
     val estadoLicencia = licenciaActiva?.getEstado() ?: "Sin licencia"
     val diasRestantes = licenciaActiva?.getDiasRestantes() ?: 0
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                Text("Gestor360 Admin", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
-                androidx.compose.material3.Divider()
-                listOf("Negocios", "Locales", "Usuarios", "Licencias", "Cerrar Sesión").forEach { item ->
-                    NavigationDrawerItem(
-                        label = { Text(item) },
-                        selected = false,
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                            when (item) {
-                                "Cerrar Sesión" -> { /* logout */ }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("📊 Panel de Control") },
+                navigationIcon = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menú", tint = Color.White)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = Color.White
+                )
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
+            // Tarjeta de Licencia
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = androidx.compose.material3.CardDefaults.cardColors(
+                    containerColor = when {
+                        licenciaUiState.licencias.isEmpty() -> Color(0xFFFF9800)
+                        diasRestantes > 25 -> Color(0xFF4CAF50)
+                        diasRestantes > 4 -> Color(0xFFFFC107)
+                        diasRestantes >= 0 -> Color(0xFFFF9800)
+                        else -> Color(0xFFF44336)
+                    }
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "🔐 Licencia",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
+                        )
+                        Text(
+                            text = when {
+                                licenciaUiState.licencias.isEmpty() -> "⚠️ Sin licencia registrada"
+                                diasRestantes > 25 -> "✅ Vigente ($diasRestantes días)"
+                                diasRestantes > 4 -> "⚠️ Próxima a vencer ($diasRestantes días)"
+                                diasRestantes >= 0 -> "🔴 Por vencer ($diasRestantes días)"
+                                else -> "❌ EXPIRADA"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
+                    Text(
+                        text = when {
+                            diasRestantes > 25 -> "✅"
+                            diasRestantes > 4 -> "⚠️"
+                            diasRestantes >= 0 -> "🔴"
+                            else -> "❌"
+                        },
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = Color.White
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Módulos rápidos
+            Text(
+                text = "📋 Módulos",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ModuloCard(
+                    icono = "🏢",
+                    titulo = "Negocios",
+                    onClick = { /* ya está en el menú */ }
+                )
+                ModuloCard(
+                    icono = "📍",
+                    titulo = "Locales",
+                    onClick = { selectedNegocioId?.let { onLocalesClick(it) } }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ModuloCard(
+                    icono = "👥",
+                    titulo = "Usuarios",
+                    onClick = { selectedNegocioId?.let { onUsuariosClick(it) } }
+                )
+                ModuloCard(
+                    icono = "📜",
+                    titulo = "Licencias",
+                    onClick = { selectedNegocioId?.let { onLicenciasClick(it) } }
+                )
+                ModuloCard(
+                    icono = "📋",
+                    titulo = "Trazas",
+                    onClick = { onTrazasClick(null) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Lista de negocios
+            Text(
+                text = "📋 Últimos negocios",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (negocioUiState.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(negocioUiState.negocios.take(10)) { negocio ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = negocio.nombre_negocio,
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                    Text(
+                                        text = "ID: ${negocio.id} | ${if (negocio.activo) "🟢 Activo" else "🔴 Inactivo"}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
+                                        selectedNegocioId = negocio.id
+                                        onNegocioClick(negocio.id)
+                                    }
+                                ) {
+                                    Text("📂")
+                                }
                             }
                         }
-                    )
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ModuloCard(
+    icono: String,
+    titulo: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.weight(1f),
+        onClick = onClick
     ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("📊 Dashboard") },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menú", tint = Color.White)
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = Color.White
-                    )
-                )
-            }
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp)
-            ) {
-                // Estado de licencia
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = androidx.compose.material3.CardDefaults.cardColors(
-                        containerColor = when {
-                            diasRestantes > 25 -> Color(0xFF4CAF50)
-                            diasRestantes > 4 -> Color(0xFFFFC107)
-                            diasRestantes >= 0 -> Color(0xFFFF5722)
-                            else -> Color(0xFF9E9E9E)
-                        }
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text("📜 Licencia: $estadoLicencia", style = MaterialTheme.typography.titleMedium)
-                        Text("Días restantes: $diasRestantes", style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-
-                // Selector de negocio
-                if (negocioUiState.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                } else {
-                    Text("Seleccionar negocio:", style = MaterialTheme.typography.titleSmall)
-                    androidx.compose.material3.DropdownMenu(
-                        expanded = false,
-                        onDismissRequest = {},
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        negocioUiState.negocios.forEach { negocio ->
-                            androidx.compose.material3.DropdownMenuItem(
-                                text = { Text(negocio.nombre_negocio) },
-                                onClick = { selectedNegocioId = negocio.id }
-                            )
-                        }
-                    }
-                    // Mostrar selector simple
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        negocioUiState.negocios.forEach { negocio ->
-                            androidx.compose.material3.Button(
-                                onClick = { selectedNegocioId = negocio.id },
-                                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                    containerColor = if (selectedNegocioId == negocio.id) 
-                                        MaterialTheme.colorScheme.primary 
-                                    else 
-                                        MaterialTheme.colorScheme.secondary
-                                )
-                            ) {
-                                Text(negocio.nombre_negocio.take(10))
-                            }
-                        }
-                    }
-                }
-
-                // Lista de locales del negocio seleccionado
-                if (selectedNegocioId != null) {
-                    Text("Locales del negocio:", style = MaterialTheme.typography.titleSmall)
-                    // Aquí se cargarían los locales
-                    Text("Selecciona un negocio para ver sus locales", style = MaterialTheme.typography.bodySmall)
-                }
-            }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = icono,
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
     }
 }

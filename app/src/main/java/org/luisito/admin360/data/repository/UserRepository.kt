@@ -2,28 +2,41 @@ package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
 import org.luisito.admin360.data.SupabaseClientProvider
-import org.luisito.admin360.data.models.Local
+import org.luisito.admin360.data.models.User
 
-class LocalRepository {
+class UserRepository {
 
-    suspend fun getLocales(clienteId: String): List<Local> {
+    suspend fun getUsers(clienteId: String): List<User> {
         return try {
             SupabaseClientProvider.client
-                .from("locales")
+                .from("usuarios")
                 .select { filter { eq("cliente_id", clienteId) } }
-                .decodeAs<List<Local>>()
+                .decodeAs<List<User>>()
         } catch (e: Exception) { emptyList() }
     }
 
-    suspend fun createLocal(clienteId: String, nombre: String, ruc: String?, direccion: String?): Boolean {
+    suspend fun createUser(
+        clienteId: String,
+        almacenId: String,
+        username: String,
+        nombre: String?,
+        email: String?,
+        telefono: String?,
+        password: String,
+        rol: String
+    ): Boolean {
         return try {
             SupabaseClientProvider.client
-                .from("locales")
+                .from("usuarios")
                 .insert(mapOf(
                     "cliente_id" to clienteId,
+                    "almacen_id" to almacenId,
+                    "username" to username,
                     "nombre" to nombre,
-                    "ruc" to ruc,
-                    "direccion" to direccion,
+                    "email" to email,
+                    "telefono" to telefono,
+                    "password" to password,
+                    "rol" to rol,
                     "activo" to true
                 )) {
                     select()
@@ -32,14 +45,24 @@ class LocalRepository {
         } catch (e: Exception) { false }
     }
 
-    suspend fun updateLocal(id: String, nombre: String, ruc: String?, direccion: String?, activo: Boolean): Boolean {
+    suspend fun updateUser(
+        id: String,
+        username: String,
+        nombre: String?,
+        email: String?,
+        telefono: String?,
+        rol: String,
+        activo: Boolean
+    ): Boolean {
         return try {
             SupabaseClientProvider.client
-                .from("locales")
+                .from("usuarios")
                 .update(mapOf(
+                    "username" to username,
                     "nombre" to nombre,
-                    "ruc" to ruc,
-                    "direccion" to direccion,
+                    "email" to email,
+                    "telefono" to telefono,
+                    "rol" to rol,
                     "activo" to activo
                 )) {
                     filter { eq("id", id) }
@@ -48,10 +71,10 @@ class LocalRepository {
         } catch (e: Exception) { false }
     }
 
-    suspend fun deleteLocal(id: String): Boolean {
+    suspend fun deleteUser(id: String): Boolean {
         return try {
             SupabaseClientProvider.client
-                .from("locales")
+                .from("usuarios")
                 .delete {
                     filter { eq("id", id) }
                 }

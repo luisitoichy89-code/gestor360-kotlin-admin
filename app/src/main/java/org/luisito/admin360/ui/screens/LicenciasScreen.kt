@@ -1,5 +1,6 @@
 package org.luisito.admin360.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.luisito.admin360.ui.viewmodels.LicenciaViewModel
@@ -42,14 +44,15 @@ import org.luisito.admin360.ui.viewmodels.LicenciaViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LicenciasScreen(
-    clienteId: Int,
+    clienteId: String,
     onBack: () -> Unit,
     viewModel: LicenciaViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var deleteLicenciaId by remember { mutableStateOf<Int?>(null) }
+    var deleteLicenciaId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.loadLicencias(clienteId)
@@ -80,50 +83,70 @@ fun LicenciasScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(20.dp)
+                .padding(16.dp)
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else if (uiState.error != null) {
                 Text(text = uiState.error ?: "Error", color = MaterialTheme.colorScheme.error)
+            } else if (uiState.licencias.isEmpty()) {
+                Text(
+                    text = "No hay licencias activas para este negocio",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.Gray,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(uiState.licencias) { licencia ->
                         Card(
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = androidx.compose.material3.CardDefaults.cardColors(
+                                containerColor = when {
+                                    licencia.getDiasRestantes() > 25 -> Color(0xFF4CAF50)
+                                    licencia.getDiasRestantes() > 4 -> Color(0xFFFFC107)
+                                    licencia.getDiasRestantes() >= 0 -> Color(0xFFFF9800)
+                                    else -> Color(0xFFF44336)
+                                }
+                            )
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(20.dp),
+                                    .padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
                                     Text(
-                                        text = "Device: ${licencia.device_id}",
-                                        style = MaterialTheme.typography.titleMedium
+                                        text = "📱 Device: ${licencia.device_id}",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Color.White
                                     )
                                     Text(
-                                        text = "Expira: ${licencia.expiracion ?: "N/A"} | ${licencia.getEstado()}",
-                                        style = MaterialTheme.typography.bodySmall
+                                        text = "Expira: ${licencia.expiracion ?: "N/A"}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White.copy(alpha = 0.8f)
                                     )
                                     Text(
-                                        text = "ID: ${licencia.id} | ${if (licencia.activo) "🟢 Activa" else "🔴 Inactiva"}",
-                                        style = MaterialTheme.typography.bodySmall
+                                        text = licencia.getEstado(),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White
                                     )
                                 }
-                                Row {
-                                    IconButton(
-                                        onClick = {
-                                            deleteLicenciaId = licencia.id
-                                            showDeleteDialog = true
-                                        }
-                                    ) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Eliminar")
+                                IconButton(
+                                    onClick = {
+                                        deleteLicenciaId = licencia.id
+                                        showDeleteDialog = true
                                     }
+                                ) {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Eliminar",
+                                        tint = Color.White
+                                    )
                                 }
                             }
                         }
@@ -133,16 +156,16 @@ fun LicenciasScreen(
         }
     }
 
-    // Dialog: Eliminar
     if (showDeleteDialog && deleteLicenciaId != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("⚠️ Eliminar licencia") },
-            text = { Text("¿Estás seguro?") },
+            text = { Text("¿Estás seguro de que quieres eliminar esta licencia?") },
             confirmButton = {
                 TextButton(
                     onClick = {
                         viewModel.deleteLicense(deleteLicenciaId!!, clienteId)
+                        Toast.makeText(context, "✅ Licencia eliminada", Toast.LENGTH_SHORT).show()
                         showDeleteDialog = false
                         deleteLicenciaId = null
                     }
@@ -158,10 +181,10 @@ fun LicenciasScreen(
         )
     }
 
-    // Dialog: Crear licencia
     if (showDialog) {
         var newDeviceId by remember { mutableStateOf("") }
-        var newDias by remember { mutableStateOf("") }
+        var newDias by remember { mutableStateOf("30") }
+
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text("📜 Nueva licencia") },
@@ -170,7 +193,7 @@ fun LicenciasScreen(
                     OutlinedTextField(
                         value = newDeviceId,
                         onValueChange = { newDeviceId = it },
-                        label = { Text("Device ID") },
+                        label = { Text("Device ID *") },
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
@@ -184,8 +207,10 @@ fun LicenciasScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        if (newDeviceId.isNotEmpty() && newDias.isNotEmpty()) {
-                            viewModel.activateLicense(clienteId, newDeviceId, newDias.toIntOrNull() ?: 30)
+                        if (newDeviceId.isNotEmpty()) {
+                            val dias = newDias.toIntOrNull() ?: 30
+                            viewModel.activateLicense(clienteId, newDeviceId, dias)
+                            Toast.makeText(context, "✅ Licencia activada por $dias días", Toast.LENGTH_SHORT).show()
                             showDialog = false
                         }
                     }
