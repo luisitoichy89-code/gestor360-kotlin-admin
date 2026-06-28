@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.luisito.admin360.data.repository.AuthRepository
+import org.luisito.admin360.data.models.LoginResult
 
 data class LoginUiState(
     val isLoading: Boolean = false,
@@ -27,7 +28,7 @@ class LoginViewModel(
             _uiState.update { it.copy(isLoading = true, error = null) }
             val result = authRepository.login(username, password)
             when (result) {
-                is AuthRepository.LoginResult.Success -> {
+                is LoginResult.Success -> {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -36,7 +37,7 @@ class LoginViewModel(
                         )
                     }
                 }
-                is AuthRepository.LoginResult.Error -> {
+                is LoginResult.Error -> {
                     _uiState.update {
                         it.copy(
                             isLoading = false,

@@ -4,15 +4,11 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import org.luisito.admin360.data.SupabaseClientProvider
 import org.luisito.admin360.data.models.User
+import org.luisito.admin360.data.models.LoginResult
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.security.MessageDigest
 import java.util.UUID
-
-sealed class LoginResult {
-    data class Success(val userId: Int, val user: User) : LoginResult()
-    data class Error(val message: String) : LoginResult()
-}
 
 class AuthRepository {
 
@@ -77,7 +73,6 @@ class AuthRepository {
         }
     }
 
-    // FUNCIÓN CORREGIDA: Verificar licencia activa usando .postgrest.rpc() con UUID
     private suspend fun verifyLicense(authId: UUID?): Boolean {
         if (authId == null) return false
         return try {
