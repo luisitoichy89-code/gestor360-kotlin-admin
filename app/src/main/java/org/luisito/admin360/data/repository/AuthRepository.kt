@@ -34,7 +34,9 @@ class AuthRepository {
 
             val users = supabase
                 .from("usuarios")
-                .select { filter { eq("username", username) } }
+                .select {
+                    filter { eq("username", username) }
+                }
                 .decodeAs<List<User>>()
 
             if (users.isEmpty()) {
@@ -53,7 +55,7 @@ class AuthRepository {
                 return LoginResult.Error("Usuario desactivado")
             }
 
-            // Verificar licencia
+            // Verificar licencia usando rpc con postgrest
             val canLogin = verifyLicense(user.auth_id ?: "")
             if (!canLogin) {
                 return LoginResult.Error("Licencia expirada")
