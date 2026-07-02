@@ -1,6 +1,5 @@
 package org.luisito.admin360.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -23,11 +22,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.luisito.admin360.BuildConfig
 import org.luisito.admin360.data.repository.AuthRepository
 import org.luisito.admin360.data.repository.LoginResult
 
@@ -42,7 +41,6 @@ fun LoginScreen(
     
     val authRepo = remember { AuthRepository() }
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
     
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -66,6 +64,14 @@ fun LoginScreen(
             Text(
                 text = "Acceso exclusivo para administradores",
                 style = MaterialTheme.typography.bodyMedium
+            )
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Text(
+                text = "URL: ${BuildConfig.SUPABASE_URL.take(40)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.outline
             )
             
             Spacer(modifier = Modifier.height(32.dp))
@@ -120,13 +126,11 @@ fun LoginScreen(
                                     is LoginResult.Error -> {
                                         isLoading = false
                                         error = result.message
-                                        Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
                                     }
                                 }
                             } catch (e: Exception) {
                                 isLoading = false
                                 error = e.message ?: "Error inesperado"
-                                Toast.makeText(context, "Excepción: ${e.message}", Toast.LENGTH_LONG).show()
                             }
                         }
                     }
