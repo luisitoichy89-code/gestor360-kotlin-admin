@@ -10,7 +10,7 @@ class NegocioRepository {
     suspend fun getAllNegocios(): Result<List<Negocio>> {
         return try {
             val response = SupabaseProvider.client
-                .from("negocios")
+                .from("clientes")
                 .select()
             Result.success(response.decodeList<Negocio>())
         } catch (e: Exception) {
@@ -21,7 +21,7 @@ class NegocioRepository {
     suspend fun getNegocios(clienteId: String): Result<List<Negocio>> {
         return try {
             val response = SupabaseProvider.client
-                .from("negocios")
+                .from("clientes")
                 .select {
                     filter {
                         eq("cliente_id", clienteId)
@@ -41,7 +41,7 @@ class NegocioRepository {
     ): Result<Unit> {
         return try {
             SupabaseProvider.client
-                .from("negocios")
+                .from("clientes")
                 .insert(
                     mapOf(
                         "nombre_negocio" to nombre,
@@ -64,7 +64,7 @@ class NegocioRepository {
     ): Result<Unit> {
         return try {
             SupabaseProvider.client
-                .from("negocios")
+                .from("clientes")
                 .update(
                     mapOf(
                         "nombre_negocio" to nombre,
@@ -85,7 +85,7 @@ class NegocioRepository {
     suspend fun setActivo(id: String, activo: Boolean): Result<Unit> {
         return try {
             SupabaseProvider.client
-                .from("negocios")
+                .from("clientes")
                 .update(mapOf("activo" to activo)) {
                     filter {
                         eq("id", id)
@@ -100,7 +100,7 @@ class NegocioRepository {
     suspend fun deleteNegocio(id: String): Result<Unit> {
         return try {
             SupabaseProvider.client
-                .from("negocios")
+                .from("clientes")
                 .delete {
                     filter {
                         eq("id", id)
