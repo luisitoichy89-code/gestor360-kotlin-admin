@@ -4,25 +4,25 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.filter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.luisito.admin360.data.models.Licencia
+import org.luisito.admin360.data.models.User
 import org.luisito.admin360.data.remote.SupabaseProvider
 
-class LicenciaRepository {
+class UsuarioRepository {
 
     private val client = SupabaseProvider.client
 
-    suspend fun getLicencias(clienteId: String): Result<List<Licencia>> {
+    suspend fun getUsuarios(clienteId: String): Result<List<User>> {
         return withContext(Dispatchers.IO) {
             try {
 
                 val response = client
-                    .from("licencias")
+                    .from("usuarios")
                     .select {
                         filter {
                             eq("cliente_id", clienteId)
                         }
                     }
-                    .decodeList<Licencia>()
+                    .decodeList<User>()
 
                 Result.success(response)
 
@@ -32,30 +32,31 @@ class LicenciaRepository {
         }
     }
 
-    suspend fun activateLicense(
+    suspend fun createUsuario(
+        username: String,
+        nombre: String,
+        password: String,
+        rol: String,
         clienteId: String,
-        deviceId: String,
-        dias: Int
-    ): Result<Licencia> {
+        almacenId: String
+    ): Result<User> {
         return withContext(Dispatchers.IO) {
             try {
 
-                val expiracion = java.time.LocalDateTime
-                    .now()
-                    .plusDays(dias.toLong())
-                    .toString()
-
                 val response = client
-                    .from("licencias")
+                    .from("usuarios")
                     .insert(
                         mapOf(
+                            "username" to username,
+                            "nombre" to nombre,
+                            "pin" to password,
+                            "rol" to rol,
                             "cliente_id" to clienteId,
-                            "device_id" to deviceId,
-                            "expiracion" to expiracion,
+                            "almacen_id" to almacenId,
                             "activo" to true
                         )
                     )
-                    .decodeSingle<Licencia>()
+                    .decodeSingle<User>()
 
                 Result.success(response)
 
@@ -65,33 +66,33 @@ class LicenciaRepository {
         }
     }
 
-    suspend fun renewLicense(
-        clienteId: String,
-        deviceId: String,
-        dias: Int
-    ): Result<Licencia> {
+    suspend fun updateUsuario(
+        id: String,
+        username: String,
+        nombre: String,
+        rol: String,
+        almacenId: String,
+        activo: Boolean
+    ): Result<User> {
         return withContext(Dispatchers.IO) {
             try {
 
-                val expiracion = java.time.LocalDateTime
-                    .now()
-                    .plusDays(dias.toLong())
-                    .toString()
-
                 val response = client
-                    .from("licencias")
+                    .from("usuarios")
                     .update(
                         {
-                            set("expiracion", expiracion)
-                            set("activo", true)
+                            set("username", username)
+                            set("nombre", nombre)
+                            set("rol", rol)
+                            set("almacen_id", almacenId)
+                            set("activo", activo)
                         }
                     ) {
                         filter {
-                            eq("cliente_id", clienteId)
-                            eq("device_id", deviceId)
+                            eq("id", id)
                         }
                     }
-                    .decodeSingle<Licencia>()
+                    .decodeSingle<User>()
 
                 Result.success(response)
 
@@ -101,12 +102,12 @@ class LicenciaRepository {
         }
     }
 
-    suspend fun deleteLicense(id: String): Result<Boolean> {
+    suspend fun deleteUsuario(id: String): Result<Boolean> {
         return withContext(Dispatchers.IO) {
             try {
 
                 client
-                    .from("licencias")
+                    .from("usuarios")
                     .delete {
                         filter {
                             eq("id", id)

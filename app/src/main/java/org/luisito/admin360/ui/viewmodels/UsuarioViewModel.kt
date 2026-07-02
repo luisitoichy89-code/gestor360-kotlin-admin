@@ -6,32 +6,32 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.luisito.admin360.data.models.Licencia
-import org.luisito.admin360.data.repository.LicenciaRepository
+import org.luisito.admin360.data.models.User
+import org.luisito.admin360.data.repository.UsuarioRepository
 
-data class LicenciaUiState(
+data class UsuarioUiState(
     val isLoading: Boolean = false,
-    val licencias: List<Licencia> = emptyList(),
+    val usuarios: List<User> = emptyList(),
     val error: String? = null
 )
 
-class LicenciaViewModel(
-    private val repository: LicenciaRepository = LicenciaRepository()
+class UsuarioViewModel(
+    private val repository: UsuarioRepository = UsuarioRepository()
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(LicenciaUiState())
-    val uiState: StateFlow<LicenciaUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(UsuarioUiState())
+    val uiState: StateFlow<UsuarioUiState> = _uiState.asStateFlow()
 
-    fun loadLicencias(clienteId: String) {
+    fun loadUsuarios(clienteId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            val result = repository.getLicencias(clienteId)
+            val result = repository.getUsuarios(clienteId)
 
             result.onSuccess {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    licencias = it,
+                    usuarios = it,
                     error = null
                 )
             }.onFailure {
@@ -43,14 +43,28 @@ class LicenciaViewModel(
         }
     }
 
-    fun activateLicense(clienteId: String, deviceId: String, dias: Int) {
+    fun createUsuario(
+        username: String,
+        nombre: String,
+        password: String,
+        rol: String,
+        clienteId: String,
+        almacenId: String
+    ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            val result = repository.activateLicense(clienteId, deviceId, dias)
+            val result = repository.createUsuario(
+                username,
+                nombre,
+                password,
+                rol,
+                clienteId,
+                almacenId
+            )
 
             result.onSuccess {
-                loadLicencias(clienteId)
+                loadUsuarios(clienteId)
             }.onFailure {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -60,14 +74,29 @@ class LicenciaViewModel(
         }
     }
 
-    fun renewLicense(clienteId: String, deviceId: String, dias: Int) {
+    fun updateUsuario(
+        id: String,
+        username: String,
+        nombre: String,
+        rol: String,
+        almacenId: String,
+        activo: Boolean,
+        clienteId: String
+    ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            val result = repository.renewLicense(clienteId, deviceId, dias)
+            val result = repository.updateUsuario(
+                id,
+                username,
+                nombre,
+                rol,
+                almacenId,
+                activo
+            )
 
             result.onSuccess {
-                loadLicencias(clienteId)
+                loadUsuarios(clienteId)
             }.onFailure {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -77,14 +106,14 @@ class LicenciaViewModel(
         }
     }
 
-    fun deleteLicense(id: String, clienteId: String) {
+    fun deleteUsuario(id: String, clienteId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            val result = repository.deleteLicense(id)
+            val result = repository.deleteUsuario(id)
 
             result.onSuccess {
-                loadLicencias(clienteId)
+                loadUsuarios(clienteId)
             }.onFailure {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
