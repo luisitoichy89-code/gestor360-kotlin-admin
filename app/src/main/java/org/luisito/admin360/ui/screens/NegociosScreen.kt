@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.luisito.admin360.data.models.Negocio
-import org.luisito.admin360.data.repository.NegocioRepository
 import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

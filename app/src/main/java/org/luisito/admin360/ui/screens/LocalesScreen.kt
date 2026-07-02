@@ -1,5 +1,3 @@
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.*
 package org.luisito.admin360.ui.screens
 
 import androidx.compose.foundation.layout.*
@@ -10,19 +8,20 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.luisito.admin360.data.models.Local
 import org.luisito.admin360.ui.viewmodels.LocalViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocalesScreen(
     clienteId: String,
     viewModel: LocalViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    var nombre by remember { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
+    var nombre by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         viewModel.loadLocales(clienteId)
@@ -31,34 +30,39 @@ fun LocalesScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { showDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = null)
+                Icon(Icons.Default.Add, contentDescription = "Crear")
             }
         }
     ) { padding ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp)
         ) {
-
             when {
-                uiState.isLoading -> CircularProgressIndicator()
-
-                uiState.error != null -> Text(
-                    uiState.error ?: "",
-                    color = MaterialTheme.colorScheme.error
-                )
-
+                uiState.isLoading -> {
+                    CircularProgressIndicator()
+                }
+                uiState.error != null -> {
+                    Text(uiState.error ?: "", color = MaterialTheme.colorScheme.error)
+                }
                 else -> {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(uiState.locales) { local: Local ->
-
-                            Card(modifier = Modifier.fillMaxWidth()) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(local.nombre)
-                                    Text(if (local.activo) "Activo" else "Inactivo")
+                    if (uiState.locales.isEmpty()) {
+                        Text("No hay locales")
+                    } else {
+                        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(uiState.locales) { local ->
+                                Card(modifier = Modifier.fillMaxWidth()) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(local.nombre)
+                                        Text(if (local.activo) "🟢 Activo" else "🔴 Inactivo")
+                                    }
                                 }
                             }
                         }
@@ -71,7 +75,7 @@ fun LocalesScreen(
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Nuevo local") },
+            title = { Text("Crear local") },
             text = {
                 OutlinedTextField(
                     value = nombre,
