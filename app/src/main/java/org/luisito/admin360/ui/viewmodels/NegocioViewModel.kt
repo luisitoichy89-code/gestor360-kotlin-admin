@@ -18,15 +18,15 @@ data class NegocioUiState(
 class NegocioViewModel(
     private val repository: NegocioRepository = NegocioRepository()
 ) : ViewModel() {
-
+    
     private val _uiState = MutableStateFlow(NegocioUiState())
     val uiState: StateFlow<NegocioUiState> = _uiState.asStateFlow()
-
-    fun loadNegocios() {
+    
+    fun loadNegocios(clienteId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                val result = repository.getNegocios()
+                val result = repository.getNegocios(clienteId)
                 result.onSuccess { list ->
                     _uiState.value = _uiState.value.copy(isLoading = false, negocios = list)
                 }.onFailure { e ->
@@ -37,14 +37,14 @@ class NegocioViewModel(
             }
         }
     }
-
-    fun createNegocio(nombre: String) {
+    
+    fun createNegocio(nombre: String, direccion: String, telefono: String, clienteId: String) {
         viewModelScope.launch {
             try {
-                repository.createNegocio(nombre)
-                loadNegocios()
+                repository.createNegocio(nombre, direccion, telefono, clienteId)
+                loadNegocios(clienteId)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(error = e.message)
             }
         }
     }

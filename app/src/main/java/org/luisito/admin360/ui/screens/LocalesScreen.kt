@@ -16,17 +16,19 @@ import org.luisito.admin360.ui.viewmodels.LocalViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocalesScreen(
-    clienteId: String,
+    negocioId: String,
     viewModel: LocalViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var nombre by remember { mutableStateOf("") }
-
-    LaunchedEffect(Unit) {
-        viewModel.loadLocales(clienteId)
+    var direccion by remember { mutableStateOf("") }
+    var telefono by remember { mutableStateOf("") }
+    
+    LaunchedEffect(negocioId) {
+        viewModel.loadLocales(negocioId)
     }
-
+    
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { showDialog = true }) {
@@ -71,22 +73,39 @@ fun LocalesScreen(
             }
         }
     }
-
+    
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text("Crear local") },
             text = {
-                OutlinedTextField(
-                    value = nombre,
-                    onValueChange = { nombre = it },
-                    label = { Text("Nombre") }
-                )
+                Column {
+                    OutlinedTextField(
+                        value = nombre,
+                        onValueChange = { nombre = it },
+                        label = { Text("Nombre") }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = direccion,
+                        onValueChange = { direccion = it },
+                        label = { Text("Dirección") }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = telefono,
+                        onValueChange = { telefono = it },
+                        label = { Text("Teléfono") }
+                    )
+                }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.createLocal(clienteId, nombre)
+                    viewModel.createLocal(nombre, direccion, telefono, negocioId)
                     showDialog = false
+                    nombre = ""
+                    direccion = ""
+                    telefono = ""
                 }) {
                     Text("Crear")
                 }

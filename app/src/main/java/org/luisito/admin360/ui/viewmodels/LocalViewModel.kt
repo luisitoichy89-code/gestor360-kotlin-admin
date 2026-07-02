@@ -18,15 +18,15 @@ data class LocalUiState(
 class LocalViewModel(
     private val repository: LocalRepository = LocalRepository()
 ) : ViewModel() {
-
+    
     private val _uiState = MutableStateFlow(LocalUiState())
     val uiState: StateFlow<LocalUiState> = _uiState.asStateFlow()
-
-    fun loadLocales(clienteId: String) {
+    
+    fun loadLocales(negocioId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                val result = repository.getLocales(clienteId)
+                val result = repository.getLocales(negocioId)
                 result.onSuccess { list ->
                     _uiState.value = _uiState.value.copy(isLoading = false, locales = list)
                 }.onFailure { e ->
@@ -37,14 +37,14 @@ class LocalViewModel(
             }
         }
     }
-
-    fun createLocal(clienteId: String, nombre: String) {
+    
+    fun createLocal(nombre: String, direccion: String, telefono: String, negocioId: String) {
         viewModelScope.launch {
             try {
-                repository.createLocal(clienteId, nombre)
-                loadLocales(clienteId)
+                repository.createLocal(nombre, direccion, telefono, negocioId)
+                loadLocales(negocioId)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(error = e.message)
             }
         }
     }

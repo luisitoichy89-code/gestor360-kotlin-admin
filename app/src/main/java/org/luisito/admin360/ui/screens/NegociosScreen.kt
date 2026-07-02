@@ -16,16 +16,19 @@ import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NegociosScreen(
+    clienteId: String,
     viewModel: NegocioViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var nombre by remember { mutableStateOf("") }
-
-    LaunchedEffect(Unit) {
-        viewModel.loadNegocios()
+    var direccion by remember { mutableStateOf("") }
+    var telefono by remember { mutableStateOf("") }
+    
+    LaunchedEffect(clienteId) {
+        viewModel.loadNegocios(clienteId)
     }
-
+    
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { showDialog = true }) {
@@ -70,21 +73,35 @@ fun NegociosScreen(
             }
         }
     }
-
+    
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text("Crear negocio") },
             text = {
-                OutlinedTextField(
-                    value = nombre,
-                    onValueChange = { nombre = it },
-                    label = { Text("Nombre") }
-                )
+                Column {
+                    OutlinedTextField(
+                        value = nombre,
+                        onValueChange = { nombre = it },
+                        label = { Text("Nombre") }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = direccion,
+                        onValueChange = { direccion = it },
+                        label = { Text("Dirección") }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = telefono,
+                        onValueChange = { telefono = it },
+                        label = { Text("Teléfono") }
+                    )
+                }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.createNegocio(nombre)
+                    viewModel.createNegocio(nombre, direccion, telefono, clienteId)
                     showDialog = false
                 }) {
                     Text("Crear")
