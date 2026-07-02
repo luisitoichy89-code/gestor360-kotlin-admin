@@ -6,6 +6,18 @@ import org.luisito.admin360.data.remote.SupabaseProvider
 
 class NegocioRepository {
 
+    /** Todos los negocios del sistema, sin filtrar por cliente. Vista de superadmin. */
+    suspend fun getAllNegocios(): Result<List<Negocio>> {
+        return try {
+            val response = SupabaseProvider.client
+                .from("negocios")
+                .select()
+            Result.success(response.decodeList<Negocio>())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getNegocios(clienteId: String): Result<List<Negocio>> {
         return try {
             val response = SupabaseProvider.client

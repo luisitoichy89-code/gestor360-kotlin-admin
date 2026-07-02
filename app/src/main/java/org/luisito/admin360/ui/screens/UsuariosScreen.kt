@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
@@ -39,6 +40,8 @@ private val ROLES = listOf("admin", "vendedor")
 @Composable
 fun UsuariosScreen(
     clienteId: String,
+    negocioNombre: String = "",
+    onBack: (() -> Unit)? = null,
     viewModel: UsuarioViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -62,7 +65,21 @@ fun UsuariosScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Usuarios") },
+                title = {
+                    Column {
+                        Text("Usuarios")
+                        if (negocioNombre.isNotBlank()) {
+                            Text(negocioNombre, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                },
+                navigationIcon = {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        }
+                    }
+                },
                 actions = {
                     IconButton(onClick = { viewModel.refrescar() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refrescar")

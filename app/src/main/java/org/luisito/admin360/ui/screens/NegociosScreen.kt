@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
@@ -27,11 +28,18 @@ import org.luisito.admin360.ui.components.EstadoError
 import org.luisito.admin360.ui.components.EstadoVacio
 import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 
+/**
+ * Vista principal del superadmin. Si [clienteId] es null se listan TODOS los negocios
+ * del sistema (modo superadmin). Si viene un clienteId se listan solo los de ese cliente.
+ * Al tocar un negocio, [onSeleccionarNegocio] lo marca como "negocio activo" en AppContent,
+ * que luego se usa como contexto para Locales, Usuarios y Licencias.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NegociosScreen(
-    clienteId: String,
-    onAbrirLocales: (Negocio) -> Unit = {},
+    clienteId: String? = null,
+    onSeleccionarNegocio: (Negocio) -> Unit = {},
+    onBack: (() -> Unit)? = null,
     viewModel: NegocioViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -41,7 +49,7 @@ fun NegociosScreen(
     var negocioAEliminar by remember { mutableStateOf<Negocio?>(null) }
 
     LaunchedEffect(clienteId) {
-        viewModel.loadNegocios(clienteId)
+        if (clienteId == null) viewModel.loadTodosNegocios() else viewModel.loadNegocios(clienteId)
     }
 
     val negociosFiltrados = remember(uiState.negocios, query) {
@@ -53,6 +61,13 @@ fun NegociosScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Negocios") },
+                navigationIcon = {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        }
+                    }
+                },
                 actions = {
                     IconButton(onClick = { viewModel.refrescar() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refrescar")
@@ -77,6 +92,12 @@ fun NegociosScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            Text(
+                "Toca un negocio para gestionar sus locales, usuarios y licencias",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             BuscadorField(query = query, onQueryChange = { query = it }, placeholder = "Buscar negocio...")
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -90,7 +111,7 @@ fun NegociosScreen(
                     items(negociosFiltrados, key = { it.id }) { negocio ->
                         NegocioCard(
                             negocio = negocio,
-                            onClick = { onAbrirLocales(negocio) },
+                            onClick = { onSeleccionarNegocio(negocio) },
                             onEditar = {
                                 negocioEnEdicion = negocio
                                 mostrarFormulario = true
@@ -108,12 +129,13 @@ fun NegociosScreen(
     if (mostrarFormulario) {
         NegocioFormDialog(
             negocio = negocioEnEdicion,
+            clienteIdFijo = clienteId,
             isSaving = uiState.isSaving,
             onDismiss = { mostrarFormulario = false },
-            onGuardar = { nombre, direccion, telefono ->
+            onGuardar = { nombre, direccion, telefono, clienteIdDestino ->
                 val existente = negocioEnEdicion
                 if (existente == null) {
-                    viewModel.createNegocio(nombre, direccion, telefono, clienteId)
+                    viewModel.createNegocio(nombre, direccion, telefono, clienteIdDestino)
                 } else {
                     viewModel.updateNegocio(existente.id, nombre, direccion, telefono)
                 }
@@ -196,13 +218,19 @@ private fun NegocioCard(
 @Composable
 private fun NegocioFormDialog(
     negocio: Negocio?,
+    clienteIdFijo: String?,
     isSaving: Boolean,
     onDismiss: () -> Unit,
-    onGuardar: (nombre: String, direccion: String, telefono: String) -> Unit
+    onGuardar: (nombre: String, direccion: String, telefono: String, clienteId: String) -> Unit
 ) {
     var nombre by remember { mutableStateOf(negocio?.nombre_negocio ?: "") }
     var direccion by remember { mutableStateOf(negocio?.direccion ?: "") }
     var telefono by remember { mutableStateOf(negocio?.telefono ?: "") }
+    var clienteId by remember { mutableStateOf(negocio?.cliente_id ?: clienteIdFijo ?: "") }
+
+    // El cliente_id solo se pide al crear un negocio nuevo en modo "todos los negocios"
+    // (superadmin sin un cliente fijo). Al editar, el cliente ya viene definido.
+    val pedirClienteId = negocio == null && clienteIdFijo == null
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -232,12 +260,22 @@ private fun NegocioFormDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (pedirClienteId) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = clienteId,
+                        onValueChange = { clienteId = it },
+                        label = { Text("Cliente ID (dueño del negocio)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         },
         confirmButton = {
             TextButton(
-                enabled = nombre.isNotBlank() && !isSaving,
-                onClick = { onGuardar(nombre.trim(), direccion.trim(), telefono.trim()) }
+                enabled = nombre.isNotBlank() && (!pedirClienteId || clienteId.isNotBlank()) && !isSaving,
+                onClick = { onGuardar(nombre.trim(), direccion.trim(), telefono.trim(), clienteId.trim()) }
             ) {
                 Text(if (isSaving) "Guardando..." else "Guardar")
             }

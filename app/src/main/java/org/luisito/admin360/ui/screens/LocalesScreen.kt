@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
@@ -31,6 +32,8 @@ import org.luisito.admin360.ui.viewmodels.LocalViewModel
 @Composable
 fun LocalesScreen(
     negocioId: String,
+    negocioNombre: String = "",
+    onBack: (() -> Unit)? = null,
     viewModel: LocalViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -51,7 +54,21 @@ fun LocalesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Locales") },
+                title = {
+                    Column {
+                        Text("Locales")
+                        if (negocioNombre.isNotBlank()) {
+                            Text(negocioNombre, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                },
+                navigationIcon = {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        }
+                    }
+                },
                 actions = {
                     IconButton(onClick = { viewModel.refrescar() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refrescar")

@@ -24,8 +24,21 @@ class NegocioViewModel(
     val uiState: StateFlow<NegocioUiState> = _uiState.asStateFlow()
 
     private var clienteIdActual: String? = null
+    private var modoTodos: Boolean = false
+
+    fun loadTodosNegocios() {
+        modoTodos = true
+        clienteIdActual = null
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            repository.getAllNegocios()
+                .onSuccess { list -> _uiState.value = _uiState.value.copy(isLoading = false, negocios = list) }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Error al cargar negocios") }
+        }
+    }
 
     fun loadNegocios(clienteId: String) {
+        modoTodos = false
         clienteIdActual = clienteId
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
@@ -36,14 +49,14 @@ class NegocioViewModel(
     }
 
     fun refrescar() {
-        clienteIdActual?.let { loadNegocios(it) }
+        if (modoTodos) loadTodosNegocios() else clienteIdActual?.let { loadNegocios(it) }
     }
 
     fun createNegocio(nombre: String, direccion: String, telefono: String, clienteId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
             repository.createNegocio(nombre, direccion, telefono, clienteId)
-                .onSuccess { loadNegocios(clienteId) }
+                .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
         }
@@ -53,7 +66,7 @@ class NegocioViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
             repository.updateNegocio(id, nombre, direccion, telefono)
-                .onSuccess { clienteIdActual?.let { loadNegocios(it) } }
+                .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
         }
@@ -62,7 +75,7 @@ class NegocioViewModel(
     fun toggleActivo(negocio: Negocio) {
         viewModelScope.launch {
             repository.setActivo(negocio.id, !negocio.activo)
-                .onSuccess { clienteIdActual?.let { loadNegocios(it) } }
+                .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
         }
     }
@@ -70,7 +83,7 @@ class NegocioViewModel(
     fun deleteNegocio(id: String) {
         viewModelScope.launch {
             repository.deleteNegocio(id)
-                .onSuccess { clienteIdActual?.let { loadNegocios(it) } }
+                .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
         }
     }
