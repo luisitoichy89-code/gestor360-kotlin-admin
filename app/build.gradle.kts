@@ -73,3 +73,4 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:postgrest-kt:3.1.0")
     implementation("io.github.jan-tennert.supabase:auth-kt:3.1.0")
 }
+
