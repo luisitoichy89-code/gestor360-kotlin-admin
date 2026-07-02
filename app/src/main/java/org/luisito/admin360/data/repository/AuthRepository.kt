@@ -12,15 +12,15 @@ sealed class LoginResult {
 class AuthRepository {
     
     suspend fun login(email: String, password: String): LoginResult {
-        val supabase = SupabaseProvider.client
-        return runCatching {
+        return try {
+            val supabase = SupabaseProvider.client
             supabase.auth.signInWith(Email) {
                 this.email = email
                 this.password = password
             }
             LoginResult.Success(email)
-        }.getOrElse { exception ->
-            LoginResult.Error(exception.message ?: "Error de conexión")
+        } catch (e: Exception) {
+            LoginResult.Error(e.message ?: "Error de conexión")
         }
     }
     
