@@ -26,71 +26,42 @@ class LicenciaViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            val result = repository.getLicencias(clienteId)
-
-            result.onSuccess {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    licencias = it,
-                    error = null
-                )
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = it.message
-                )
+            when (val result = repository.getLicencias(clienteId)) {
+                is Result.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        licencias = result.value,
+                        error = null
+                    )
+                }
+                is Result.Failure -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = result.exceptionOrNull()?.message
+                    )
+                }
             }
         }
     }
 
     fun activateLicense(clienteId: String, deviceId: String, dias: Int) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val result = repository.activateLicense(clienteId, deviceId, dias)
-
-            result.onSuccess {
-                loadLicencias(clienteId)
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = it.message
-                )
-            }
+            repository.activateLicense(clienteId, deviceId, dias)
+            loadLicencias(clienteId)
         }
     }
 
-    fun renewLicense(clienteId: String, deviceId: String, dias: Int) {
+    fun renewLicense(clienteId: String, dias: Int) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val result = repository.renewLicense(clienteId, deviceId, dias)
-
-            result.onSuccess {
-                loadLicencias(clienteId)
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = it.message
-                )
-            }
+            repository.renewLicense(clienteId, dias)
+            loadLicencias(clienteId)
         }
     }
 
     fun deleteLicense(id: String, clienteId: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val result = repository.deleteLicense(id)
-
-            result.onSuccess {
-                loadLicencias(clienteId)
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = it.message
-                )
-            }
+            repository.deleteLicense(id)
+            loadLicencias(clienteId)
         }
     }
 }

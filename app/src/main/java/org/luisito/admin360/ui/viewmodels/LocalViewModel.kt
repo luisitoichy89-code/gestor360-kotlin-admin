@@ -26,71 +26,28 @@ class LocalViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            val result = repository.getLocales(clienteId)
-
-            result.onSuccess {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    locales = it,
-                    error = null
-                )
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = it.message
-                )
+            when (val result = repository.getLocales(clienteId)) {
+                is Result.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        locales = result.value,
+                        error = null
+                    )
+                }
+                is Result.Failure -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = result.exceptionOrNull()?.message
+                    )
+                }
             }
         }
     }
 
     fun createLocal(clienteId: String, nombre: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val result = repository.createLocal(clienteId, nombre)
-
-            result.onSuccess {
-                loadLocales(clienteId)
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = it.message
-                )
-            }
-        }
-    }
-
-    fun updateLocal(id: String, nombre: String, activo: Boolean, clienteId: String) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val result = repository.updateLocal(id, nombre, activo)
-
-            result.onSuccess {
-                loadLocales(clienteId)
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = it.message
-                )
-            }
-        }
-    }
-
-    fun deleteLocal(id: String, clienteId: String) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val result = repository.deleteLocal(id)
-
-            result.onSuccess {
-                loadLocales(clienteId)
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = it.message
-                )
-            }
+            repository.createLocal(clienteId, nombre)
+            loadLocales(clienteId)
         }
     }
 }

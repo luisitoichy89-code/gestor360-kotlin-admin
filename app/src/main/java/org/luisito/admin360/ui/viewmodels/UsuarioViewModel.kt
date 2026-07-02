@@ -26,19 +26,20 @@ class UsuarioViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            val result = repository.getUsuarios(clienteId)
-
-            result.onSuccess {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    usuarios = it,
-                    error = null
-                )
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = it.message
-                )
+            when (val result = repository.getUsuarios(clienteId)) {
+                is Result.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        usuarios = result.value,
+                        error = null
+                    )
+                }
+                is Result.Failure -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = result.exceptionOrNull()?.message
+                    )
+                }
             }
         }
     }
@@ -52,74 +53,8 @@ class UsuarioViewModel(
         almacenId: String
     ) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val result = repository.createUsuario(
-                username,
-                nombre,
-                password,
-                rol,
-                clienteId,
-                almacenId
-            )
-
-            result.onSuccess {
-                loadUsuarios(clienteId)
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = it.message
-                )
-            }
-        }
-    }
-
-    fun updateUsuario(
-        id: String,
-        username: String,
-        nombre: String,
-        rol: String,
-        almacenId: String,
-        activo: Boolean,
-        clienteId: String
-    ) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val result = repository.updateUsuario(
-                id,
-                username,
-                nombre,
-                rol,
-                almacenId,
-                activo
-            )
-
-            result.onSuccess {
-                loadUsuarios(clienteId)
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = it.message
-                )
-            }
-        }
-    }
-
-    fun deleteUsuario(id: String, clienteId: String) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val result = repository.deleteUsuario(id)
-
-            result.onSuccess {
-                loadUsuarios(clienteId)
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = it.message
-                )
-            }
+            repository.createUsuario(username, nombre, password, rol, clienteId, almacenId)
+            loadUsuarios(clienteId)
         }
     }
 }
