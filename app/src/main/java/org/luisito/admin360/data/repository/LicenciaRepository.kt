@@ -2,122 +2,81 @@ package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.filter
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.luisito.admin360.data.models.Licencia
+import io.github.jan.supabase.postgrest.query.eq
+import kotlinx.serialization.Serializable
 import org.luisito.admin360.data.remote.SupabaseProvider
+
+@Serializable
+data class Licencia(
+    val id: String? = null,
+    val cliente_id: String,
+    val device_id: String,
+    val expiracion: String,
+    val activo: Boolean = true
+)
 
 class LicenciaRepository {
 
-    private val client = SupabaseProvider.client
-
     suspend fun getLicencias(clienteId: String): Result<List<Licencia>> {
-        return withContext(Dispatchers.IO) {
-            try {
+        return try {
+            val result = SupabaseProvider.client
+                .from("licencias")
+                .select {
+                    filter { eq("cliente_id", clienteId) }
+                }
 
-                val response = client
-                    .from("licencias")
-                    .select {
-                        filter {
-                            eq("cliente_id", clienteId)
-                        }
-                    }
-                    .decodeList<Licencia>()
-
-                Result.success(response)
-
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
+            Result.success(result.decodeList())
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
-    suspend fun activateLicense(
-        clienteId: String,
-        deviceId: String,
-        dias: Int
-    ): Result<Licencia> {
-        return withContext(Dispatchers.IO) {
-            try {
-
-                val expiracion = java.time.LocalDateTime
-                    .now()
-                    .plusDays(dias.toLong())
-                    .toString()
-
-                val response = client
-                    .from("licencias")
-                    .insert(
-                        mapOf(
-                            "cliente_id" to clienteId,
-                            "device_id" to deviceId,
-                            "expiracion" to expiracion,
-                            "activo" to true
-                        )
+    suspend fun activateLicense(clienteId: String, deviceId: String, dias: Int): Result<Unit> {
+        return try {
+            SupabaseProvider.client
+                .from("licencias")
+                .insert(
+                    mapOf(
+                        "cliente_id" to clienteId,
+                        "device_id" to deviceId,
+                        "dias" to dias,
+                        "activo" to true
                     )
-                    .decodeSingle<Licencia>()
+                )
 
-                Result.success(response)
-
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
-    suspend fun renewLicense(
-        clienteId: String,
-        deviceId: String,
-        dias: Int
-    ): Result<Licencia> {
-        return withContext(Dispatchers.IO) {
-            try {
+    suspend fun renewLicense(clienteId: String, dias: Int): Result<Unit> {
+        return try {
+            SupabaseProvider.client
+                .from("licencias")
+                .update(
+                    mapOf("dias" to dias)
+                ) {
+                    filter { eq("cliente_id", clienteId) }
+                }
 
-                val expiracion = java.time.LocalDateTime
-                    .now()
-                    .plusDays(dias.toLong())
-                    .toString()
-
-                val response = client
-                    .from("licencias")
-                    .update(
-                        {
-                            set("expiracion", expiracion)
-                            set("activo", true)
-                        }
-                    ) {
-                        filter {
-                            eq("cliente_id", clienteId)
-                            eq("device_id", deviceId)
-                        }
-                    }
-                    .decodeSingle<Licencia>()
-
-                Result.success(response)
-
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
-    suspend fun deleteLicense(id: String): Result<Boolean> {
-        return withContext(Dispatchers.IO) {
-            try {
+    suspend fun deleteLicense(id: String): Result<Unit> {
+        return try {
+            SupabaseProvider.client
+                .from("licencias")
+                .delete {
+                    filter { eq("id", id) }
+                }
 
-                client
-                    .from("licencias")
-                    .delete {
-                        filter {
-                            eq("id", id)
-                        }
-                    }
-
-                Result.success(true)
-
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }
