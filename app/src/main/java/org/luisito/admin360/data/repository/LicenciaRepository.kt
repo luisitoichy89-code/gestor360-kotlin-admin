@@ -1,8 +1,7 @@
+import io.github.jan.supabase.postgrest.query.eq
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.eq
-import io.github.jan.supabase.postgrest.query.filter
 import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.data.remote.SupabaseProvider
 import java.time.LocalDate

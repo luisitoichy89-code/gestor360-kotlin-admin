@@ -1,8 +1,7 @@
+import io.github.jan.supabase.postgrest.query.eq
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.eq
-import io.github.jan.supabase.postgrest.query.filter
 import org.luisito.admin360.data.models.Negocio
 import org.luisito.admin360.data.remote.SupabaseProvider
 
@@ -20,12 +19,12 @@ class NegocioRepository {
         }
     }
 
-    suspend fun createNegocio(nombre: String): Result<Unit> {
+    suspend fun createNegocio(id = null, nombre: String): Result<Unit> {
         return try {
             SupabaseProvider.client
                 .from("clientes")
                 .insert(
-                    Negocio(
+                    Negocio(id = null, 
                         nombre_negocio = nombre,
                         activo = true
                     )
@@ -37,7 +36,7 @@ class NegocioRepository {
         }
     }
 
-    suspend fun updateNegocio(
+    suspend fun updateNegocio(id = null, 
         id: String,
         nombre: String,
         activo: Boolean
@@ -62,7 +61,7 @@ class NegocioRepository {
         }
     }
 
-    suspend fun deleteNegocio(id: String): Result<Unit> {
+    suspend fun deleteNegocio(id = null, id: String): Result<Unit> {
         return try {
             SupabaseProvider.client
                 .from("clientes")
