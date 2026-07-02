@@ -23,14 +23,3 @@ fun Licencia.getDiasRestantes(): Long {
         -1
     }
 }
-
-fun Licencia.getDiasRestantes(): Long {
-    return try {
-        val formatter = java.time.format.DateTimeFormatter.ISO_DATE
-        val expDate = java.time.LocalDate.parse(expiracion, formatter)
-        val today = java.time.LocalDate.now()
-        java.time.temporal.ChronoUnit.DAYS.between(today, expDate)
-    } catch (e: Exception) {
-        -1
-    }
-}

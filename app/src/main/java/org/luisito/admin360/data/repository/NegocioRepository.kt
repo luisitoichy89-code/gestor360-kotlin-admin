@@ -1,7 +1,8 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.eq
+import io.github.jan.supabase.postgrest.query.filter
+import io.github.jan.supabase.postgrest.query.Filter
 import org.luisito.admin360.data.models.Negocio
 import org.luisito.admin360.data.remote.SupabaseProvider
 
@@ -23,9 +24,9 @@ class NegocioRepository {
             SupabaseProvider.client
                 .from("clientes")
                 .insert(
-                    Negocio(
-                        nombre_negocio = nombre,
-                        activo = true
+                    mapOf(
+                        "nombre_negocio" to nombre,
+                        "activo" to true
                     )
                 )
             Result.success(Unit)
@@ -48,7 +49,7 @@ class NegocioRepository {
                         "activo" to activo
                     )
                 ) {
-                    eq("id", id)
+                    filter { Filter.eq("id", id) }
                 }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -61,7 +62,7 @@ class NegocioRepository {
             SupabaseProvider.client
                 .from("clientes")
                 .delete {
-                    eq("id", id)
+                    filter { Filter.eq("id", id) }
                 }
             Result.success(Unit)
         } catch (e: Exception) {

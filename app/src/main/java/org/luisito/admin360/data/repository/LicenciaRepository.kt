@@ -1,7 +1,8 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.eq
+import io.github.jan.supabase.postgrest.query.filter
+import io.github.jan.supabase.postgrest.query.Filter
 import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.data.remote.SupabaseProvider
 import java.time.LocalDate
@@ -13,7 +14,7 @@ class LicenciaRepository {
             val response = SupabaseProvider.client
                 .from("licencias")
                 .select {
-                    eq("cliente_id", clienteId)
+                    filter { Filter.eq("cliente_id", clienteId) }
                 }
             Result.success(response.decodeList<Licencia>())
         } catch (e: Exception) {
@@ -63,7 +64,7 @@ class LicenciaRepository {
                         "expiracion" to nuevaExpiracion
                     )
                 ) {
-                    eq("cliente_id", clienteId)
+                    filter { Filter.eq("cliente_id", clienteId) }
                 }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -76,7 +77,7 @@ class LicenciaRepository {
             SupabaseProvider.client
                 .from("licencias")
                 .delete {
-                    eq("id", id)
+                    filter { Filter.eq("id", id) }
                 }
             Result.success(Unit)
         } catch (e: Exception) {
