@@ -1,3 +1,5 @@
+import org.luisito.admin360.ui.screens.NegociosScreen
+import org.luisito.admin360.ui.screens.NegociosScreen
 package org.luisito.admin360
 
 import android.os.Bundle
@@ -197,18 +199,31 @@ fun AdminDashboard() {
             floatingActionButton = {
                 FloatingActionButton(onClick = {
                     when (selectedItem) {
-                        "negocios" -> {
-                            dialogTitle = "Crear Negocio"
-                            dialogFields = listOf("Nombre" to "")
-                            onDialogConfirm = { values ->
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    try {
-                                        val success = negocioRepo.createNegocio(values["Nombre"] ?: "")
-                                        withContext(Dispatchers.Main) {
-                                            if (success) {
-                                                Toast.makeText(context, "✅ Negocio creado correctamente", Toast.LENGTH_LONG).show()
-                                                loadNegocios()
-                                            } else {
+        "negocios" -> {
+            NegociosScreen(
+                negocios = negocios,
+                isLoading = isLoading,
+                onCreateNegocio = { nombre ->
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val success = negocioRepo.createNegocio(nombre)
+                            withContext(Dispatchers.Main) {
+                                if (success) {
+                                    Toast.makeText(context, "✅ Negocio creado correctamente", Toast.LENGTH_LONG).show()
+                                    loadNegocios()
+                                } else {
+                                    Toast.makeText(context, "❌ Error: ${ErrorHolder.lastError}", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(context, "❌ Excepción: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }
+                }
+            )
+        }
                                                 Toast.makeText(context, "❌ Error: ${ErrorHolder.lastError}", Toast.LENGTH_LONG).show()
                                             }
                                         }
@@ -235,11 +250,31 @@ fun AdminDashboard() {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 } else {
                     when (selectedItem) {
-                        "negocios" -> {
-                            Text("Negocios", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-                            if (negocios.isEmpty()) {
-                                Text("No hay negocios. Presiona el botón + para crear.", modifier = Modifier.padding(16.dp))
-                            } else {
+        "negocios" -> {
+            NegociosScreen(
+                negocios = negocios,
+                isLoading = isLoading,
+                onCreateNegocio = { nombre ->
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val success = negocioRepo.createNegocio(nombre)
+                            withContext(Dispatchers.Main) {
+                                if (success) {
+                                    Toast.makeText(context, "✅ Negocio creado correctamente", Toast.LENGTH_LONG).show()
+                                    loadNegocios()
+                                } else {
+                                    Toast.makeText(context, "❌ Error: ${ErrorHolder.lastError}", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(context, "❌ Excepción: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }
+                }
+            )
+        }
                                 LazyColumn {
                                     items(negocios) { negocio ->
                                         Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
