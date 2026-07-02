@@ -18,14 +18,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.luisito.admin360.data.repository.AuthRepository
 import org.luisito.admin360.data.repository.LoginResult
@@ -38,14 +37,14 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-
-    val authRepo = AuthRepository()
-
+    
+    val authRepo = remember { AuthRepository() }
+    val scope = rememberCoroutineScope()
+    
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -53,22 +52,21 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-
             Text(
                 text = "🔐 Gestor360 Admin",
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.primary
             )
-
+            
             Spacer(modifier = Modifier.height(8.dp))
-
+            
             Text(
                 text = "Acceso exclusivo para administradores",
                 style = MaterialTheme.typography.bodyMedium
             )
-
+            
             Spacer(modifier = Modifier.height(32.dp))
-
+            
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -78,9 +76,9 @@ fun LoginScreen(
                     keyboardType = KeyboardType.Email
                 )
             )
-
+            
             Spacer(modifier = Modifier.height(12.dp))
-
+            
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -91,7 +89,7 @@ fun LoginScreen(
                     keyboardType = KeyboardType.Password
                 )
             )
-
+            
             error?.let {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -99,46 +97,41 @@ fun LoginScreen(
                     color = MaterialTheme.colorScheme.error
                 )
             }
-
+            
             Spacer(modifier = Modifier.height(24.dp))
-
+            
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading,
                 onClick = {
-
                     if (email.isNotBlank() && password.isNotBlank()) {
-
                         isLoading = true
                         error = null
-
-                        CoroutineScope(Dispatchers.Main).launch {
-
-                            when (val result = authRepo.login(email, password)) {
-
-                                is LoginResult.Success -> {
-                                    isLoading = false
-                                    onLoginSuccess()
+                        scope.launch {
+                            try {
+                                when (val result = authRepo.login(email, password)) {
+                                    is LoginResult.Success -> {
+                                        isLoading = false
+                                        onLoginSuccess()
+                                    }
+                                    is LoginResult.Error -> {
+                                        isLoading = false
+                                        error = result.message
+                                    }
                                 }
-
-                                is LoginResult.Error -> {
-                                    isLoading = false
-                                    error = result.message
-                                }
+                            } catch (e: Exception) {
+                                isLoading = false
+                                error = e.message ?: "Error inesperado"
                             }
                         }
                     }
                 }
             ) {
-
                 if (isLoading) {
-
                     CircularProgressIndicator(
                         modifier = Modifier.height(20.dp)
                     )
-
                 } else {
-
                     Text("Iniciar Sesión")
                 }
             }
