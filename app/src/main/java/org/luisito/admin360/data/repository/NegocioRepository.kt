@@ -49,7 +49,7 @@ class NegocioRepository {
                         "activo" to activo
                     )
                 ) {
-                    filter { Filter.eq("id", id) }
+                    filter { eq("id", id) }
                 }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -62,7 +62,7 @@ class NegocioRepository {
             SupabaseProvider.client
                 .from("clientes")
                 .delete {
-                    filter { Filter.eq("id", id) }
+                    filter { eq("id", id) }
                 }
             Result.success(Unit)
         } catch (e: Exception) {

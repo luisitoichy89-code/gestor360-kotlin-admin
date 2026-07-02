@@ -13,7 +13,7 @@ class LocalRepository {
             val response = SupabaseProvider.client
                 .from("locales")
                 .select {
-                    filter { Filter.eq("cliente_id", clienteId) }
+                    filter { eq("cliente_id", clienteId) }
                 }
             Result.success(response.decodeList<Local>())
         } catch (e: Exception) {
@@ -55,7 +55,7 @@ class LocalRepository {
                         "activo" to activo
                     )
                 ) {
-                    filter { Filter.eq("id", id) }
+                    filter { eq("id", id) }
                 }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -68,7 +68,7 @@ class LocalRepository {
             SupabaseProvider.client
                 .from("locales")
                 .delete {
-                    filter { Filter.eq("id", id) }
+                    filter { eq("id", id) }
                 }
             Result.success(Unit)
         } catch (e: Exception) {

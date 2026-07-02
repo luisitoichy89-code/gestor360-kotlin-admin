@@ -14,7 +14,7 @@ class LicenciaRepository {
             val response = SupabaseProvider.client
                 .from("licencias")
                 .select {
-                    filter { Filter.eq("cliente_id", clienteId) }
+                    filter { eq("cliente_id", clienteId) }
                 }
             Result.success(response.decodeList<Licencia>())
         } catch (e: Exception) {
@@ -64,7 +64,7 @@ class LicenciaRepository {
                         "expiracion" to nuevaExpiracion
                     )
                 ) {
-                    filter { Filter.eq("cliente_id", clienteId) }
+                    filter { eq("cliente_id", clienteId) }
                 }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -77,7 +77,7 @@ class LicenciaRepository {
             SupabaseProvider.client
                 .from("licencias")
                 .delete {
-                    filter { Filter.eq("id", id) }
+                    filter { eq("id", id) }
                 }
             Result.success(Unit)
         } catch (e: Exception) {
