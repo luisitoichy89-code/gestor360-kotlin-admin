@@ -11,6 +11,7 @@ import org.luisito.admin360.data.repository.LicenciaRepository
 
 data class LicenciaUiState(
     val isLoading: Boolean = false,
+    val isSaving: Boolean = false,
     val licencias: List<Licencia> = emptyList(),
     val error: String? = null
 )
@@ -22,52 +23,60 @@ class LicenciaViewModel(
     private val _uiState = MutableStateFlow(LicenciaUiState())
     val uiState: StateFlow<LicenciaUiState> = _uiState.asStateFlow()
 
+    private var clienteIdActual: String? = null
+
     fun loadLicencias(clienteId: String) {
+        clienteIdActual = clienteId
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            try {
-                val result = repository.getLicencias(clienteId)
-                result.onSuccess { list ->
-                    _uiState.value = _uiState.value.copy(isLoading = false, licencias = list)
-                }.onFailure { e ->
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
-                }
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
-            }
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            repository.getLicencias(clienteId)
+                .onSuccess { list -> _uiState.value = _uiState.value.copy(isLoading = false, licencias = list) }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Error al cargar licencias") }
         }
+    }
+
+    fun refrescar() {
+        clienteIdActual?.let { loadLicencias(it) }
     }
 
     fun activateLicense(clienteId: String, deviceId: String, dias: Int) {
         viewModelScope.launch {
-            try {
-                repository.activateLicense(clienteId, deviceId, dias)
-                loadLicencias(clienteId)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
-            }
+            _uiState.value = _uiState.value.copy(isSaving = true, error = null)
+            repository.activateLicense(clienteId, deviceId, dias)
+                .onSuccess { loadLicencias(clienteId) }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
+            _uiState.value = _uiState.value.copy(isSaving = false)
         }
     }
 
     fun renewLicense(clienteId: String, dias: Int) {
         viewModelScope.launch {
-            try {
-                repository.renewLicense(clienteId, dias)
-                loadLicencias(clienteId)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
-            }
+            _uiState.value = _uiState.value.copy(isSaving = true, error = null)
+            repository.renewLicense(clienteId, dias)
+                .onSuccess { loadLicencias(clienteId) }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
+            _uiState.value = _uiState.value.copy(isSaving = false)
         }
     }
 
-    fun deleteLicense(id: String, clienteId: String) {
+    fun toggleActivo(licencia: Licencia) {
+        val id = licencia.id ?: return
         viewModelScope.launch {
-            try {
-                repository.deleteLicense(id)
-                loadLicencias(clienteId)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
-            }
+            repository.setActivo(id, !licencia.activo)
+                .onSuccess { clienteIdActual?.let { loadLicencias(it) } }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
         }
+    }
+
+    fun deleteLicense(id: String) {
+        viewModelScope.launch {
+            repository.deleteLicense(id)
+                .onSuccess { clienteIdActual?.let { loadLicencias(it) } }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
+        }
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
     }
 }

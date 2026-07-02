@@ -1,7 +1,6 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.data.remote.SupabaseProvider
 import java.time.LocalDate
@@ -58,6 +57,21 @@ class LicenciaRepository {
         }
     }
     
+    suspend fun setActivo(id: String, activo: Boolean): Result<Unit> {
+        return try {
+            SupabaseProvider.client
+                .from("licencias")
+                .update(mapOf("activo" to activo)) {
+                    filter {
+                        eq("id", id)
+                    }
+                }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun deleteLicense(id: String): Result<Unit> {
         return try {
             SupabaseProvider.client

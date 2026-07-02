@@ -1,12 +1,11 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import org.luisito.admin360.data.models.Local
 import org.luisito.admin360.data.remote.SupabaseProvider
 
 class LocalRepository {
-    
+
     suspend fun getLocales(negocioId: String): Result<List<Local>> {
         return try {
             val response = SupabaseProvider.client
@@ -21,7 +20,7 @@ class LocalRepository {
             Result.failure(e)
         }
     }
-    
+
     suspend fun createLocal(
         nombre: String,
         direccion: String,
@@ -44,9 +43,9 @@ class LocalRepository {
             Result.failure(e)
         }
     }
-    
+
     suspend fun updateLocal(
-        id: String,
+        id: Int,
         nombre: String,
         direccion: String,
         telefono: String
@@ -70,8 +69,23 @@ class LocalRepository {
             Result.failure(e)
         }
     }
-    
-    suspend fun deleteLocal(id: String): Result<Unit> {
+
+    suspend fun setActivo(id: Int, activo: Boolean): Result<Unit> {
+        return try {
+            SupabaseProvider.client
+                .from("locales")
+                .update(mapOf("activo" to activo)) {
+                    filter {
+                        eq("id", id)
+                    }
+                }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteLocal(id: Int): Result<Unit> {
         return try {
             SupabaseProvider.client
                 .from("locales")

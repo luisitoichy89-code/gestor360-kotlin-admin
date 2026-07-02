@@ -11,6 +11,7 @@ import org.luisito.admin360.data.repository.UsuarioRepository
 
 data class UsuarioUiState(
     val isLoading: Boolean = false,
+    val isSaving: Boolean = false,
     val usuarios: List<User> = emptyList(),
     val error: String? = null
 )
@@ -22,20 +23,20 @@ class UsuarioViewModel(
     private val _uiState = MutableStateFlow(UsuarioUiState())
     val uiState: StateFlow<UsuarioUiState> = _uiState.asStateFlow()
 
+    private var clienteIdActual: String? = null
+
     fun loadUsuarios(clienteId: String) {
+        clienteIdActual = clienteId
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            try {
-                val result = repository.getUsuarios(clienteId)
-                result.onSuccess { list ->
-                    _uiState.value = _uiState.value.copy(isLoading = false, usuarios = list)
-                }.onFailure { e ->
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
-                }
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
-            }
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            repository.getUsuarios(clienteId)
+                .onSuccess { list -> _uiState.value = _uiState.value.copy(isLoading = false, usuarios = list) }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Error al cargar usuarios") }
         }
+    }
+
+    fun refrescar() {
+        clienteIdActual?.let { loadUsuarios(it) }
     }
 
     fun createUsuario(
@@ -47,12 +48,48 @@ class UsuarioViewModel(
         almacenId: String
     ) {
         viewModelScope.launch {
-            try {
-                repository.createUsuario(username, nombre, password, rol, clienteId, almacenId)
-                loadUsuarios(clienteId)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
-            }
+            _uiState.value = _uiState.value.copy(isSaving = true, error = null)
+            repository.createUsuario(username, nombre, password, rol, clienteId, almacenId)
+                .onSuccess { loadUsuarios(clienteId) }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
+            _uiState.value = _uiState.value.copy(isSaving = false)
         }
+    }
+
+    fun updateUsuario(
+        id: Int,
+        username: String,
+        nombre: String,
+        rol: String,
+        almacenId: String,
+        activo: Boolean
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSaving = true, error = null)
+            repository.updateUsuario(id, username, nombre, rol, almacenId, activo)
+                .onSuccess { clienteIdActual?.let { loadUsuarios(it) } }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
+            _uiState.value = _uiState.value.copy(isSaving = false)
+        }
+    }
+
+    fun toggleActivo(user: User) {
+        viewModelScope.launch {
+            repository.setActivo(user.id, !user.activo)
+                .onSuccess { clienteIdActual?.let { loadUsuarios(it) } }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
+        }
+    }
+
+    fun deleteUsuario(id: Int) {
+        viewModelScope.launch {
+            repository.deleteUsuario(id)
+                .onSuccess { clienteIdActual?.let { loadUsuarios(it) } }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
+        }
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
     }
 }

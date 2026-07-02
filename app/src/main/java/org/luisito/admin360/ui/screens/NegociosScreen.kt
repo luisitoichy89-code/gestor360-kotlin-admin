@@ -5,35 +5,70 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.ToggleOff
+import androidx.compose.material.icons.filled.ToggleOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.luisito.admin360.data.models.Negocio
+import org.luisito.admin360.ui.components.BuscadorField
+import org.luisito.admin360.ui.components.ConfirmarEliminarDialog
+import org.luisito.admin360.ui.components.EstadoCargando
+import org.luisito.admin360.ui.components.EstadoChip
+import org.luisito.admin360.ui.components.EstadoError
+import org.luisito.admin360.ui.components.EstadoVacio
 import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NegociosScreen(
     clienteId: String,
+    onAbrirLocales: (Negocio) -> Unit = {},
     viewModel: NegocioViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showDialog by remember { mutableStateOf(false) }
-    var nombre by remember { mutableStateOf("") }
-    var direccion by remember { mutableStateOf("") }
-    var telefono by remember { mutableStateOf("") }
-    
+    var query by remember { mutableStateOf("") }
+    var negocioEnEdicion by remember { mutableStateOf<Negocio?>(null) }
+    var mostrarFormulario by remember { mutableStateOf(false) }
+    var negocioAEliminar by remember { mutableStateOf<Negocio?>(null) }
+
     LaunchedEffect(clienteId) {
         viewModel.loadNegocios(clienteId)
     }
-    
+
+    val negociosFiltrados = remember(uiState.negocios, query) {
+        if (query.isBlank()) uiState.negocios
+        else uiState.negocios.filter { it.nombre_negocio.contains(query, ignoreCase = true) }
+    }
+
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Negocios") },
+                actions = {
+                    IconButton(onClick = { viewModel.refrescar() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refrescar")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Crear")
-            }
+            ExtendedFloatingActionButton(
+                onClick = {
+                    negocioEnEdicion = null
+                    mostrarFormulario = true
+                },
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("Nuevo negocio") }
+            )
         }
     ) { padding ->
         Column(
@@ -42,76 +77,173 @@ fun NegociosScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            BuscadorField(query = query, onQueryChange = { query = it }, placeholder = "Buscar negocio...")
+            Spacer(modifier = Modifier.height(12.dp))
+
             when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator()
-                }
-                uiState.error != null -> {
-                    Text(uiState.error ?: "", color = MaterialTheme.colorScheme.error)
-                }
-                else -> {
-                    if (uiState.negocios.isEmpty()) {
-                        Text("No hay negocios")
-                    } else {
-                        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(uiState.negocios) { negocio ->
-                                Card(modifier = Modifier.fillMaxWidth()) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(negocio.nombre_negocio)
-                                        Text(if (negocio.activo) "🟢 Activo" else "🔴 Inactivo")
-                                    }
-                                }
-                            }
-                        }
+                uiState.isLoading -> EstadoCargando()
+                uiState.error != null -> EstadoError(uiState.error ?: "Error desconocido") { viewModel.refrescar() }
+                negociosFiltrados.isEmpty() -> EstadoVacio(
+                    if (query.isBlank()) "Aún no hay negocios registrados" else "Sin resultados para \"$query\""
+                )
+                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(negociosFiltrados, key = { it.id }) { negocio ->
+                        NegocioCard(
+                            negocio = negocio,
+                            onClick = { onAbrirLocales(negocio) },
+                            onEditar = {
+                                negocioEnEdicion = negocio
+                                mostrarFormulario = true
+                            },
+                            onToggleActivo = { viewModel.toggleActivo(negocio) },
+                            onEliminar = { negocioAEliminar = negocio }
+                        )
                     }
+                    item { Spacer(modifier = Modifier.height(72.dp)) }
                 }
             }
         }
     }
-    
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("Crear negocio") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = nombre,
-                        onValueChange = { nombre = it },
-                        label = { Text("Nombre") }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = direccion,
-                        onValueChange = { direccion = it },
-                        label = { Text("Dirección") }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = telefono,
-                        onValueChange = { telefono = it },
-                        label = { Text("Teléfono") }
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
+
+    if (mostrarFormulario) {
+        NegocioFormDialog(
+            negocio = negocioEnEdicion,
+            isSaving = uiState.isSaving,
+            onDismiss = { mostrarFormulario = false },
+            onGuardar = { nombre, direccion, telefono ->
+                val existente = negocioEnEdicion
+                if (existente == null) {
                     viewModel.createNegocio(nombre, direccion, telefono, clienteId)
-                    showDialog = false
-                }) {
-                    Text("Crear")
+                } else {
+                    viewModel.updateNegocio(existente.id, nombre, direccion, telefono)
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text("Cancelar")
-                }
+                mostrarFormulario = false
             }
         )
     }
+
+    negocioAEliminar?.let { negocio ->
+        ConfirmarEliminarDialog(
+            nombre = negocio.nombre_negocio,
+            onConfirm = {
+                viewModel.deleteNegocio(negocio.id)
+                negocioAEliminar = null
+            },
+            onDismiss = { negocioAEliminar = null }
+        )
+    }
+}
+
+@Composable
+private fun NegocioCard(
+    negocio: Negocio,
+    onClick: () -> Unit,
+    onEditar: () -> Unit,
+    onToggleActivo: () -> Unit,
+    onEliminar: () -> Unit
+) {
+    var menuAbierto by remember { mutableStateOf(false) }
+
+    ElevatedCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.Storefront,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(negocio.nombre_negocio, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                EstadoChip(activo = negocio.activo)
+            }
+            Box {
+                IconButton(onClick = { menuAbierto = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Más opciones")
+                }
+                DropdownMenu(expanded = menuAbierto, onDismissRequest = { menuAbierto = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Editar") },
+                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                        onClick = { menuAbierto = false; onEditar() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(if (negocio.activo) "Desactivar" else "Activar") },
+                        leadingIcon = {
+                            Icon(
+                                if (negocio.activo) Icons.Default.ToggleOff else Icons.Default.ToggleOn,
+                                contentDescription = null
+                            )
+                        },
+                        onClick = { menuAbierto = false; onToggleActivo() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Eliminar") },
+                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                        onClick = { menuAbierto = false; onEliminar() }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NegocioFormDialog(
+    negocio: Negocio?,
+    isSaving: Boolean,
+    onDismiss: () -> Unit,
+    onGuardar: (nombre: String, direccion: String, telefono: String) -> Unit
+) {
+    var nombre by remember { mutableStateOf(negocio?.nombre_negocio ?: "") }
+    var direccion by remember { mutableStateOf(negocio?.direccion ?: "") }
+    var telefono by remember { mutableStateOf(negocio?.telefono ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (negocio == null) "Nuevo negocio" else "Editar negocio") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text("Nombre") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = direccion,
+                    onValueChange = { direccion = it },
+                    label = { Text("Dirección") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = telefono,
+                    onValueChange = { telefono = it },
+                    label = { Text("Teléfono") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = nombre.isNotBlank() && !isSaving,
+                onClick = { onGuardar(nombre.trim(), direccion.trim(), telefono.trim()) }
+            ) {
+                Text(if (isSaving) "Guardando..." else "Guardar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        }
+    )
 }
