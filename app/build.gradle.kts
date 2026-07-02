@@ -16,8 +16,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        val supabaseUrl = System.getenv("SUPABASE_URL") ?: project.findProperty("SUPABASE_URL") as String? ?: ""
-        val supabaseAnonKey = System.getenv("SUPABASE_ANON_KEY") ?: project.findProperty("SUPABASE_ANON_KEY") as String? ?: ""
+        val supabaseUrl = properties["SUPABASE_URL"] as String? ?: ""
+        val supabaseAnonKey = properties["SUPABASE_ANON_KEY"] as String? ?: ""
 
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
