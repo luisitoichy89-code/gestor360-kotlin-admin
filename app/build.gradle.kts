@@ -5,7 +5,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.serialization")
-    id("com.google.devtools.ksp") version "2.1.21-1.0.20"
+    id("com.google.devtools.ksp") version "2.1.21-2.0.1"
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
