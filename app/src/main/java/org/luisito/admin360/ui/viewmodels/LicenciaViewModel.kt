@@ -26,21 +26,20 @@ class LicenciaViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            when (val result = repository.getLicencias(clienteId)) {
-                is Result.Success -> {
+            repository.getLicencias(clienteId)
+                .onSuccess { list ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        licencias = result.value,
+                        licencias = list,
                         error = null
                     )
                 }
-                is Result.Failure -> {
+                .onFailure { e ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = result.exceptionOrNull()?.message
+                        error = e.message
                     )
                 }
-            }
         }
     }
 

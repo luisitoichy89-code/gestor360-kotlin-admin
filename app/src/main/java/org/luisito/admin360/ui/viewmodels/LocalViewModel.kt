@@ -26,21 +26,20 @@ class LocalViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            when (val result = repository.getLocales(clienteId)) {
-                is Result.Success -> {
+            repository.getLocales(clienteId)
+                .onSuccess { list ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        locales = result.value,
+                        locales = list,
                         error = null
                     )
                 }
-                is Result.Failure -> {
+                .onFailure { e ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = result.exceptionOrNull()?.message
+                        error = e.message
                     )
                 }
-            }
         }
     }
 
