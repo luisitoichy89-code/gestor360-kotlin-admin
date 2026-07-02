@@ -1,8 +1,6 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.filter
-import io.github.jan.supabase.postgrest.query.Filter
 import org.luisito.admin360.data.models.Local
 import org.luisito.admin360.data.remote.SupabaseProvider
 
@@ -12,51 +10,29 @@ class LocalRepository {
         return try {
             val response = SupabaseProvider.client
                 .from("locales")
-                .select {
-                    filter { eq("cliente_id", clienteId) }
-                }
+                .select { eq("cliente_id", clienteId) }
             Result.success(response.decodeList<Local>())
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun createLocal(
-        clienteId: String,
-        nombre: String
-    ): Result<Unit> {
+    suspend fun createLocal(clienteId: String, nombre: String): Result<Unit> {
         return try {
             SupabaseProvider.client
                 .from("locales")
-                .insert(
-                    mapOf(
-                        "cliente_id" to clienteId,
-                        "nombre" to nombre,
-                        "activo" to true
-                    )
-                )
+                .insert(mapOf("cliente_id" to clienteId, "nombre" to nombre, "activo" to true))
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun updateLocal(
-        id: String,
-        nombre: String,
-        activo: Boolean
-    ): Result<Unit> {
+    suspend fun updateLocal(id: String, nombre: String, activo: Boolean): Result<Unit> {
         return try {
             SupabaseProvider.client
                 .from("locales")
-                .update(
-                    mapOf(
-                        "nombre" to nombre,
-                        "activo" to activo
-                    )
-                ) {
-                    filter { eq("id", id) }
-                }
+                .update(mapOf("nombre" to nombre, "activo" to activo)) { eq("id", id) }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -67,9 +43,7 @@ class LocalRepository {
         return try {
             SupabaseProvider.client
                 .from("locales")
-                .delete {
-                    filter { eq("id", id) }
-                }
+                .delete { eq("id", id) }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

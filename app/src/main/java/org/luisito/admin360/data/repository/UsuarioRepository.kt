@@ -1,8 +1,6 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.filter
-import io.github.jan.supabase.postgrest.query.Filter
 import org.luisito.admin360.data.models.User
 import org.luisito.admin360.data.remote.SupabaseProvider
 
@@ -12,9 +10,7 @@ class UsuarioRepository {
         return try {
             val response = SupabaseProvider.client
                 .from("usuarios")
-                .select {
-                    filter { eq("cliente_id", clienteId) }
-                }
+                .select { eq("cliente_id", clienteId) }
             Result.success(response.decodeList<User>())
         } catch (e: Exception) {
             Result.failure(e)
@@ -68,9 +64,7 @@ class UsuarioRepository {
                         "almacen_id" to almacenId,
                         "activo" to activo
                     )
-                ) {
-                    filter { eq("id", id) }
-                }
+                ) { eq("id", id) }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -81,9 +75,7 @@ class UsuarioRepository {
         return try {
             SupabaseProvider.client
                 .from("usuarios")
-                .delete {
-                    filter { eq("id", id) }
-                }
+                .delete { eq("id", id) }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

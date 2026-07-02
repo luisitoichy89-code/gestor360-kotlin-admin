@@ -1,8 +1,6 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.filter
-import io.github.jan.supabase.postgrest.query.Filter
 import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.data.remote.SupabaseProvider
 import java.time.LocalDate
@@ -13,25 +11,16 @@ class LicenciaRepository {
         return try {
             val response = SupabaseProvider.client
                 .from("licencias")
-                .select {
-                    filter { eq("cliente_id", clienteId) }
-                }
+                .select { eq("cliente_id", clienteId) }
             Result.success(response.decodeList<Licencia>())
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun activateLicense(
-        clienteId: String,
-        deviceId: String,
-        dias: Int
-    ): Result<Unit> {
+    suspend fun activateLicense(clienteId: String, deviceId: String, dias: Int): Result<Unit> {
         return try {
-            val expiracion = LocalDate.now()
-                .plusDays(dias.toLong())
-                .toString()
-
+            val expiracion = LocalDate.now().plusDays(dias.toLong()).toString()
             SupabaseProvider.client
                 .from("licencias")
                 .insert(
@@ -48,24 +37,12 @@ class LicenciaRepository {
         }
     }
 
-    suspend fun renewLicense(
-        clienteId: String,
-        dias: Int
-    ): Result<Unit> {
+    suspend fun renewLicense(clienteId: String, dias: Int): Result<Unit> {
         return try {
-            val nuevaExpiracion = LocalDate.now()
-                .plusDays(dias.toLong())
-                .toString()
-
+            val nuevaExpiracion = LocalDate.now().plusDays(dias.toLong()).toString()
             SupabaseProvider.client
                 .from("licencias")
-                .update(
-                    mapOf(
-                        "expiracion" to nuevaExpiracion
-                    )
-                ) {
-                    filter { eq("cliente_id", clienteId) }
-                }
+                .update(mapOf("expiracion" to nuevaExpiracion)) { eq("cliente_id", clienteId) }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -76,9 +53,7 @@ class LicenciaRepository {
         return try {
             SupabaseProvider.client
                 .from("licencias")
-                .delete {
-                    filter { eq("id", id) }
-                }
+                .delete { eq("id", id) }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
