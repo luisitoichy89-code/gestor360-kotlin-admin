@@ -25,21 +25,12 @@ class UsuarioViewModel(
     fun loadUsuarios(clienteId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-
-            repository.getUsuarios(clienteId)
-                .onSuccess { list ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        usuarios = list,
-                        error = null
-                    )
-                }
-                .onFailure { e ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = e.message
-                    )
-                }
+            val result = repository.getUsuarios(clienteId)
+            result.onSuccess { list ->
+                _uiState.value = _uiState.value.copy(isLoading = false, usuarios = list)
+            }.onFailure { e ->
+                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+            }
         }
     }
 

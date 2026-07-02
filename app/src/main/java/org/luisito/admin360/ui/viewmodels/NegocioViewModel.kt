@@ -25,21 +25,12 @@ class NegocioViewModel(
     fun loadNegocios() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-
-            repository.getNegocios()
-                .onSuccess { list ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        negocios = list,
-                        error = null
-                    )
-                }
-                .onFailure { e ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = e.message
-                    )
-                }
+            val result = repository.getNegocios()
+            result.onSuccess { list ->
+                _uiState.value = _uiState.value.copy(isLoading = false, negocios = list)
+            }.onFailure { e ->
+                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+            }
         }
     }
 
