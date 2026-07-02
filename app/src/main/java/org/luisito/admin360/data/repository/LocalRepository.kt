@@ -1,49 +1,85 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import org.luisito.admin360.data.models.Local
 import org.luisito.admin360.data.remote.SupabaseProvider
 
 class LocalRepository {
-
-    suspend fun getLocales(clienteId: String): Result<List<Local>> {
+    
+    suspend fun getLocales(negocioId: String): Result<List<Local>> {
         return try {
             val response = SupabaseProvider.client
                 .from("locales")
-                .select { eq("cliente_id", clienteId) }
+                .select {
+                    filter {
+                        eq("negocio_id", negocioId)
+                    }
+                }
             Result.success(response.decodeList<Local>())
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-
-    suspend fun createLocal(clienteId: String, nombre: String): Result<Unit> {
+    
+    suspend fun createLocal(
+        nombre: String,
+        direccion: String,
+        telefono: String,
+        negocioId: String
+    ): Result<Unit> {
         return try {
             SupabaseProvider.client
                 .from("locales")
-                .insert(mapOf("cliente_id" to clienteId, "nombre" to nombre, "activo" to true))
+                .insert(
+                    mapOf(
+                        "nombre" to nombre,
+                        "direccion" to direccion,
+                        "telefono" to telefono,
+                        "negocio_id" to negocioId
+                    )
+                )
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-
-    suspend fun updateLocal(id: String, nombre: String, activo: Boolean): Result<Unit> {
+    
+    suspend fun updateLocal(
+        id: String,
+        nombre: String,
+        direccion: String,
+        telefono: String
+    ): Result<Unit> {
         return try {
             SupabaseProvider.client
                 .from("locales")
-                .update(mapOf("nombre" to nombre, "activo" to activo)) { eq("id", id) }
+                .update(
+                    mapOf(
+                        "nombre" to nombre,
+                        "direccion" to direccion,
+                        "telefono" to telefono
+                    )
+                ) {
+                    filter {
+                        eq("id", id)
+                    }
+                }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-
+    
     suspend fun deleteLocal(id: String): Result<Unit> {
         return try {
             SupabaseProvider.client
                 .from("locales")
-                .delete { eq("id", id) }
+                .delete {
+                    filter {
+                        eq("id", id)
+                    }
+                }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

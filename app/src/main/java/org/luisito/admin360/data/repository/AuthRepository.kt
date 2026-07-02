@@ -2,7 +2,7 @@ package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
-import org.luisito.admin360.data.SupabaseClientProvider
+import org.luisito.admin360.data.remote.SupabaseProvider
 
 sealed class LoginResult {
     data class Success(val userId: String) : LoginResult()
@@ -10,10 +10,9 @@ sealed class LoginResult {
 }
 
 class AuthRepository {
-
+    
     suspend fun login(email: String, password: String): LoginResult {
-        val supabase = SupabaseClientProvider.client
-        
+        val supabase = SupabaseProvider.client
         return runCatching {
             supabase.auth.signInWith(Email) {
                 this.email = email
@@ -24,10 +23,10 @@ class AuthRepository {
             LoginResult.Error(exception.message ?: "Error de conexión")
         }
     }
-
+    
     suspend fun sendPasswordRecovery(email: String): Boolean {
         return try {
-            val supabase = SupabaseClientProvider.client
+            val supabase = SupabaseProvider.client
             supabase.auth.resetPasswordForEmail(email)
             true
         } catch (e: Exception) {
