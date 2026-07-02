@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import org.luisito.admin360.ui.screens.LoginScreen
-import org.luisito.admin360.ui.screens.AdminDashboard
+import org.luisito.admin360.ui.screens.AdminDashboardScreen
 
 @Composable
 fun AppContent() {
@@ -21,6 +21,10 @@ fun AppContent() {
 
     } else {
 
-        AdminDashboard()
+        AdminDashboardScreen(
+            onNavigate = { route ->
+                // TODO: Implementar navegación
+            }
+        )
     }
 }
