@@ -1,7 +1,7 @@
-import io.github.jan.supabase.postgrest.query.eq
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.eq
 import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.data.remote.SupabaseProvider
 import java.time.LocalDate
@@ -13,11 +13,8 @@ class LicenciaRepository {
             val response = SupabaseProvider.client
                 .from("licencias")
                 .select {
-                    filter {
-                        eq("cliente_id", clienteId)
-                    }
+                    eq("cliente_id", clienteId)
                 }
-
             Result.success(response.decodeList<Licencia>())
         } catch (e: Exception) {
             Result.failure(e)
@@ -30,7 +27,6 @@ class LicenciaRepository {
         dias: Int
     ): Result<Unit> {
         return try {
-
             val expiracion = LocalDate.now()
                 .plusDays(dias.toLong())
                 .toString()
@@ -45,9 +41,7 @@ class LicenciaRepository {
                         "activo" to true
                     )
                 )
-
             Result.success(Unit)
-
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -57,9 +51,7 @@ class LicenciaRepository {
         clienteId: String,
         dias: Int
     ): Result<Unit> {
-
         return try {
-
             val nuevaExpiracion = LocalDate.now()
                 .plusDays(dias.toLong())
                 .toString()
@@ -71,32 +63,22 @@ class LicenciaRepository {
                         "expiracion" to nuevaExpiracion
                     )
                 ) {
-                    filter {
-                        eq("cliente_id", clienteId)
-                    }
+                    eq("cliente_id", clienteId)
                 }
-
             Result.success(Unit)
-
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
     suspend fun deleteLicense(id: String): Result<Unit> {
-
         return try {
-
             SupabaseProvider.client
                 .from("licencias")
                 .delete {
-                    filter {
-                        eq("id", id)
-                    }
+                    eq("id", id)
                 }
-
             Result.success(Unit)
-
         } catch (e: Exception) {
             Result.failure(e)
         }

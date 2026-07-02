@@ -1,7 +1,7 @@
-import io.github.jan.supabase.postgrest.query.eq
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.eq
 import org.luisito.admin360.data.models.Local
 import org.luisito.admin360.data.remote.SupabaseProvider
 
@@ -12,11 +12,8 @@ class LocalRepository {
             val response = SupabaseProvider.client
                 .from("locales")
                 .select {
-                    filter {
-                        eq("cliente_id", clienteId)
-                    }
+                    eq("cliente_id", clienteId)
                 }
-
             Result.success(response.decodeList<Local>())
         } catch (e: Exception) {
             Result.failure(e)
@@ -37,7 +34,6 @@ class LocalRepository {
                         "activo" to true
                     )
                 )
-
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -58,11 +54,8 @@ class LocalRepository {
                         "activo" to activo
                     )
                 ) {
-                    filter {
-                        eq("id", id)
-                    }
+                    eq("id", id)
                 }
-
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -74,11 +67,8 @@ class LocalRepository {
             SupabaseProvider.client
                 .from("locales")
                 .delete {
-                    filter {
-                        eq("id", id)
-                    }
+                    eq("id", id)
                 }
-
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

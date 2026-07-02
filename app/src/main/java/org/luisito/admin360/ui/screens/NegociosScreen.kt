@@ -1,5 +1,3 @@
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.*
 package org.luisito.admin360.ui.screens
 
 import androidx.compose.foundation.layout.*
@@ -13,17 +11,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.luisito.admin360.data.models.Negocio
+import org.luisito.admin360.data.repository.NegocioRepository
 import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NegociosScreen(
-    viewModel: NegocioViewModel = viewModel(),
-    onCreateNegocio: (String) -> Unit = {}
+    viewModel: NegocioViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    var newNombre by remember { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
+    var nombre by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         viewModel.loadNegocios()
@@ -36,37 +34,26 @@ fun NegociosScreen(
             }
         }
     ) { padding ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp)
         ) {
-
             when {
                 uiState.isLoading -> {
                     CircularProgressIndicator()
                 }
-
                 uiState.error != null -> {
-                    Text(
-                        text = uiState.error ?: "",
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Text(uiState.error ?: "", color = MaterialTheme.colorScheme.error)
                 }
-
                 else -> {
                     if (uiState.negocios.isEmpty()) {
                         Text("No hay negocios")
                     } else {
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(uiState.negocios) { negocio: Negocio ->
-                                Card(
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
+                        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(uiState.negocios) { negocio ->
+                                Card(modifier = Modifier.fillMaxWidth()) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -74,9 +61,7 @@ fun NegociosScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(negocio.nombre_negocio)
-                                        Text(
-                                            if (negocio.activo) "🟢 Activo" else "🔴 Inactivo"
-                                        )
+                                        Text(if (negocio.activo) "🟢 Activo" else "🔴 Inactivo")
                                     }
                                 }
                             }
@@ -93,16 +78,14 @@ fun NegociosScreen(
             title = { Text("Crear negocio") },
             text = {
                 OutlinedTextField(
-                    value = newNombre,
-                    onValueChange = { newNombre = it },
+                    value = nombre,
+                    onValueChange = { nombre = it },
                     label = { Text("Nombre") }
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
-                    onCreateNegocio(newNombre)
-                    viewModel.createNegocio(newNombre)
-                    newNombre = ""
+                    viewModel.createNegocio(nombre)
                     showDialog = false
                 }) {
                     Text("Crear")
