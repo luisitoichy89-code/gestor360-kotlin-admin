@@ -25,10 +25,14 @@ class NegocioViewModel(
     fun loadNegocios() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            val result = repository.getNegocios()
-            result.onSuccess { list ->
-                _uiState.value = _uiState.value.copy(isLoading = false, negocios = list)
-            }.onFailure { e ->
+            try {
+                val result = repository.getNegocios()
+                result.onSuccess { list ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, negocios = list)
+                }.onFailure { e ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                }
+            } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
             }
         }
@@ -36,8 +40,12 @@ class NegocioViewModel(
 
     fun createNegocio(nombre: String) {
         viewModelScope.launch {
-            repository.createNegocio(nombre)
-            loadNegocios()
+            try {
+                repository.createNegocio(nombre)
+                loadNegocios()
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+            }
         }
     }
 }

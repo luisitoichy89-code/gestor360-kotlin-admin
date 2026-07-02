@@ -25,10 +25,14 @@ class LocalViewModel(
     fun loadLocales(clienteId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            val result = repository.getLocales(clienteId)
-            result.onSuccess { list ->
-                _uiState.value = _uiState.value.copy(isLoading = false, locales = list)
-            }.onFailure { e ->
+            try {
+                val result = repository.getLocales(clienteId)
+                result.onSuccess { list ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, locales = list)
+                }.onFailure { e ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                }
+            } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
             }
         }
@@ -36,8 +40,12 @@ class LocalViewModel(
 
     fun createLocal(clienteId: String, nombre: String) {
         viewModelScope.launch {
-            repository.createLocal(clienteId, nombre)
-            loadLocales(clienteId)
+            try {
+                repository.createLocal(clienteId, nombre)
+                loadLocales(clienteId)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+            }
         }
     }
 }

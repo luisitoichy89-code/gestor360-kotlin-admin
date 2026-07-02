@@ -25,10 +25,14 @@ class LicenciaViewModel(
     fun loadLicencias(clienteId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            val result = repository.getLicencias(clienteId)
-            result.onSuccess { list ->
-                _uiState.value = _uiState.value.copy(isLoading = false, licencias = list)
-            }.onFailure { e ->
+            try {
+                val result = repository.getLicencias(clienteId)
+                result.onSuccess { list ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, licencias = list)
+                }.onFailure { e ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                }
+            } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
             }
         }
@@ -36,22 +40,34 @@ class LicenciaViewModel(
 
     fun activateLicense(clienteId: String, deviceId: String, dias: Int) {
         viewModelScope.launch {
-            repository.activateLicense(clienteId, deviceId, dias)
-            loadLicencias(clienteId)
+            try {
+                repository.activateLicense(clienteId, deviceId, dias)
+                loadLicencias(clienteId)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+            }
         }
     }
 
     fun renewLicense(clienteId: String, dias: Int) {
         viewModelScope.launch {
-            repository.renewLicense(clienteId, dias)
-            loadLicencias(clienteId)
+            try {
+                repository.renewLicense(clienteId, dias)
+                loadLicencias(clienteId)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+            }
         }
     }
 
     fun deleteLicense(id: String, clienteId: String) {
         viewModelScope.launch {
-            repository.deleteLicense(id)
-            loadLicencias(clienteId)
+            try {
+                repository.deleteLicense(id)
+                loadLicencias(clienteId)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+            }
         }
     }
 }

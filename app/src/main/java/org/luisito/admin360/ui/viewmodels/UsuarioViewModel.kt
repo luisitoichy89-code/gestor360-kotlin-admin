@@ -25,10 +25,14 @@ class UsuarioViewModel(
     fun loadUsuarios(clienteId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            val result = repository.getUsuarios(clienteId)
-            result.onSuccess { list ->
-                _uiState.value = _uiState.value.copy(isLoading = false, usuarios = list)
-            }.onFailure { e ->
+            try {
+                val result = repository.getUsuarios(clienteId)
+                result.onSuccess { list ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, usuarios = list)
+                }.onFailure { e ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                }
+            } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
             }
         }
@@ -43,8 +47,12 @@ class UsuarioViewModel(
         almacenId: String
     ) {
         viewModelScope.launch {
-            repository.createUsuario(username, nombre, password, rol, clienteId, almacenId)
-            loadUsuarios(clienteId)
+            try {
+                repository.createUsuario(username, nombre, password, rol, clienteId, almacenId)
+                loadUsuarios(clienteId)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+            }
         }
     }
 }
