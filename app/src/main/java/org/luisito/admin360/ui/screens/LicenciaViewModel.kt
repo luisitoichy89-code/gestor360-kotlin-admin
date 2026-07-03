@@ -6,70 +6,75 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.luisito.admin360.data.models.Local
-import org.luisito.admin360.data.repository.LocalRepository
+import org.luisito.admin360.data.models.Licencia
+import org.luisito.admin360.data.repository.LicenciaRepository
 
-data class LocalUiState(
+data class LicenciaUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
-    val locales: List<Local> = emptyList(),
+    val licencia: Licencia? = null,
     val error: String? = null
 )
 
-class LocalViewModel(
-    private val repository: LocalRepository = LocalRepository()
+class LicenciaViewModel(
+    private val repository: LicenciaRepository = LicenciaRepository()
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(LocalUiState())
-    val uiState: StateFlow<LocalUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(LicenciaUiState())
+    val uiState: StateFlow<LicenciaUiState> = _uiState.asStateFlow()
 
     private var clienteIdActual: String? = null
 
-    fun loadLocales(clienteId: String) {
+    fun loadLicencia(clienteId: String) {
         clienteIdActual = clienteId
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            repository.getLocales(clienteId)
-                .onSuccess { list -> _uiState.value = _uiState.value.copy(isLoading = false, locales = list) }
-                .onFailure { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Error al cargar locales") }
+            repository.getLicencia(clienteId)
+                .onSuccess { licencia -> _uiState.value = _uiState.value.copy(isLoading = false, licencia = licencia) }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Error al cargar la licencia") }
         }
     }
 
     fun refrescar() {
-        clienteIdActual?.let { loadLocales(it) }
+        clienteIdActual?.let { loadLicencia(it) }
     }
 
-    fun createLocal(nombre: String, clienteId: String) {
+    fun activarLicencia(deviceId: String, dias: Int) {
+        val clienteId = clienteIdActual ?: return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.createLocal(nombre, clienteId)
-                .onSuccess { loadLocales(clienteId) }
+            repository.activarLicencia(clienteId, deviceId, dias)
+                .onSuccess { loadLicencia(clienteId) }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
         }
     }
 
-    fun updateLocal(id: Long, nombre: String) {
+    fun renovarLicencia(dias: Int) {
+        val clienteId = clienteIdActual ?: return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.updateLocal(id, nombre)
-                .onSuccess { refrescar() }
+            repository.renovarLicencia(clienteId, dias)
+                .onSuccess { loadLicencia(clienteId) }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
         }
     }
 
-    fun toggleActivo(local: Local) {
+    fun toggleActivo() {
+        val licencia = _uiState.value.licencia ?: return
+        val id = licencia.id ?: return
         viewModelScope.launch {
-            repository.setActivo(local.id, !local.activo)
+            repository.setActivo(id, !licencia.activo)
                 .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
         }
     }
 
-    fun deleteLocal(id: Long) {
+    fun eliminarLicencia() {
+        val id = _uiState.value.licencia?.id ?: return
         viewModelScope.launch {
-            repository.deleteLocal(id)
+            repository.eliminarLicencia(id)
                 .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
         }

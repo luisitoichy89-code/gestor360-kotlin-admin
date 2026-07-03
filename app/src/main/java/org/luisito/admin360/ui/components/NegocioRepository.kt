@@ -1,47 +1,39 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
-import org.luisito.admin360.data.models.Local
+import org.luisito.admin360.data.models.Negocio
 import org.luisito.admin360.data.remote.SupabaseProvider
 
-class LocalRepository {
+/** Opera sobre la tabla real "clientes" (no existe tabla "negocios"). */
+class NegocioRepository {
 
-    suspend fun getLocales(clienteId: String): Result<List<Local>> {
+    suspend fun getAllNegocios(): Result<List<Negocio>> {
         return try {
             val response = SupabaseProvider.client
-                .from("locales")
-                .select {
-                    filter {
-                        eq("cliente_id", clienteId)
-                    }
-                }
-            Result.success(response.decodeList<Local>())
+                .from("clientes")
+                .select()
+            Result.success(response.decodeList<Negocio>())
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun createLocal(nombre: String, clienteId: String): Result<Unit> {
+    suspend fun createNegocio(nombre: String): Result<Unit> {
         return try {
             SupabaseProvider.client
-                .from("locales")
-                .insert(
-                    mapOf(
-                        "nombre" to nombre,
-                        "cliente_id" to clienteId
-                    )
-                )
+                .from("clientes")
+                .insert(mapOf("nombre_negocio" to nombre))
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun updateLocal(id: Long, nombre: String): Result<Unit> {
+    suspend fun updateNegocio(id: String, nombre: String): Result<Unit> {
         return try {
             SupabaseProvider.client
-                .from("locales")
-                .update(mapOf("nombre" to nombre)) {
+                .from("clientes")
+                .update(mapOf("nombre_negocio" to nombre)) {
                     filter {
                         eq("id", id)
                     }
@@ -52,10 +44,10 @@ class LocalRepository {
         }
     }
 
-    suspend fun setActivo(id: Long, activo: Boolean): Result<Unit> {
+    suspend fun setActivo(id: String, activo: Boolean): Result<Unit> {
         return try {
             SupabaseProvider.client
-                .from("locales")
+                .from("clientes")
                 .update(mapOf("activo" to activo)) {
                     filter {
                         eq("id", id)
@@ -67,10 +59,10 @@ class LocalRepository {
         }
     }
 
-    suspend fun deleteLocal(id: Long): Result<Unit> {
+    suspend fun deleteNegocio(id: String): Result<Unit> {
         return try {
             SupabaseProvider.client
-                .from("locales")
+                .from("clientes")
                 .delete {
                     filter {
                         eq("id", id)

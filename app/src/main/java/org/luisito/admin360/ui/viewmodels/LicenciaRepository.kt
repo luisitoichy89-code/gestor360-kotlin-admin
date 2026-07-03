@@ -1,34 +1,43 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
-import org.luisito.admin360.data.models.Local
+import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.data.remote.SupabaseProvider
+import java.time.LocalDate
 
-class LocalRepository {
+/**
+ * Tabla real "licencias": cliente_id uuid (FK a clientes.id), id bigint.
+ * Por reglas de negocio, cada cliente/negocio debe tener una sola licencia activa
+ * (no lo impone el esquema por sí solo; ver constraint UNIQUE sugerida en el chat).
+ */
+class LicenciaRepository {
 
-    suspend fun getLocales(clienteId: String): Result<List<Local>> {
+    suspend fun getLicencia(clienteId: String): Result<Licencia?> {
         return try {
             val response = SupabaseProvider.client
-                .from("locales")
+                .from("licencias")
                 .select {
                     filter {
                         eq("cliente_id", clienteId)
                     }
                 }
-            Result.success(response.decodeList<Local>())
+            Result.success(response.decodeList<Licencia>().firstOrNull())
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun createLocal(nombre: String, clienteId: String): Result<Unit> {
+    suspend fun activarLicencia(clienteId: String, deviceId: String, dias: Int): Result<Unit> {
         return try {
+            val expiracion = LocalDate.now().plusDays(dias.toLong()).toString()
             SupabaseProvider.client
-                .from("locales")
+                .from("licencias")
                 .insert(
                     mapOf(
-                        "nombre" to nombre,
-                        "cliente_id" to clienteId
+                        "cliente_id" to clienteId,
+                        "device_id" to deviceId,
+                        "expiracion" to expiracion,
+                        "activo" to true
                     )
                 )
             Result.success(Unit)
@@ -37,13 +46,19 @@ class LocalRepository {
         }
     }
 
-    suspend fun updateLocal(id: Long, nombre: String): Result<Unit> {
+    suspend fun renovarLicencia(clienteId: String, dias: Int): Result<Unit> {
         return try {
+            val nuevaExpiracion = LocalDate.now().plusDays(dias.toLong()).toString()
             SupabaseProvider.client
-                .from("locales")
-                .update(mapOf("nombre" to nombre)) {
+                .from("licencias")
+                .update(
+                    mapOf(
+                        "expiracion" to nuevaExpiracion,
+                        "activo" to true
+                    )
+                ) {
                     filter {
-                        eq("id", id)
+                        eq("cliente_id", clienteId)
                     }
                 }
             Result.success(Unit)
@@ -55,7 +70,7 @@ class LocalRepository {
     suspend fun setActivo(id: Long, activo: Boolean): Result<Unit> {
         return try {
             SupabaseProvider.client
-                .from("locales")
+                .from("licencias")
                 .update(mapOf("activo" to activo)) {
                     filter {
                         eq("id", id)
@@ -67,10 +82,10 @@ class LocalRepository {
         }
     }
 
-    suspend fun deleteLocal(id: Long): Result<Unit> {
+    suspend fun eliminarLicencia(id: Long): Result<Unit> {
         return try {
             SupabaseProvider.client
-                .from("locales")
+                .from("licencias")
                 .delete {
                     filter {
                         eq("id", id)
