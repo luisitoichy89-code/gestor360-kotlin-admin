@@ -1,15 +1,12 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.data.remote.SupabaseProvider
 import java.time.LocalDate
 
-/**
- * Tabla real "licencias": cliente_id uuid (FK a clientes.id), id bigint.
- * Por reglas de negocio, cada cliente/negocio debe tener una sola licencia activa
- * (no lo impone el esquema por sí solo; ver constraint UNIQUE sugerida en el chat).
- */
 class LicenciaRepository {
 
     suspend fun getLicencia(clienteId: String): Result<Licencia?> {
@@ -30,16 +27,15 @@ class LicenciaRepository {
     suspend fun activarLicencia(clienteId: String, deviceId: String, dias: Int): Result<Unit> {
         return try {
             val expiracion = LocalDate.now().plusDays(dias.toLong()).toString()
+            val payload = buildJsonObject {
+                put("cliente_id", clienteId)
+                put("device_id", deviceId)
+                put("expiracion", expiracion)
+                put("activo", true)
+            }
             SupabaseProvider.client
                 .from("licencias")
-                .insert(
-                    mapOf(
-                        "cliente_id" to clienteId,
-                        "device_id" to deviceId,
-                        "expiracion" to expiracion,
-                        "activo" to true
-                    )
-                )
+                .insert(payload)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -49,14 +45,13 @@ class LicenciaRepository {
     suspend fun renovarLicencia(clienteId: String, dias: Int): Result<Unit> {
         return try {
             val nuevaExpiracion = LocalDate.now().plusDays(dias.toLong()).toString()
+            val payload = buildJsonObject {
+                put("expiracion", nuevaExpiracion)
+                put("activo", true)
+            }
             SupabaseProvider.client
                 .from("licencias")
-                .update(
-                    mapOf(
-                        "expiracion" to nuevaExpiracion,
-                        "activo" to true
-                    )
-                ) {
+                .update(payload) {
                     filter {
                         eq("cliente_id", clienteId)
                     }
