@@ -37,10 +37,10 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    
+
     val authRepo = remember { AuthRepository() }
     val scope = rememberCoroutineScope()
-    
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -57,19 +57,16 @@ fun LoginScreen(
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.primary
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 text = "Acceso exclusivo para administradores",
                 style = MaterialTheme.typography.bodyMedium
             )
-            
-            Spacer(modifier = Modifier.height(4.dp))
-            )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -79,9 +76,9 @@ fun LoginScreen(
                     keyboardType = KeyboardType.Email
                 )
             )
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -92,7 +89,7 @@ fun LoginScreen(
                     keyboardType = KeyboardType.Password
                 )
             )
-            
+
             error?.let {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -100,9 +97,9 @@ fun LoginScreen(
                     color = MaterialTheme.colorScheme.error
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading,
