@@ -145,7 +145,7 @@ fun UsuariosScreen(
                 if (usuarioEnEdicion != null)
                     viewModel.updateUsuario(usuarioEnEdicion!!.id, username, nombre, rol, almacenId, activo)
                 else
-                    viewModel.createUsuario(username, nombre, pin, rol, clienteId, almacenId)
+                    viewModel.createUsuario(username, nombre, pin, rol, clienteId, almacenId, deviceId)
                 mostrarFormulario = false
             }
         )
@@ -192,13 +192,14 @@ private fun UsuarioFormDialog(
     isSaving: Boolean,
     locales: List<Local>,
     onDismiss: () -> Unit,
-    onGuardar: (username: String, nombre: String, pin: String, rol: String, almacenId: String, activo: Boolean) -> Unit
+    onGuardar: (username: String, nombre: String, pin: String, rol: String, almacenId: String, deviceId: String, activo: Boolean) -> Unit
 ) {
     var username by remember { mutableStateOf(usuario?.username ?: "") }
     var nombre by remember { mutableStateOf(usuario?.nombre ?: "") }
     var pin by remember { mutableStateOf("") }
     var rol by remember { mutableStateOf(usuario?.rol ?: "seller") }
     var almacenId by remember { mutableStateOf(usuario?.almacen_id ?: "1") }
+    var deviceId by remember { mutableStateOf(usuario?.device_id ?: "") }
     var activo by remember { mutableStateOf(usuario?.activo ?: true) }
     var rolMenuAbierto by remember { mutableStateOf(false) }
     var localMenuAbierto by remember { mutableStateOf(false) }
@@ -236,6 +237,8 @@ private fun UsuarioFormDialog(
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = deviceId, onValueChange = { deviceId = it }, label = { Text("Android ID del dispositivo") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 // Dropdown de Local (solo vendedor)
                 if (rol == "seller") {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -276,7 +279,7 @@ private fun UsuarioFormDialog(
         },
         confirmButton = {
             TextButton(enabled = formularioValido && !isSaving, onClick = {
-                onGuardar(username.trim(), nombre.trim(), pin, rol, almacenId, activo)
+                onGuardar(username.trim(), nombre.trim(), pin, rol, almacenId, deviceId, activo)
             }) { Text(if (isSaving) "Guardando..." else "Guardar") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
