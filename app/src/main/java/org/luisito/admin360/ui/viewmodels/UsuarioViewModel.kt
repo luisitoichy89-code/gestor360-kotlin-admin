@@ -45,11 +45,12 @@ class UsuarioViewModel(
         pin: String,
         rol: String,
         clienteId: String,
-        almacenId: String
+        almacenId: String,
+        deviceId: String = ""
     ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.createUsuario(username, nombre, pin, rol, clienteId, almacenId)
+            repository.createUsuario(username, nombre, pin, rol, clienteId, almacenId, deviceId)
                 .onSuccess { loadUsuarios(clienteId) }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
