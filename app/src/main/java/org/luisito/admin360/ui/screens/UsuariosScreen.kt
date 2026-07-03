@@ -93,17 +93,7 @@ fun UsuariosScreen(
             BuscadorField(query = query, onQueryChange = { query = it }, placeholder = "Buscar usuario...")
 
             when {
-                uiState.isLoading -> EstadoCargando()
-                uiState.error != null -> EstadoError(uiState.error ?: "Error desconocido") { viewModel.refrescar() }
-                usuariosFiltrados.isEmpty() -> EstadoVacio(
-                    if (query.isNotBlank()) "Sin resultados" else "No hay usuarios registrados",
-                    accionLabel = if (query.isNotBlank()) "Limpiar búsqueda" else "Crear usuario",
-                    onAccion = {
-                        if (query.isNotBlank()) query = ""
-                        else { usuarioEnEdicion = null; mostrarFormulario = true }
-                    }
-                )
-                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                usuariosFiltrados.isEmpty() -> EstadoVacio(mensaje = if (query.isNotBlank()) "Sin resultados" else "No hay usuarios registrados")
                     items(usuariosFiltrados, key = { it.id }) { usuario ->
                         UsuarioCard(
                             usuario = usuario,
@@ -139,9 +129,10 @@ fun UsuariosScreen(
 
     usuarioAEliminar?.let { usuario ->
         ConfirmarEliminarDialog(
-            titulo = "Eliminar usuario",
-            elemento = usuario.username,
-            onConfirmar = {
+                nombre = usuario.username,
+            
+            
+            onConfirm = {
                 viewModel.deleteUsuario(usuario.id)
                 usuarioAEliminar = null
             },
