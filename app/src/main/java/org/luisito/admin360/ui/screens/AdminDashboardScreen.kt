@@ -1,37 +1,18 @@
 package org.luisito.admin360.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Storefront
-import androidx.compose.material.icons.filled.VerifiedUser
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import org.luisito.admin360.data.models.Negocio
 
 private data class SeccionDashboard(
     val titulo: String,
@@ -40,71 +21,75 @@ private data class SeccionDashboard(
     val ruta: String
 )
 
-private val SECCIONES = listOf(
-    SeccionDashboard("Negocios", "Gestiona todos los negocios del sistema", Icons.Default.Business, "negocios"),
-    SeccionDashboard("Licencias", "Control global de licencias activas", Icons.Default.VerifiedUser, "licencias"),
-    SeccionDashboard("Usuarios", "Administradores y vendedores", Icons.Default.Group, "usuarios"),
-    SeccionDashboard("Locales", "Gestión por negocio", Icons.Default.Storefront, "locales")
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminDashboardScreen(
-    onNavigate: (String) -> Unit
+    negocioActivo: Negocio? = null,
+    onNavigate: (String) -> Unit,
+    onLogout: () -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Super Admin Dashboard") })
-        }
-    ) { padding ->
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            items(SECCIONES) { seccion ->
-                SeccionCard(seccion = seccion, onClick = { onNavigate(seccion.ruta) })
-            }
+    val secciones = buildList {
+        add(SeccionDashboard("Negocios", "Gestiona todos los negocios", Icons.Default.Business, "negocios"))
+        if (negocioActivo != null) {
+            add(SeccionDashboard(
+                "Gestionar ${negocioActivo.nombre_negocio}",
+                "Locales · Usuarios · Licencia",
+                Icons.Default.Settings,
+                "gestionar"
+            ))
         }
     }
-}
 
-@Composable
-private fun SeccionCard(seccion: SeccionDashboard, onClick: () -> Unit) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onClick
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(40.dp)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Super Admin") },
+                navigationIcon = {
+                    IconButton(onClick = onLogout) {
+                        Icon(Icons.Default.Logout, "Cerrar sesión")
+                    }
+                },
+                actions = {
+                    if (negocioActivo != null) {
+                        Text(
+                            text = negocioActivo.nombre_negocio,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        if (secciones.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Text("No hay secciones disponibles")
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxSize().padding(padding)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        seccion.icono,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                items(secciones) { seccion ->
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onNavigate(seccion.ruta) }
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(seccion.icono, null, modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(seccion.titulo, style = MaterialTheme.typography.titleSmall)
+                            Text(seccion.descripcion, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                        }
+                    }
                 }
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(seccion.titulo, style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                seccion.descripcion,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
