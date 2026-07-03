@@ -67,7 +67,6 @@ fun AppContent() {
 
         is Pantalla.Negocios -> NegociosScreen(
             onBack = { pantallaActual = Pantalla.Dashboard },
-            onBack = { pantallaActual = Pantalla.Dashboard },
             onSeleccionarNegocio = { negocio ->
                 negocioActivo = negocio
                 pantallaActual = when (pantalla.destinoPendiente) {
