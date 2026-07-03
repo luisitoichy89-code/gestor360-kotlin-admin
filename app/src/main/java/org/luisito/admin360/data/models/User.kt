@@ -2,6 +2,11 @@ package org.luisito.admin360.data.models
 
 import kotlinx.serialization.Serializable
 
+/**
+ * Coincide con la tabla real "usuarios": auth_id queda null para usuarios que solo
+ * acceden por PIN (sin cuenta en Supabase Auth). El primer acceso valida contra esta
+ * tabla + Android ID; después trabajan offline con caché local.
+ */
 @Serializable
 data class User(
     val id: Long,
@@ -11,7 +16,7 @@ data class User(
     val nombre: String? = null,
     val rol: String,
     val pin: String? = null,
-    val device_id: String? = null,
+    val android_id: String? = null,
     val almacen_id: String? = "1",
     val activo: Boolean = true,
     val created_at: String? = null

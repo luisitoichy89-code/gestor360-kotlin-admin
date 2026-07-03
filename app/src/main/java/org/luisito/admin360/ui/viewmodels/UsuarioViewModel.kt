@@ -46,11 +46,11 @@ class UsuarioViewModel(
         rol: String,
         clienteId: String,
         almacenId: String,
-        deviceId: String = ""
+        androidId: String
     ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.createUsuario(username, nombre, pin, rol, clienteId, almacenId, deviceId)
+            repository.createUsuario(username, nombre, pin, rol, clienteId, almacenId, androidId)
                 .onSuccess { loadUsuarios(clienteId) }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
@@ -63,11 +63,12 @@ class UsuarioViewModel(
         nombre: String,
         rol: String,
         almacenId: String,
+        androidId: String,
         activo: Boolean
     ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.updateUsuario(id, username, nombre, rol, almacenId, activo)
+            repository.updateUsuario(id, username, nombre, rol, almacenId, androidId, activo)
                 .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
