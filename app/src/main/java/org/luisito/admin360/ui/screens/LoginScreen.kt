@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.luisito.admin360.BuildConfig
 import org.luisito.admin360.data.repository.AuthRepository
 import org.luisito.admin360.data.repository.LoginResult
 
@@ -68,7 +69,14 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(4.dp))
             
             Text(
+                text = "URL: ${BuildConfig.SUPABASE_URL.take(40)}",
                 style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.outline
+            )
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 modifier = Modifier.fillMaxWidth(),

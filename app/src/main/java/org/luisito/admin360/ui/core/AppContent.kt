@@ -66,7 +66,7 @@ fun AppContent() {
         )
 
         is Pantalla.Negocios -> NegociosScreen(
-        is Pantalla.Negocios -> NegociosScreen(
+            onBack = { pantallaActual = Pantalla.Dashboard },
             onBack = { pantallaActual = Pantalla.Dashboard },
             onSeleccionarNegocio = { negocio ->
                 negocioActivo = negocio
@@ -98,7 +98,7 @@ fun AppContent() {
                 pantallaActual = Pantalla.Negocios(destinoPendiente = "usuarios")
             } else {
                 UsuariosScreen(
-                    clienteId = clienteId,
+                    clienteId = negocio?.id ?: "",
                     negocioNombre = negocio.nombre_negocio,
                     onBack = { pantallaActual = Pantalla.Negocios(destinoPendiente = null) }
                 )
