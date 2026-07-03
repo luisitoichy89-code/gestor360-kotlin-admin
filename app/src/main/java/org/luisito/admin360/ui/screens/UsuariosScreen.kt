@@ -5,16 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.ToggleOff
-import androidx.compose.material.icons.filled.ToggleOn
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,8 +14,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
+import org.luisito.admin360.data.models.Local
 import org.luisito.admin360.data.models.User
-import org.luisito.admin360.ui.components.BuscadorField
+import org.luisito.admin360.data.repository.LocalRepository
 import org.luisito.admin360.ui.components.ConfirmarEliminarDialog
 import org.luisito.admin360.ui.components.EstadoCargando
 import org.luisito.admin360.ui.components.EstadoChip
@@ -48,84 +41,68 @@ fun UsuariosScreen(
     var mostrarFormulario by remember { mutableStateOf(false) }
     var usuarioAEliminar by remember { mutableStateOf<User?>(null) }
     var usuarioParaCambiarPin by remember { mutableStateOf<User?>(null) }
+    var nuevoPin by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    val localRepo = remember { LocalRepository() }
+    var locales by remember { mutableStateOf<List<Local>>(emptyList()) }
 
     LaunchedEffect(clienteId) {
         viewModel.loadUsuarios(clienteId)
+        scope.launch { localRepo.getLocales(clienteId).onSuccess { locales = it } }
     }
 
-    val usuariosFiltrados = remember(uiState.usuarios, query) {
-        if (query.isBlank()) uiState.usuarios
-        else uiState.usuarios.filter {
-            it.username.contains(query, ignoreCase = true) ||
-                (it.nombre?.contains(query, ignoreCase = true) == true)
-        }
+    val usuariosFiltrados = uiState.usuarios.filter {
+        query.isBlank() || it.username.contains(query, true) || (it.nombre?.contains(query, true) == true)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Column {
-                        Text("Usuarios")
-                        if (negocioNombre.isNotBlank()) {
-                            Text(negocioNombre, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                },
-                navigationIcon = {
-                    if (onBack != null) {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
-                        }
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.refrescar() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refrescar")
-                    }
-                }
+                title = { Text(if (negocioNombre.isNotBlank()) "Usuarios · $negocioNombre" else "Usuarios") },
+                navigationIcon = { if (onBack != null) IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Volver") } },
+                actions = { IconButton(onClick = { viewModel.refrescar() }) { Icon(Icons.Default.Refresh, "Refrescar") } }
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = {
-                    usuarioEnEdicion = null
-                    mostrarFormulario = true
-                },
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Nuevo usuario") }
-            )
+            FloatingActionButton(onClick = { usuarioEnEdicion = null; mostrarFormulario = true }) {
+                Icon(Icons.Default.Add, "Crear usuario")
+            }
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            BuscadorField(query = query, onQueryChange = { query = it }, placeholder = "Buscar usuario...")
-            Spacer(modifier = Modifier.height(12.dp))
-
+        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 14.dp)) {
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("Buscar usuario...") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            Spacer(modifier = Modifier.height(8.dp))
             when {
                 uiState.isLoading -> EstadoCargando()
-                uiState.error != null -> EstadoError(uiState.error ?: "Error desconocido") { viewModel.refrescar() }
-                usuariosFiltrados.isEmpty() -> EstadoVacio(
-                    if (query.isBlank()) "Aún no hay usuarios registrados" else "Sin resultados para \"$query\""
-                )
-                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                uiState.error != null -> EstadoError(uiState.error!!) { viewModel.refrescar() }
+                usuariosFiltrados.isEmpty() -> EstadoVacio(mensaje = "No hay usuarios registrados")
+                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(usuariosFiltrados, key = { it.id }) { usuario ->
-                        UsuarioCard(
-                            usuario = usuario,
-                            onEditar = {
-                                usuarioEnEdicion = usuario
-                                mostrarFormulario = true
-                            },
-                            onCambiarPin = { usuarioParaCambiarPin = usuario },
-                            onToggleActivo = { viewModel.toggleActivo(usuario) },
-                            onEliminar = { usuarioAEliminar = usuario }
-                        )
+                        val localNombre = if (usuario.rol == "admin") "Todos" else {
+                            locales.find { it.id.toString() == usuario.almacen_id }?.nombre ?: "Local ${usuario.almacen_id}"
+                        }
+                        var menuAbierto by remember { mutableStateOf(false) }
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("👤 ${usuario.username}", style = MaterialTheme.typography.titleMedium)
+                                    Text("🏪 $localNombre · ${usuario.rol}", style = MaterialTheme.typography.bodySmall)
+                                    if (!usuario.android_id.isNullOrBlank()) Text("📱 ${usuario.android_id}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                                    EstadoChip(activo = usuario.activo)
+                                }
+                                Box {
+                                    IconButton(onClick = { menuAbierto = true }) { Icon(Icons.Default.MoreVert, "Más") }
+                                    DropdownMenu(expanded = menuAbierto, onDismissRequest = { menuAbierto = false }) {
+                                        DropdownMenuItem(text = { Text("Editar") }, leadingIcon = { Icon(Icons.Default.Edit, null) }, onClick = { menuAbierto = false; usuarioEnEdicion = usuario; mostrarFormulario = true })
+                                        DropdownMenuItem(text = { Text(if (usuario.activo) "Desactivar" else "Activar") }, leadingIcon = { Icon(if (usuario.activo) Icons.Default.ToggleOff else Icons.Default.ToggleOn, null) }, onClick = { menuAbierto = false; viewModel.toggleActivo(usuario) })
+                                        DropdownMenuItem(text = { Text("Cambiar PIN") }, leadingIcon = { Icon(Icons.Default.Key, null) }, onClick = { menuAbierto = false; usuarioParaCambiarPin = usuario; nuevoPin = "" })
+                                        DropdownMenuItem(text = { Text("Eliminar") }, leadingIcon = { Icon(Icons.Default.Delete, null) }, onClick = { menuAbierto = false; usuarioAEliminar = usuario })
+                                    }
+                                }
+                            }
+                        }
                     }
-                    item { Spacer(modifier = Modifier.height(72.dp)) }
                 }
             }
         }
@@ -135,104 +112,32 @@ fun UsuariosScreen(
         UsuarioFormDialog(
             usuario = usuarioEnEdicion,
             isSaving = uiState.isSaving,
+            locales = locales,
             onDismiss = { mostrarFormulario = false },
             onGuardar = { username, nombre, pin, rol, almacenId, androidId, activo ->
-                val existente = usuarioEnEdicion
-                if (existente == null) {
+                if (usuarioEnEdicion != null)
+                    viewModel.updateUsuario(usuarioEnEdicion!!.id, username, nombre, rol, almacenId, androidId, activo)
+                else
                     viewModel.createUsuario(username, nombre, pin, rol, clienteId, almacenId, androidId)
-                } else {
-                    viewModel.updateUsuario(existente.id, username, nombre, rol, almacenId, androidId, activo)
-                }
                 mostrarFormulario = false
             }
         )
     }
 
-    usuarioParaCambiarPin?.let { usuario ->
-        CambiarPinDialog(
-            isSaving = uiState.isSaving,
-            onDismiss = { usuarioParaCambiarPin = null },
-            onGuardar = { nuevoPin ->
-                viewModel.cambiarPin(usuario.id, nuevoPin)
-                usuarioParaCambiarPin = null
-            }
-        )
-    }
-
     usuarioAEliminar?.let { usuario ->
-        ConfirmarEliminarDialog(
-            nombre = usuario.nombre ?: usuario.username,
-            onConfirm = {
-                viewModel.deleteUsuario(usuario.id)
-                usuarioAEliminar = null
-            },
-            onDismiss = { usuarioAEliminar = null }
-        )
+        ConfirmarEliminarDialog(nombre = usuario.username, onConfirm = { viewModel.deleteUsuario(usuario.id); usuarioAEliminar = null }, onDismiss = { usuarioAEliminar = null })
     }
-}
 
-@Composable
-private fun UsuarioCard(
-    usuario: User,
-    onEditar: () -> Unit,
-    onCambiarPin: () -> Unit,
-    onToggleActivo: () -> Unit,
-    onEliminar: () -> Unit
-) {
-    var menuAbierto by remember { mutableStateOf(false) }
-
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                Icons.Default.Person,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(usuario.nombre?.takeIf { it.isNotBlank() } ?: usuario.username, style = MaterialTheme.typography.titleMedium)
-                Text("@${usuario.username} · ${usuario.rol}", style = MaterialTheme.typography.bodySmall)
-                Spacer(modifier = Modifier.height(4.dp))
-                EstadoChip(activo = usuario.activo)
-            }
-            Box {
-                IconButton(onClick = { menuAbierto = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Más opciones")
-                }
-                DropdownMenu(expanded = menuAbierto, onDismissRequest = { menuAbierto = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Editar") },
-                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                        onClick = { menuAbierto = false; onEditar() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Cambiar PIN") },
-                        leadingIcon = { Icon(Icons.Default.Key, contentDescription = null) },
-                        onClick = { menuAbierto = false; onCambiarPin() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(if (usuario.activo) "Desactivar" else "Activar") },
-                        leadingIcon = {
-                            Icon(
-                                if (usuario.activo) Icons.Default.ToggleOff else Icons.Default.ToggleOn,
-                                contentDescription = null
-                            )
-                        },
-                        onClick = { menuAbierto = false; onToggleActivo() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Eliminar") },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-                        onClick = { menuAbierto = false; onEliminar() }
-                    )
-                }
-            }
-        }
+    usuarioParaCambiarPin?.let { usuario ->
+        AlertDialog(
+            onDismissRequest = { usuarioParaCambiarPin = null },
+            title = { Text("Cambiar PIN · ${usuario.username}") },
+            text = {
+                OutlinedTextField(value = nuevoPin, onValueChange = { if (it.length <= 6) nuevoPin = it.filter { c -> c.isDigit() } }, label = { Text("Nuevo PIN (4 a 6 dígitos)") }, singleLine = true, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword), modifier = Modifier.fillMaxWidth())
+            },
+            confirmButton = { TextButton(enabled = nuevoPin.length in 4..6, onClick = { viewModel.cambiarPin(usuario.id, nuevoPin); usuarioParaCambiarPin = null }) { Text("Guardar") } },
+            dismissButton = { TextButton(onClick = { usuarioParaCambiarPin = null }) { Text("Cancelar") } }
+        )
     }
 }
 
@@ -241,92 +146,58 @@ private fun UsuarioCard(
 private fun UsuarioFormDialog(
     usuario: User?,
     isSaving: Boolean,
+    locales: List<Local>,
     onDismiss: () -> Unit,
     onGuardar: (username: String, nombre: String, pin: String, rol: String, almacenId: String, androidId: String, activo: Boolean) -> Unit
 ) {
     var username by remember { mutableStateOf(usuario?.username ?: "") }
     var nombre by remember { mutableStateOf(usuario?.nombre ?: "") }
     var pin by remember { mutableStateOf("") }
-    var rol by remember { mutableStateOf(usuario?.rol ?: ROLES.first()) }
-    var rolMenuAbierto by remember { mutableStateOf(false) }
+    var rol by remember { mutableStateOf(usuario?.rol ?: "seller") }
     var almacenId by remember { mutableStateOf(usuario?.almacen_id ?: "1") }
     var androidId by remember { mutableStateOf(usuario?.android_id ?: "") }
     var activo by remember { mutableStateOf(usuario?.activo ?: true) }
-
+    var rolMenuAbierto by remember { mutableStateOf(false) }
+    var localMenuAbierto by remember { mutableStateOf(false) }
     val esEdicion = usuario != null
     val pinValido = pin.length in 4..6 && pin.all { it.isDigit() }
-    val formularioValido = username.isNotBlank() && androidId.isNotBlank() && (esEdicion || pinValido)
+    val formularioValido = username.isNotBlank() && (esEdicion || pinValido)
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (esEdicion) "Editar usuario" else "Nuevo usuario") },
         text = {
             Column {
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text("Usuario") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Usuario") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = nombre,
-                    onValueChange = { nombre = it },
-                    label = { Text("Nombre completo") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre completo") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 if (!esEdicion) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = pin,
-                        onValueChange = { if (it.length <= 6) pin = it.filter { c -> c.isDigit() } },
-                        label = { Text("PIN (4 a 6 dígitos)") },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    OutlinedTextField(value = pin, onValueChange = { if (it.length <= 6) pin = it.filter { c -> c.isDigit() } }, label = { Text("PIN (4 a 6 dígitos)") }, singleLine = true, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword), modifier = Modifier.fillMaxWidth())
                 }
                 Spacer(modifier = Modifier.height(8.dp))
+                // Dropdown Rol
                 ExposedDropdownMenuBox(expanded = rolMenuAbierto, onExpandedChange = { rolMenuAbierto = it }) {
-                    OutlinedTextField(
-                        value = rol,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Rol") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = rolMenuAbierto) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                    )
+                    OutlinedTextField(value = rol, onValueChange = {}, readOnly = true, label = { Text("Rol") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = rolMenuAbierto) }, modifier = Modifier.fillMaxWidth().menuAnchor())
                     ExposedDropdownMenu(expanded = rolMenuAbierto, onDismissRequest = { rolMenuAbierto = false }) {
-                        ROLES.forEach { opcion ->
-                            DropdownMenuItem(
-                                text = { Text(opcion) },
-                                onClick = { rol = opcion; rolMenuAbierto = false }
-                            )
-                        }
+                        ROLES.forEach { opcion -> DropdownMenuItem(text = { Text(opcion) }, onClick = { rol = opcion; rolMenuAbierto = false }) }
                     }
                 }
+                // Dropdown Local (solo vendedor)
+                if (rol == "seller") {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ExposedDropdownMenuBox(expanded = localMenuAbierto, onExpandedChange = { localMenuAbierto = it }) {
+                        val localSeleccionado = locales.find { it.id.toString() == almacenId }
+                        OutlinedTextField(value = localSeleccionado?.nombre ?: "Seleccionar local...", onValueChange = {}, readOnly = true, label = { Text("Local asignado") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = localMenuAbierto) }, modifier = Modifier.fillMaxWidth().menuAnchor())
+                        ExposedDropdownMenu(expanded = localMenuAbierto, onDismissRequest = { localMenuAbierto = false }) {
+                            if (locales.isEmpty()) DropdownMenuItem(text = { Text("No hay locales") }, onClick = { localMenuAbierto = false })
+                            else locales.forEach { local -> DropdownMenuItem(text = { Text("🏪 ${local.nombre}") }, onClick = { almacenId = local.id.toString(); localMenuAbierto = false }) }
+                        }
+                    }
+                } else { LaunchedEffect(rol) { if (rol == "admin") almacenId = "1" } }
+                // Android ID
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = androidId,
-                    onValueChange = { androidId = it.trim() },
-                    label = { Text("Android ID del dispositivo") },
-                    supportingText = { Text("Solo este dispositivo podrá acceder mientras la licencia esté vigente") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = almacenId,
-                    onValueChange = { almacenId = it },
-                    label = { Text("ID de local / almacén") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                OutlinedTextField(value = androidId, onValueChange = { androidId = it.trim() }, label = { Text("Android ID del dispositivo") }, supportingText = { Text("Solo este dispositivo podrá acceder mientras la licencia esté vigente") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 if (esEdicion) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -337,55 +208,7 @@ private fun UsuarioFormDialog(
                 }
             }
         },
-        confirmButton = {
-            TextButton(
-                enabled = formularioValido && !isSaving,
-                onClick = {
-                    onGuardar(username.trim(), nombre.trim(), pin, rol, almacenId.trim(), androidId.trim(), activo)
-                }
-            ) {
-                Text(if (isSaving) "Guardando..." else "Guardar")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
-        }
-    )
-}
-
-@Composable
-private fun CambiarPinDialog(
-    isSaving: Boolean,
-    onDismiss: () -> Unit,
-    onGuardar: (String) -> Unit
-) {
-    var pin by remember { mutableStateOf("") }
-    val pinValido = pin.length in 4..6 && pin.all { it.isDigit() }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Cambiar PIN") },
-        text = {
-            OutlinedTextField(
-                value = pin,
-                onValueChange = { if (it.length <= 6) pin = it.filter { c -> c.isDigit() } },
-                label = { Text("Nuevo PIN (4 a 6 dígitos)") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        confirmButton = {
-            TextButton(
-                enabled = pinValido && !isSaving,
-                onClick = { onGuardar(pin) }
-            ) {
-                Text(if (isSaving) "Guardando..." else "Guardar")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
-        }
+        confirmButton = { TextButton(enabled = formularioValido && !isSaving, onClick = { onGuardar(username.trim(), nombre.trim(), pin, rol, almacenId, androidId.trim(), activo) }) { Text(if (isSaving) "Guardando..." else "Guardar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
     )
 }
