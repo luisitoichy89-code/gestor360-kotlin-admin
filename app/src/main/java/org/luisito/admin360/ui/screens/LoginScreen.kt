@@ -69,7 +69,6 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(4.dp))
             
             Text(
-                text = "URL: ${BuildConfig.SUPABASE_URL.take(40)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline
             )
