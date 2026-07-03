@@ -29,7 +29,8 @@ class UsuarioRepository {
         pin: String,
         rol: String,
         clienteId: String,
-        almacenId: String
+        almacenId: String,
+        deviceId: String = ""
     ): Result<Unit> {
         return try {
             val payload = buildJsonObject {
@@ -39,6 +40,7 @@ class UsuarioRepository {
                 put("rol", rol)
                 put("cliente_id", clienteId)
                 put("almacen_id", almacenId)
+                put("device_id", deviceId)
                 put("activo", true)
             }
             SupabaseProvider.client
