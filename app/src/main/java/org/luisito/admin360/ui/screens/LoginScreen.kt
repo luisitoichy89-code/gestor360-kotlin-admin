@@ -69,9 +69,6 @@ fun LoginScreen(
             
             Text(
                 style = MaterialTheme.typography.bodySmall,
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 modifier = Modifier.fillMaxWidth(),
