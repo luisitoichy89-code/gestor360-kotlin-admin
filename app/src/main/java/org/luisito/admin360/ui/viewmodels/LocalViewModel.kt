@@ -23,41 +23,38 @@ class LocalViewModel(
     private val _uiState = MutableStateFlow(LocalUiState())
     val uiState: StateFlow<LocalUiState> = _uiState.asStateFlow()
 
-    private var negocioIdActual: String? = null
+    private var clienteIdActual: String? = null
 
-    fun loadLocales(negocioId: String) {
-        negocioIdActual = negocioId
+    fun loadLocales(clienteId: String) {
+        clienteIdActual = clienteId
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            val result = repository.getLocales(negocioId)
-            result.onSuccess { list ->
-                _uiState.value = _uiState.value.copy(isLoading = false, locales = list)
-            }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Error al cargar locales")
-            }
+            repository.getLocales(clienteId)
+                .onSuccess { list -> _uiState.value = _uiState.value.copy(isLoading = false, locales = list) }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Error al cargar locales") }
         }
     }
 
     fun refrescar() {
-        negocioIdActual?.let { loadLocales(it) }
+        clienteIdActual?.let { loadLocales(it) }
     }
 
-    fun createLocal(nombre: String, direccion: String, telefono: String, negocioId: String) {
+    fun createLocal(nombre: String, clienteId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.createLocal(nombre, direccion, telefono, negocioId)
-                .onSuccess { loadLocales(negocioId) }
-                .onFailure { e -> _uiState.value = _uiState.value.copy(isSaving = false, error = e.message) }
+            repository.createLocal(nombre, clienteId)
+                .onSuccess { loadLocales(clienteId) }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
         }
     }
 
-    fun updateLocal(id: Int, nombre: String, direccion: String, telefono: String) {
+    fun updateLocal(id: Int, nombre: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.updateLocal(id, nombre, direccion, telefono)
-                .onSuccess { negocioIdActual?.let { loadLocales(it) } }
-                .onFailure { e -> _uiState.value = _uiState.value.copy(isSaving = false, error = e.message) }
+            repository.updateLocal(id, nombre)
+                .onSuccess { refrescar() }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
         }
     }
@@ -65,7 +62,7 @@ class LocalViewModel(
     fun toggleActivo(local: Local) {
         viewModelScope.launch {
             repository.setActivo(local.id, !local.activo)
-                .onSuccess { negocioIdActual?.let { loadLocales(it) } }
+                .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
         }
     }
@@ -73,7 +70,7 @@ class LocalViewModel(
     fun deleteLocal(id: Int) {
         viewModelScope.launch {
             repository.deleteLocal(id)
-                .onSuccess { negocioIdActual?.let { loadLocales(it) } }
+                .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
         }
     }

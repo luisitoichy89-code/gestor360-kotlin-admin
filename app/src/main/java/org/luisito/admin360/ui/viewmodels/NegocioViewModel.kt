@@ -23,12 +23,7 @@ class NegocioViewModel(
     private val _uiState = MutableStateFlow(NegocioUiState())
     val uiState: StateFlow<NegocioUiState> = _uiState.asStateFlow()
 
-    private var clienteIdActual: String? = null
-    private var modoTodos: Boolean = false
-
     fun loadTodosNegocios() {
-        modoTodos = true
-        clienteIdActual = null
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             repository.getAllNegocios()
@@ -37,35 +32,22 @@ class NegocioViewModel(
         }
     }
 
-    fun loadNegocios(clienteId: String) {
-        modoTodos = false
-        clienteIdActual = clienteId
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            repository.getNegocios(clienteId)
-                .onSuccess { list -> _uiState.value = _uiState.value.copy(isLoading = false, negocios = list) }
-                .onFailure { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Error al cargar negocios") }
-        }
-    }
+    fun refrescar() = loadTodosNegocios()
 
-    fun refrescar() {
-        if (modoTodos) loadTodosNegocios() else clienteIdActual?.let { loadNegocios(it) }
-    }
-
-    fun createNegocio(nombre: String, direccion: String, telefono: String, clienteId: String) {
+    fun createNegocio(nombre: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.createNegocio(nombre, direccion, telefono, clienteId)
+            repository.createNegocio(nombre)
                 .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
         }
     }
 
-    fun updateNegocio(id: String, nombre: String, direccion: String, telefono: String) {
+    fun updateNegocio(id: String, nombre: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.updateNegocio(id, nombre, direccion, telefono)
+            repository.updateNegocio(id, nombre)
                 .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)

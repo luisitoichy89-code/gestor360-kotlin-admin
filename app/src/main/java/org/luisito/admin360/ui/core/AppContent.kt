@@ -107,12 +107,11 @@ fun AppContent() {
 
         is Pantalla.Licencias -> {
             val negocio = negocioActivo
-            val clienteId = negocio?.cliente_id
-            if (negocio == null || clienteId == null) {
+            if (negocio == null) {
                 pantallaActual = Pantalla.Negocios(destinoPendiente = "licencias")
             } else {
                 LicenciasScreen(
-                    clienteId = clienteId,
+                    negocioId = negocio.id,
                     negocioNombre = negocio.nombre_negocio,
                     onBack = { pantallaActual = Pantalla.Negocios(destinoPendiente = null) }
                 )

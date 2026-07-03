@@ -5,9 +5,14 @@ import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.data.remote.SupabaseProvider
 import java.time.LocalDate
 
+/**
+ * Tabla real "licencias": cliente_id uuid (FK a clientes.id), id bigint.
+ * Por reglas de negocio, cada cliente/negocio debe tener una sola licencia activa
+ * (no lo impone el esquema por sí solo; ver constraint UNIQUE sugerida en el chat).
+ */
 class LicenciaRepository {
-    
-    suspend fun getLicencias(clienteId: String): Result<List<Licencia>> {
+
+    suspend fun getLicencia(clienteId: String): Result<Licencia?> {
         return try {
             val response = SupabaseProvider.client
                 .from("licencias")
@@ -16,13 +21,13 @@ class LicenciaRepository {
                         eq("cliente_id", clienteId)
                     }
                 }
-            Result.success(response.decodeList<Licencia>())
+            Result.success(response.decodeList<Licencia>().firstOrNull())
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-    
-    suspend fun activateLicense(clienteId: String, deviceId: String, dias: Int): Result<Unit> {
+
+    suspend fun activarLicencia(clienteId: String, deviceId: String, dias: Int): Result<Unit> {
         return try {
             val expiracion = LocalDate.now().plusDays(dias.toLong()).toString()
             SupabaseProvider.client
@@ -40,13 +45,18 @@ class LicenciaRepository {
             Result.failure(e)
         }
     }
-    
-    suspend fun renewLicense(clienteId: String, dias: Int): Result<Unit> {
+
+    suspend fun renovarLicencia(clienteId: String, dias: Int): Result<Unit> {
         return try {
             val nuevaExpiracion = LocalDate.now().plusDays(dias.toLong()).toString()
             SupabaseProvider.client
                 .from("licencias")
-                .update(mapOf("expiracion" to nuevaExpiracion)) {
+                .update(
+                    mapOf(
+                        "expiracion" to nuevaExpiracion,
+                        "activo" to true
+                    )
+                ) {
                     filter {
                         eq("cliente_id", clienteId)
                     }
@@ -56,8 +66,8 @@ class LicenciaRepository {
             Result.failure(e)
         }
     }
-    
-    suspend fun setActivo(id: String, activo: Boolean): Result<Unit> {
+
+    suspend fun setActivo(id: Long, activo: Boolean): Result<Unit> {
         return try {
             SupabaseProvider.client
                 .from("licencias")
@@ -72,7 +82,7 @@ class LicenciaRepository {
         }
     }
 
-    suspend fun deleteLicense(id: String): Result<Unit> {
+    suspend fun eliminarLicencia(id: Long): Result<Unit> {
         return try {
             SupabaseProvider.client
                 .from("licencias")

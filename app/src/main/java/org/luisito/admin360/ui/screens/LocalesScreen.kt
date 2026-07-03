@@ -125,12 +125,12 @@ fun LocalesScreen(
             local = localEnEdicion,
             isSaving = uiState.isSaving,
             onDismiss = { mostrarFormulario = false },
-            onGuardar = { nombre, direccion, telefono ->
+            onGuardar = { nombre ->
                 val existente = localEnEdicion
                 if (existente == null) {
-                    viewModel.createLocal(nombre, direccion, telefono, negocioId)
+                    viewModel.createLocal(nombre, negocioId)
                 } else {
-                    viewModel.updateLocal(existente.id, nombre, direccion, telefono)
+                    viewModel.updateLocal(existente.id, nombre)
                 }
                 mostrarFormulario = false
             }
@@ -173,9 +173,6 @@ private fun LocalCard(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(local.nombre, style = MaterialTheme.typography.titleMedium)
-                if (!local.direccion.isNullOrBlank()) {
-                    Text(local.direccion, style = MaterialTheme.typography.bodySmall)
-                }
                 Spacer(modifier = Modifier.height(4.dp))
                 EstadoChip(activo = local.activo)
             }
@@ -215,46 +212,26 @@ private fun LocalFormDialog(
     local: Local?,
     isSaving: Boolean,
     onDismiss: () -> Unit,
-    onGuardar: (nombre: String, direccion: String, telefono: String) -> Unit
+    onGuardar: (nombre: String) -> Unit
 ) {
     var nombre by remember { mutableStateOf(local?.nombre ?: "") }
-    var direccion by remember { mutableStateOf(local?.direccion ?: "") }
-    var telefono by remember { mutableStateOf(local?.telefono ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (local == null) "Nuevo local" else "Editar local") },
         text = {
-            Column {
-                OutlinedTextField(
-                    value = nombre,
-                    onValueChange = { nombre = it },
-                    label = { Text("Nombre") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = direccion,
-                    onValueChange = { direccion = it },
-                    label = { Text("Dirección") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = telefono,
-                    onValueChange = { telefono = it },
-                    label = { Text("Teléfono") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            OutlinedTextField(
+                value = nombre,
+                onValueChange = { nombre = it },
+                label = { Text("Nombre del local") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
         },
         confirmButton = {
             TextButton(
                 enabled = nombre.isNotBlank() && !isSaving,
-                onClick = { onGuardar(nombre.trim(), direccion.trim(), telefono.trim()) }
+                onClick = { onGuardar(nombre.trim()) }
             ) {
                 Text(if (isSaving) "Guardando..." else "Guardar")
             }

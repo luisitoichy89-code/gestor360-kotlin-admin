@@ -6,13 +6,13 @@ import org.luisito.admin360.data.remote.SupabaseProvider
 
 class LocalRepository {
 
-    suspend fun getLocales(negocioId: String): Result<List<Local>> {
+    suspend fun getLocales(clienteId: String): Result<List<Local>> {
         return try {
             val response = SupabaseProvider.client
                 .from("locales")
                 .select {
                     filter {
-                        eq("negocio_id", negocioId)
+                        eq("cliente_id", clienteId)
                     }
                 }
             Result.success(response.decodeList<Local>())
@@ -21,21 +21,14 @@ class LocalRepository {
         }
     }
 
-    suspend fun createLocal(
-        nombre: String,
-        direccion: String,
-        telefono: String,
-        negocioId: String
-    ): Result<Unit> {
+    suspend fun createLocal(nombre: String, clienteId: String): Result<Unit> {
         return try {
             SupabaseProvider.client
                 .from("locales")
                 .insert(
                     mapOf(
                         "nombre" to nombre,
-                        "direccion" to direccion,
-                        "telefono" to telefono,
-                        "negocio_id" to negocioId
+                        "cliente_id" to clienteId
                     )
                 )
             Result.success(Unit)
@@ -44,22 +37,11 @@ class LocalRepository {
         }
     }
 
-    suspend fun updateLocal(
-        id: Int,
-        nombre: String,
-        direccion: String,
-        telefono: String
-    ): Result<Unit> {
+    suspend fun updateLocal(id: Int, nombre: String): Result<Unit> {
         return try {
             SupabaseProvider.client
                 .from("locales")
-                .update(
-                    mapOf(
-                        "nombre" to nombre,
-                        "direccion" to direccion,
-                        "telefono" to telefono
-                    )
-                ) {
+                .update(mapOf("nombre" to nombre)) {
                     filter {
                         eq("id", id)
                     }

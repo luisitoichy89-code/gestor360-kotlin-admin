@@ -29,15 +29,13 @@ import org.luisito.admin360.ui.components.EstadoVacio
 import org.luisito.admin360.ui.viewmodels.NegocioViewModel
 
 /**
- * Vista principal del superadmin. Si [clienteId] es null se listan TODOS los negocios
- * del sistema (modo superadmin). Si viene un clienteId se listan solo los de ese cliente.
- * Al tocar un negocio, [onSeleccionarNegocio] lo marca como "negocio activo" en AppContent,
+ * Vista principal del superadmin: lista TODOS los negocios (tabla "clientes").
+ * Al tocar uno, [onSeleccionarNegocio] lo marca como "negocio activo" en AppContent,
  * que luego se usa como contexto para Locales, Usuarios y Licencias.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NegociosScreen(
-    clienteId: String? = null,
     onSeleccionarNegocio: (Negocio) -> Unit = {},
     onBack: (() -> Unit)? = null,
     viewModel: NegocioViewModel = viewModel()
@@ -48,8 +46,8 @@ fun NegociosScreen(
     var mostrarFormulario by remember { mutableStateOf(false) }
     var negocioAEliminar by remember { mutableStateOf<Negocio?>(null) }
 
-    LaunchedEffect(clienteId) {
-        if (clienteId == null) viewModel.loadTodosNegocios() else viewModel.loadNegocios(clienteId)
+    LaunchedEffect(Unit) {
+        viewModel.loadTodosNegocios()
     }
 
     val negociosFiltrados = remember(uiState.negocios, query) {
@@ -129,15 +127,14 @@ fun NegociosScreen(
     if (mostrarFormulario) {
         NegocioFormDialog(
             negocio = negocioEnEdicion,
-            clienteIdFijo = clienteId,
             isSaving = uiState.isSaving,
             onDismiss = { mostrarFormulario = false },
-            onGuardar = { nombre, direccion, telefono, clienteIdDestino ->
+            onGuardar = { nombre ->
                 val existente = negocioEnEdicion
                 if (existente == null) {
-                    viewModel.createNegocio(nombre, direccion, telefono, clienteIdDestino)
+                    viewModel.createNegocio(nombre)
                 } else {
-                    viewModel.updateNegocio(existente.id, nombre, direccion, telefono)
+                    viewModel.updateNegocio(existente.id, nombre)
                 }
                 mostrarFormulario = false
             }
@@ -218,64 +215,28 @@ private fun NegocioCard(
 @Composable
 private fun NegocioFormDialog(
     negocio: Negocio?,
-    clienteIdFijo: String?,
     isSaving: Boolean,
     onDismiss: () -> Unit,
-    onGuardar: (nombre: String, direccion: String, telefono: String, clienteId: String) -> Unit
+    onGuardar: (nombre: String) -> Unit
 ) {
     var nombre by remember { mutableStateOf(negocio?.nombre_negocio ?: "") }
-    var direccion by remember { mutableStateOf(negocio?.direccion ?: "") }
-    var telefono by remember { mutableStateOf(negocio?.telefono ?: "") }
-    var clienteId by remember { mutableStateOf(negocio?.cliente_id ?: clienteIdFijo ?: "") }
-
-    // El cliente_id solo se pide al crear un negocio nuevo en modo "todos los negocios"
-    // (superadmin sin un cliente fijo). Al editar, el cliente ya viene definido.
-    val pedirClienteId = negocio == null && clienteIdFijo == null
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (negocio == null) "Nuevo negocio" else "Editar negocio") },
         text = {
-            Column {
-                OutlinedTextField(
-                    value = nombre,
-                    onValueChange = { nombre = it },
-                    label = { Text("Nombre") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = direccion,
-                    onValueChange = { direccion = it },
-                    label = { Text("Dirección") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = telefono,
-                    onValueChange = { telefono = it },
-                    label = { Text("Teléfono") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (pedirClienteId) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = clienteId,
-                        onValueChange = { clienteId = it },
-                        label = { Text("Cliente ID (dueño del negocio)") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
+            OutlinedTextField(
+                value = nombre,
+                onValueChange = { nombre = it },
+                label = { Text("Nombre del negocio") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
         },
         confirmButton = {
             TextButton(
-                enabled = nombre.isNotBlank() && (!pedirClienteId || clienteId.isNotBlank()) && !isSaving,
-                onClick = { onGuardar(nombre.trim(), direccion.trim(), telefono.trim(), clienteId.trim()) }
+                enabled = nombre.isNotBlank() && !isSaving,
+                onClick = { onGuardar(nombre.trim()) }
             ) {
                 Text(if (isSaving) "Guardando..." else "Guardar")
             }

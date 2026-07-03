@@ -12,7 +12,7 @@ import org.luisito.admin360.data.repository.LicenciaRepository
 data class LicenciaUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
-    val licencias: List<Licencia> = emptyList(),
+    val licencia: Licencia? = null,
     val error: String? = null
 )
 
@@ -25,53 +25,57 @@ class LicenciaViewModel(
 
     private var clienteIdActual: String? = null
 
-    fun loadLicencias(clienteId: String) {
+    fun loadLicencia(clienteId: String) {
         clienteIdActual = clienteId
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            repository.getLicencias(clienteId)
-                .onSuccess { list -> _uiState.value = _uiState.value.copy(isLoading = false, licencias = list) }
-                .onFailure { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Error al cargar licencias") }
+            repository.getLicencia(clienteId)
+                .onSuccess { licencia -> _uiState.value = _uiState.value.copy(isLoading = false, licencia = licencia) }
+                .onFailure { e -> _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Error al cargar la licencia") }
         }
     }
 
     fun refrescar() {
-        clienteIdActual?.let { loadLicencias(it) }
+        clienteIdActual?.let { loadLicencia(it) }
     }
 
-    fun activateLicense(clienteId: String, deviceId: String, dias: Int) {
+    fun activarLicencia(deviceId: String, dias: Int) {
+        val clienteId = clienteIdActual ?: return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.activateLicense(clienteId, deviceId, dias)
-                .onSuccess { loadLicencias(clienteId) }
+            repository.activarLicencia(clienteId, deviceId, dias)
+                .onSuccess { loadLicencia(clienteId) }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
         }
     }
 
-    fun renewLicense(clienteId: String, dias: Int) {
+    fun renovarLicencia(dias: Int) {
+        val clienteId = clienteIdActual ?: return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.renewLicense(clienteId, dias)
-                .onSuccess { loadLicencias(clienteId) }
+            repository.renovarLicencia(clienteId, dias)
+                .onSuccess { loadLicencia(clienteId) }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
         }
     }
 
-    fun toggleActivo(licencia: Licencia) {
+    fun toggleActivo() {
+        val licencia = _uiState.value.licencia ?: return
         val id = licencia.id ?: return
         viewModelScope.launch {
             repository.setActivo(id, !licencia.activo)
-                .onSuccess { clienteIdActual?.let { loadLicencias(it) } }
+                .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
         }
     }
 
-    fun deleteLicense(id: String) {
+    fun eliminarLicencia() {
+        val id = _uiState.value.licencia?.id ?: return
         viewModelScope.launch {
-            repository.deleteLicense(id)
-                .onSuccess { clienteIdActual?.let { loadLicencias(it) } }
+            repository.eliminarLicencia(id)
+                .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
         }
     }
