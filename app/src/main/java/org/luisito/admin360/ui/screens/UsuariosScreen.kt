@@ -97,6 +97,9 @@ fun UsuariosScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text("👤 ${usuario.username}", style = MaterialTheme.typography.titleMedium)
                                     Text("🏪 $localNombre · ${usuario.rol}", style = MaterialTheme.typography.bodySmall)
+                                    if (!usuario.device_id.isNullOrBlank()) {
+                                        Text("📱 ${usuario.device_id}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                                    }
                                     EstadoChip(activo = usuario.activo)
                                 }
                                 Box {
@@ -141,7 +144,7 @@ fun UsuariosScreen(
             isSaving = uiState.isSaving,
             locales = locales,
             onDismiss = { mostrarFormulario = false },
-            onGuardar = { username, nombre, pin, rol, almacenId, activo ->
+            onGuardar = { username, nombre, pin, rol, almacenId, deviceId, activo ->
                 if (usuarioEnEdicion != null)
                     viewModel.updateUsuario(usuarioEnEdicion!!.id, username, nombre, rol, almacenId, activo)
                 else
@@ -237,8 +240,6 @@ private fun UsuarioFormDialog(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = deviceId, onValueChange = { deviceId = it }, label = { Text("Android ID del dispositivo") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 // Dropdown de Local (solo vendedor)
                 if (rol == "seller") {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -267,6 +268,15 @@ private fun UsuarioFormDialog(
                 } else {
                     LaunchedEffect(rol) { if (rol == "admin") almacenId = "1" }
                 }
+                // Android ID
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = deviceId,
+                    onValueChange = { deviceId = it },
+                    label = { Text("Android ID del dispositivo") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 if (esEdicion) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -279,7 +289,7 @@ private fun UsuarioFormDialog(
         },
         confirmButton = {
             TextButton(enabled = formularioValido && !isSaving, onClick = {
-                onGuardar(username.trim(), nombre.trim(), pin, rol, almacenId, deviceId, activo)
+                onGuardar(username.trim(), nombre.trim(), pin, rol, almacenId, deviceId.trim(), activo)
             }) { Text(if (isSaving) "Guardando..." else "Guardar") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
