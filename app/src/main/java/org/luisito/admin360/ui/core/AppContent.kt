@@ -66,7 +66,7 @@ fun AppContent() {
         )
 
         is Pantalla.Negocios -> NegociosScreen(
-            clienteId = null, // superadmin: ve todos los negocios del sistema
+            
             onBack = { pantallaActual = Pantalla.Dashboard },
             onSeleccionarNegocio = { negocio ->
                 negocioActivo = negocio
@@ -93,7 +93,7 @@ fun AppContent() {
 
         is Pantalla.Usuarios -> {
             val negocio = negocioActivo
-            val clienteId = negocio?.cliente_id
+            val clienteId = negocio?.id
             if (negocio == null || clienteId == null) {
                 pantallaActual = Pantalla.Negocios(destinoPendiente = "usuarios")
             } else {
