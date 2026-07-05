@@ -132,7 +132,6 @@ fun TicketsAdminScreen(onBack: () -> Unit, vm: TicketAdminViewModel = viewModel(
                                     Column(Modifier.weight(1f)) {
                                         Text("#${t.id} - ${t.usuario_nombre}", fontWeight = FontWeight.Bold)
                                         Text(t.updated_at?.take(16)?.replace("T", " ") ?: "")
-                                        if (!t.telefono_contacto.isNullOrBlank()) Text("📞 ${t.telefono_contacto}")
                                     }
                                     Surface(color = color, shape = MaterialTheme.shapes.small) {
                                         Text(t.estado.replace("_", " "), Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary)
