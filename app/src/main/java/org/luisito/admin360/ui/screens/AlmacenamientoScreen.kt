@@ -55,7 +55,7 @@ class AlmacenamientoViewModel : ViewModel() {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
                 val response = SupabaseProvider.client.postgrest
-                    .rpc("get_espacio_negocios", buildJsonObject {})
+                    .rpc("get_espacio_negocios", mapOf<String, String>())
                     .decodeList<EspacioNegocio>()
                 val total = response.sumOf { it.espacio_estimado_mb }
                 _uiState.value = _uiState.value.copy(
