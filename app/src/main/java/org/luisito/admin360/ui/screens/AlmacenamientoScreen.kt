@@ -33,7 +33,8 @@ data class EspacioNegocio(
 data class AlmacenamientoUiState(
     val isLoading: Boolean = false,
     val negocios: List<EspacioNegocio> = emptyList(),
-    val totalMb: Double = 500.0, val usadoMb: Double = 0.0,
+    val totalUsadoMb: Double = 0.0,
+    val totalMb: Double = 500.0,
     val error: String? = null
 )
 
@@ -46,8 +47,12 @@ class AlmacenamientoViewModel : ViewModel() {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
                 val response = SupabaseProvider.client.postgrest.rpc("get_espacio_negocios").decodeList<EspacioNegocio>()
-                val total = response.sumOf { it.espacio_estimado_mb }
-                _uiState.value = _uiState.value.copy(isLoading = false, negocios = response, usadoMb = total)
+                val storageResult = SupabaseProvider.client.postgrest.rpc("get_storage_public_mb").decodeAs<Double>()
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    negocios = response,
+                    totalUsadoMb = storageResult
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
             }
@@ -62,15 +67,15 @@ fun AlmacenamientoScreen(onBack: () -> Unit, viewModel: AlmacenamientoViewModel 
     var query by remember { mutableStateOf("") }
     LaunchedEffect(Unit) { viewModel.cargar() }
     val filtrados = uiState.negocios.filter { query.isBlank() || it.nombre_negocio.contains(query, true) }
-    val porcentajeUsado = if (uiState.totalMb > 0) (uiState.usadoMb / uiState.totalMb) else 0.0
-    val libreMb = uiState.totalMb - uiState.usadoMb
+    val porcentajeUsado = if (uiState.totalMb > 0) (uiState.totalUsadoMb / uiState.totalMb) else 0.0
+    val libreMb = uiState.totalMb - uiState.totalUsadoMb
 
     Scaffold(topBar = { TopAppBar(title = { Text("Almacenamiento") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Volver") } }) }) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                        Text("Usado: ${"%.1f".format(uiState.usadoMb)} MB", fontWeight = FontWeight.Bold)
+                        Text("Usado: ${"%.1f".format(uiState.totalUsadoMb)} MB", fontWeight = FontWeight.Bold)
                         Text("Libre: ${"%.1f".format(libreMb)} MB", color = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
