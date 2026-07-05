@@ -8,6 +8,7 @@ private sealed class Pantalla {
     object Dashboard : Pantalla()
     object Negocios : Pantalla()
     data class NegocioDetail(val negocio: Negocio) : Pantalla()
+    object Almacenamiento : Pantalla()
 }
 
 @Composable
@@ -27,9 +28,8 @@ fun AppContent() {
             onNavigate = { route ->
                 pantallaActual = when (route) {
                     "negocios" -> Pantalla.Negocios
-                    "gestionar" -> {
-                        negocioActivo?.let { Pantalla.NegocioDetail(it) } ?: Pantalla.Dashboard
-                    }
+                    "almacenamiento" -> Pantalla.Almacenamiento
+                    "gestionar" -> negocioActivo?.let { Pantalla.NegocioDetail(it) } ?: Pantalla.Dashboard
                     else -> Pantalla.Dashboard
                 }
             },
@@ -50,6 +50,10 @@ fun AppContent() {
 
         is Pantalla.NegocioDetail -> NegocioDetailScreen(
             negocio = pantalla.negocio,
+            onBack = { pantallaActual = Pantalla.Dashboard }
+        )
+
+        is Pantalla.Almacenamiento -> AlmacenamientoScreen(
             onBack = { pantallaActual = Pantalla.Dashboard }
         )
     }

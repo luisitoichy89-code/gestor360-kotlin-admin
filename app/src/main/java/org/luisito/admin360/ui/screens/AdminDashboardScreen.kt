@@ -30,6 +30,7 @@ fun AdminDashboardScreen(
 ) {
     val secciones = buildList {
         add(SeccionDashboard("Negocios", "Gestiona todos los negocios", Icons.Default.Business, "negocios"))
+        add(SeccionDashboard("Almacenamiento", "Espacio usado por cada negocio", Icons.Default.Storage, "almacenamiento"))
         if (negocioActivo != null) {
             add(SeccionDashboard(
                 "Gestionar ${negocioActivo.nombre_negocio}",
