@@ -24,12 +24,11 @@ class TicketRepository {
         } catch (e: Exception) { Result.failure(e) }
     }
 
-    suspend fun responderTicket(nombre: String, ticketId: Long, mensaje: String): Result<Unit> {
+    suspend fun responderTicket(ticketId: Long, mensaje: String): Result<Unit> {
         return try {
-            // Para admin usamos responder_ticket con android_id fijo "admin"
-            SupabaseProvider.client.from("ticket_mensajes").insert(mapOf(
-                "ticket_id" to ticketId, "autor" to "Admin", "mensaje" to mensaje
-            ))
+            SupabaseProvider.client.postgrest.rpc("responder_ticket", buildJsonObject {
+                put("p_android_id", "admin"); put("p_ticket_id", ticketId); put("p_mensaje", mensaje)
+            })
             Result.success(Unit)
         } catch (e: Exception) { Result.failure(e) }
     }
