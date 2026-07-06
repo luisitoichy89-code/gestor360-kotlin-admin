@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.luisito.admin360.ui.screens
 
 import androidx.compose.foundation.layout.*
@@ -38,7 +40,6 @@ class TicketAdminViewModel(private val repo: TicketRepository = TicketRepository
     fun cerrar() { _s.value = _s.value.copy(ticketSeleccionado = null, mensajes = emptyList()) }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TicketsAdminScreen(onBack: () -> Unit, vm: TicketAdminViewModel = viewModel()) {
     val s by vm.uiState.collectAsState()
@@ -53,14 +54,12 @@ private fun TicketListView(state: TicketAdminUiState, vm: TicketAdminViewModel, 
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TicketCard(t: Ticket, onClick: () -> Unit) {
     val color = when (t.estado) { "pendiente" -> MaterialTheme.colorScheme.error; "en_revision" -> MaterialTheme.colorScheme.tertiary; else -> MaterialTheme.colorScheme.primary }
     ElevatedCard(onClick = onClick) { Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("#${t.id}", fontWeight = FontWeight.Bold); Text(t.usuario_nombre ?: "Usuario", style = MaterialTheme.typography.bodySmall) }; AssistChip(onClick = {}, label = { Text(t.estado.replace("_", " ")) }, colors = AssistChipDefaults.assistChipColors(containerColor = color.copy(alpha = 0.15f), labelColor = color)) } }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TicketChatView(state: TicketAdminUiState, vm: TicketAdminViewModel, onBack: () -> Unit) {
     var input by remember { mutableStateOf("") }
