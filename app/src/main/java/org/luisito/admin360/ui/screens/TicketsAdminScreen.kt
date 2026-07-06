@@ -23,18 +23,14 @@ import org.luisito.admin360.data.models.TicketMensaje
 import org.luisito.admin360.data.repository.TicketRepository
 
 data class TicketAdminUiState(
-    val isLoading: Boolean = false,
-    val isSending: Boolean = false,
-    val tickets: List<Ticket> = emptyList(),
-    val mensajes: List<TicketMensaje> = emptyList(),
-    val ticketSeleccionado: Ticket? = null,
-    val error: String? = null
+    val isLoading: Boolean = false, val isSending: Boolean = false,
+    val tickets: List<Ticket> = emptyList(), val mensajes: List<TicketMensaje> = emptyList(),
+    val ticketSeleccionado: Ticket? = null, val error: String? = null
 )
 
 class TicketAdminViewModel(private val repo: TicketRepository = TicketRepository()) : ViewModel() {
     private val _s = MutableStateFlow(TicketAdminUiState())
     val uiState: StateFlow<TicketAdminUiState> = _s.asStateFlow()
-
     fun cargar() { viewModelScope.launch { _s.value = _s.value.copy(isLoading = true); repo.getTodosTickets().onSuccess { _s.value = _s.value.copy(isLoading = false, tickets = it) }.onFailure { _s.value = _s.value.copy(isLoading = false, error = it.message) } } }
     fun abrirTicket(t: Ticket) { _s.value = _s.value.copy(ticketSeleccionado = t, mensajes = emptyList()); viewModelScope.launch { repo.getMensajes(t.id!!).onSuccess { _s.value = _s.value.copy(mensajes = it) } } }
     fun responder(mensaje: String) { val t = _s.value.ticketSeleccionado ?: return; viewModelScope.launch { _s.value = _s.value.copy(isSending = true); repo.responderTicket(t.id!!, mensaje).onSuccess { abrirTicket(t) }.onFailure { _s.value = _s.value.copy(error = it.message) }; _s.value = _s.value.copy(isSending = false) } }
@@ -43,7 +39,6 @@ class TicketAdminViewModel(private val repo: TicketRepository = TicketRepository
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TicketsAdminScreen(onBack: () -> Unit, vm: TicketAdminViewModel = viewModel()) {
     val s by vm.uiState.collectAsState()
@@ -51,24 +46,19 @@ fun TicketsAdminScreen(onBack: () -> Unit, vm: TicketAdminViewModel = viewModel(
     if (s.ticketSeleccionado != null) TicketChatView(s, vm, { vm.cerrar() }) else TicketListView(s, vm, onBack)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TicketListView(state: TicketAdminUiState, vm: TicketAdminViewModel, onBack: () -> Unit) {
     Scaffold(topBar = { TopAppBar(title = { Text("Tickets de soporte") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }, actions = { IconButton(onClick = vm::cargar) { Icon(Icons.Default.Refresh, null) } }) }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            when { state.isLoading -> CircularProgressIndicator(); state.error != null -> Text(state.error!!, color = MaterialTheme.colorScheme.error); state.tickets.isEmpty() -> Text("No hay tickets todavía"); else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) { items(state.tickets) { t -> TicketCard(t) { vm.abrirTicket(t) } } } }
-        }
+        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) { when { state.isLoading -> CircularProgressIndicator(); state.error != null -> Text(state.error!!, color = MaterialTheme.colorScheme.error); state.tickets.isEmpty() -> Text("No hay tickets todavía"); else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) { items(state.tickets) { t -> TicketCard(t) { vm.abrirTicket(t) } } } } }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TicketCard(t: Ticket, onClick: () -> Unit) {
     val color = when (t.estado) { "pendiente" -> MaterialTheme.colorScheme.error; "en_revision" -> MaterialTheme.colorScheme.tertiary; else -> MaterialTheme.colorScheme.primary }
     ElevatedCard(onClick = onClick) { Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("#${t.id}", fontWeight = FontWeight.Bold); Text(t.usuario_nombre ?: "Usuario", style = MaterialTheme.typography.bodySmall) }; AssistChip(onClick = {}, label = { Text(t.estado.replace("_", " ")) }, colors = AssistChipDefaults.assistChipColors(containerColor = color.copy(alpha = 0.15f), labelColor = color)) } }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TicketChatView(state: TicketAdminUiState, vm: TicketAdminViewModel, onBack: () -> Unit) {
     var input by remember { mutableStateOf("") }
