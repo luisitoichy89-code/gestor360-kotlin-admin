@@ -1,5 +1,6 @@
 package org.luisito.admin360.ui.theme
 
+import android.os.Build
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -13,12 +14,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/**
- * Modificador neomórfico genérico: dibuja una sombra oscura (abajo-derecha)
- * y una sombra clara (arriba-izquierda) para simular relieve suave.
- * Usar sobre un fondo del MISMO color que [lightShadowColor]/[darkShadowColor] estén calibradas
- * (fondo gris -> LightShadow/DarkShadow; superficie negra -> LightShadowOnBlack/DarkShadowOnBlack).
- */
 fun Modifier.neumorphic(
     cornerRadius: Dp = 20.dp,
     elevation: Dp = 8.dp,
@@ -27,29 +22,26 @@ fun Modifier.neumorphic(
 ): Modifier = this
     .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
     .drawBehind {
-        val radiusPx = cornerRadius.toPx()
-        val elevationPx = elevation.toPx()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val radiusPx = cornerRadius.toPx()
+            val elevationPx = elevation.toPx()
 
-        drawIntoCanvas { canvas ->
-            val darkPaint = Paint().asFrameworkPaint().apply {
-                color = android.graphics.Color.TRANSPARENT
-                setShadowLayer(elevationPx, elevationPx / 2, elevationPx / 2, darkShadowColor.toArgb())
-            }
-            canvas.nativeCanvas.drawRoundRect(
-                0f, 0f, size.width, size.height, radiusPx, radiusPx, darkPaint
-            )
+            drawIntoCanvas { canvas ->
+                val darkPaint = Paint().asFrameworkPaint().apply {
+                    color = android.graphics.Color.TRANSPARENT
+                    setShadowLayer(elevationPx, elevationPx / 2, elevationPx / 2, darkShadowColor.toArgb())
+                }
+                canvas.nativeCanvas.drawRoundRect(0f, 0f, size.width, size.height, radiusPx, radiusPx, darkPaint)
 
-            val lightPaint = Paint().asFrameworkPaint().apply {
-                color = android.graphics.Color.TRANSPARENT
-                setShadowLayer(elevationPx, -elevationPx / 2, -elevationPx / 2, lightShadowColor.toArgb())
+                val lightPaint = Paint().asFrameworkPaint().apply {
+                    color = android.graphics.Color.TRANSPARENT
+                    setShadowLayer(elevationPx, -elevationPx / 2, -elevationPx / 2, lightShadowColor.toArgb())
+                }
+                canvas.nativeCanvas.drawRoundRect(0f, 0f, size.width, size.height, radiusPx, radiusPx, lightPaint)
             }
-            canvas.nativeCanvas.drawRoundRect(
-                0f, 0f, size.width, size.height, radiusPx, radiusPx, lightPaint
-            )
         }
     }
 
-/** Variante lista para usar sobre tarjetas/superficies negras (surface = NeoBlack). */
 fun Modifier.neumorphicOnBlack(
     cornerRadius: Dp = 20.dp,
     elevation: Dp = 8.dp,
@@ -60,7 +52,6 @@ fun Modifier.neumorphicOnBlack(
     darkShadowColor = DarkShadowOnBlack,
 )
 
-/** Variante lista para usar sobre el fondo gris general de la app. */
 fun Modifier.neumorphicOnBackground(
     cornerRadius: Dp = 20.dp,
     elevation: Dp = 8.dp,

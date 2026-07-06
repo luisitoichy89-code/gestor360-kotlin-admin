@@ -9,7 +9,7 @@ private val SoftUiColorScheme = lightColorScheme(
     onBackground = PureWhite,
     surface = NeoBlack,
     onSurface = PureWhite,
-    onSurfaceVariant = PureWhite.copy(alpha = 0.7f),
+    onSurfaceVariant = PureWhite,
     surfaceVariant = NeoBlack,
     primary = IconBlue,
     onPrimary = PureWhite,
@@ -18,7 +18,7 @@ private val SoftUiColorScheme = lightColorScheme(
     secondary = IconBlue,
     onSecondary = PureWhite,
     outline = LineOrange,
-    outlineVariant = LineOrange.copy(alpha = 0.5f),
+    outlineVariant = LineOrange,
     error = ErrorRed,
     onError = PureWhite
 )
