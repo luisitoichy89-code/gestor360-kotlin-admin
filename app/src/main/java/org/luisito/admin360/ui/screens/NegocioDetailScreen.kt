@@ -1,4 +1,3 @@
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 package org.luisito.admin360.ui.screens
 
 import androidx.compose.foundation.layout.*
@@ -22,7 +21,7 @@ fun NegocioDetailScreen(
     val tabs = listOf("Locales", "Usuarios", "Licencia")
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val scope = rememberCoroutineScope()
-    val selectedTab = pagerState.currentPage
+    var selectedTab by remember { mutableStateOf(0) }
 
     Scaffold(
         topBar = {
@@ -40,23 +39,12 @@ fun NegocioDetailScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                indicator = { tabPositions ->
-                    if (selectedTab < tabPositions.size) {
-                        TabRowDefaults.SecondaryIndicator(
-                            Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                    }
-                }
-            ) {
+            TabRow(selectedTabIndex = selectedTab) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = selectedTab == index,
                         onClick = {
+                            selectedTab = index
                             scope.launch { pagerState.animateScrollToPage(index) }
                         },
                         text = { Text(title) },

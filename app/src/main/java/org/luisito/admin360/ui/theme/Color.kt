@@ -2,22 +2,12 @@ package org.luisito.admin360.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Neomorfismo — gris de fondo, negro donde van letras blancas
-val SoftGrayBackground = Color(0xFFE4E7EC)
-val NeoBlack = Color(0xFF161819)
+// Soft UI / Neumorfismo
+val SoftGrayBackground = Color(0xFFF0F0F3)
+val DarkSurface = Color(0xFF24272C)
 val PureWhite = Color(0xFFFFFFFF)
-
-// Sombras neomórficas sobre el fondo gris
 val LightShadow = Color(0xFFFFFFFF)
-val DarkShadow = Color(0xFFB9C0CC)
-
-// Sombras neomórficas sobre superficies negras
-val LightShadowOnBlack = Color(0xFF2A2D30)
-val DarkShadowOnBlack = Color(0xFF000000)
-
-// Acentos
-val IconBlue = Color(0xFF3E8EFF)
-val LineOrange = Color(0xFFFF7A1A)
+val DarkShadow = Color(0xFFD1D9E6)
 
 // Funcionales
 val SuccessGreen = Color(0xFF1E8E3E)
