@@ -1,12 +1,12 @@
 package org.luisito.admin360.ui.theme
 
-import android.graphics.Paint as AndroidPaint
 import android.os.Build
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
@@ -26,15 +26,20 @@ fun Modifier.neumorphic(
             val elevationPx = elevation.toPx()
 
             drawIntoCanvas { canvas ->
-                val darkPaint = AndroidPaint().apply {
-                    setShadowLayer(elevationPx, elevationPx / 2, elevationPx / 2, darkShadowColor.toArgb())
-                }
-                canvas.nativeCanvas.drawRoundRect(0f, 0f, size.width, size.height, radiusPx, radiusPx, darkPaint)
-
-                val lightPaint = AndroidPaint().apply {
-                    setShadowLayer(elevationPx, -elevationPx / 2, -elevationPx / 2, lightShadowColor.toArgb())
-                }
-                canvas.nativeCanvas.drawRoundRect(0f, 0f, size.width, size.height, radiusPx, radiusPx, lightPaint)
+                canvas.nativeCanvas.drawRoundRect(
+                    0f, 0f, size.width, size.height,
+                    radiusPx, radiusPx,
+                    Paint().apply {
+                        setShadowLayer(elevationPx, elevationPx / 2, elevationPx / 2, darkShadowColor.toArgb())
+                    }.asFrameworkPaint()
+                )
+                canvas.nativeCanvas.drawRoundRect(
+                    0f, 0f, size.width, size.height,
+                    radiusPx, radiusPx,
+                    Paint().apply {
+                        setShadowLayer(elevationPx, -elevationPx / 2, -elevationPx / 2, lightShadowColor.toArgb())
+                    }.asFrameworkPaint()
+                )
             }
         }
     }
