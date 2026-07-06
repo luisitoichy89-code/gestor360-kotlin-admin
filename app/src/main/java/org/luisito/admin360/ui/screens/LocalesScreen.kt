@@ -22,10 +22,10 @@ import org.luisito.admin360.ui.components.EstadoError
 import org.luisito.admin360.ui.components.EstadoVacio
 import org.luisito.admin360.ui.viewmodels.LocalViewModel
 
-private val BG = Color(0xFF070B1A)
-private val CARD = Color(0xFF101A33)
-private val ACCENT = Color(0xFF4DA3FF)
-private val TEXT = Color(0xFFEAF0FF)
+private val BG = MaterialTheme.colorScheme.background
+private val CARD = MaterialTheme.colorScheme.surface
+private val ACCENT = MaterialTheme.colorScheme.primary
+private val TEXT = MaterialTheme.colorScheme.onSurface
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +39,7 @@ fun LocalesScreen(negocioId: String, negocioNombre: String = "", onBack: (() -> 
         Column(Modifier.fillMaxSize().background(BG).padding(padding).padding(16.dp)) {
             BuscadorField(query = query, onQueryChange = { query = it }, placeholder = "Buscar local...")
             Spacer(Modifier.height(12.dp))
-            when { uiState.isLoading -> EstadoCargando(); uiState.error != null -> EstadoError(uiState.error ?: "") { viewModel.refrescar() }; filtered.isEmpty() -> EstadoVacio(if (query.isBlank()) "Este negocio aún no tiene locales" else "Sin resultados"); else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) { items(filtered, key = { it.id }) { local -> ElevatedCard(Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(containerColor = CARD)) { Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Storefront, null, tint = ACCENT); Spacer(Modifier.width(12.dp)); Column(Modifier.weight(1f)) { Text(local.nombre, color = TEXT); EstadoChip(activo = local.activo) }; IconButton(onClick = { edit = local; showForm = true }) { Icon(Icons.Default.Edit, null, tint = ACCENT) }; IconButton(onClick = { deleteItem = local }) { Icon(Icons.Default.Delete, null, tint = Color.Red) }; IconButton(onClick = { viewModel.toggleActivo(local) }) { Icon(if (local.activo) Icons.Default.ToggleOn else Icons.Default.ToggleOff, null, tint = ACCENT) } } } }; item { Spacer(Modifier.height(80.dp)) } } }
+            when { uiState.isLoading -> EstadoCargando(); uiState.error != null -> EstadoError(uiState.error ?: "") { viewModel.refrescar() }; filtered.isEmpty() -> EstadoVacio(if (query.isBlank()) "Este negocio aún no tiene locales" else "Sin resultados"); else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) { items(filtered, key = { it.id }) { local -> ElevatedCard(Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(containerColor = CARD)) { Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Storefront, null, tint = ACCENT); Spacer(Modifier.width(12.dp)); Column(Modifier.weight(1f)) { Text(local.nombre, color = TEXT); EstadoChip(activo = local.activo) }; IconButton(onClick = { edit = local; showForm = true }) { Icon(Icons.Default.Edit, null, tint = ACCENT) }; IconButton(onClick = { deleteItem = local }) { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }; IconButton(onClick = { viewModel.toggleActivo(local) }) { Icon(if (local.activo) Icons.Default.ToggleOn else Icons.Default.ToggleOff, null, tint = ACCENT) } } } }; item { Spacer(Modifier.height(80.dp)) } } }
         }
     }
 
@@ -50,5 +50,5 @@ fun LocalesScreen(negocioId: String, negocioNombre: String = "", onBack: (() -> 
 @Composable
 private fun LocalFormDialog(local: Local?, isSaving: Boolean, onDismiss: () -> Unit, onGuardar: (String) -> Unit) {
     var nombre by remember { mutableStateOf(local?.nombre ?: "") }
-    AlertDialog(containerColor = CARD, onDismissRequest = onDismiss, title = { Text(if (local == null) "Nuevo local" else "Editar local", color = TEXT) }, text = { OutlinedTextField(nombre, { nombre = it }, label = { Text("Nombre", color = TEXT) }) }, confirmButton = { TextButton(enabled = nombre.isNotBlank() && !isSaving, onClick = { onGuardar(nombre.trim()) }) { Text(if (isSaving) "Guardando..." else "Guardar", color = ACCENT) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = Color.Gray) } })
+    AlertDialog(containerColor = CARD, onDismissRequest = onDismiss, title = { Text(if (local == null) "Nuevo local" else "Editar local", color = TEXT) }, text = { OutlinedTextField(nombre, { nombre = it }, label = { Text("Nombre", color = TEXT) }) }, confirmButton = { TextButton(enabled = nombre.isNotBlank() && !isSaving, onClick = { onGuardar(nombre.trim()) }) { Text(if (isSaving) "Guardando..." else "Guardar", color = ACCENT) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant) } })
 }
