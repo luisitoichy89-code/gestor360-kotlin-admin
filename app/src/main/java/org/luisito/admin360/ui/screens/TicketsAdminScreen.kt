@@ -43,6 +43,7 @@ class TicketAdminViewModel(private val repo: TicketRepository = TicketRepository
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TicketsAdminScreen(onBack: () -> Unit, vm: TicketAdminViewModel = viewModel()) {
     val s by vm.uiState.collectAsState()
@@ -50,6 +51,7 @@ fun TicketsAdminScreen(onBack: () -> Unit, vm: TicketAdminViewModel = viewModel(
     if (s.ticketSeleccionado != null) TicketChatView(s, vm, { vm.cerrar() }) else TicketListView(s, vm, onBack)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TicketListView(state: TicketAdminUiState, vm: TicketAdminViewModel, onBack: () -> Unit) {
     Scaffold(topBar = { TopAppBar(title = { Text("Tickets de soporte") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }, actions = { IconButton(onClick = vm::cargar) { Icon(Icons.Default.Refresh, null) } }) }) { padding ->
@@ -59,12 +61,14 @@ private fun TicketListView(state: TicketAdminUiState, vm: TicketAdminViewModel, 
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TicketCard(t: Ticket, onClick: () -> Unit) {
     val color = when (t.estado) { "pendiente" -> MaterialTheme.colorScheme.error; "en_revision" -> MaterialTheme.colorScheme.tertiary; else -> MaterialTheme.colorScheme.primary }
     ElevatedCard(onClick = onClick) { Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("#${t.id}", fontWeight = FontWeight.Bold); Text(t.usuario_nombre ?: "Usuario", style = MaterialTheme.typography.bodySmall) }; AssistChip(onClick = {}, label = { Text(t.estado.replace("_", " ")) }, colors = AssistChipDefaults.assistChipColors(containerColor = color.copy(alpha = 0.15f), labelColor = color)) } }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TicketChatView(state: TicketAdminUiState, vm: TicketAdminViewModel, onBack: () -> Unit) {
     var input by remember { mutableStateOf("") }
