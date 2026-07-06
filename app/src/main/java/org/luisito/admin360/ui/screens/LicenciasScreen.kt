@@ -1,17 +1,16 @@
 package org.luisito.admin360.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -19,265 +18,74 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import org.luisito.admin360.data.models.Licencia
 import org.luisito.admin360.data.models.estaBloqueada
 import org.luisito.admin360.data.models.getDiasRestantes
-import org.luisito.admin360.ui.components.ConfirmarEliminarDialog
-import org.luisito.admin360.ui.components.EstadoCargando
-import org.luisito.admin360.ui.components.EstadoChip
-import org.luisito.admin360.ui.components.EstadoError
+import org.luisito.admin360.ui.components.*
 import org.luisito.admin360.ui.viewmodels.LicenciaViewModel
 
-/**
- * Un negocio = una licencia (la principal, de pago). Admin y vendedores de ese negocio
- * dependen de esta licencia; si vence o se desactiva, todos quedan bloqueados en la app cliente.
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LicenciasScreen(
-    negocioId: String,
-    negocioNombre: String = "",
-    onBack: (() -> Unit)? = null,
-    viewModel: LicenciaViewModel = viewModel()
-) {
+fun LicenciasScreen(negocioId: String, negocioNombre: String = "", onBack: (() -> Unit)? = null, viewModel: LicenciaViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
     var mostrarEliminar by remember { mutableStateOf(false) }
+    LaunchedEffect(negocioId) { viewModel.loadLicencia(negocioId) }
 
-    LaunchedEffect(negocioId) {
-        viewModel.loadLicencia(negocioId)
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Licencia")
-                        if (negocioNombre.isNotBlank()) {
-                            Text(negocioNombre, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                },
-                navigationIcon = {
-                    if (onBack != null) {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
-                        }
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.refrescar() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refrescar")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            when {
-                uiState.isLoading -> EstadoCargando()
-                uiState.error != null -> EstadoError(uiState.error ?: "Error desconocido") { viewModel.refrescar() }
-                uiState.licencia == null -> ActivarLicenciaPanel(
-                    isSaving = uiState.isSaving,
-                    onActivar = { deviceId, dias -> viewModel.activarLicencia(deviceId, dias) }
-                )
-                else -> LicenciaPanel(
-                    licencia = uiState.licencia!!,
-                    isSaving = uiState.isSaving,
-                    onRenovar = { dias -> viewModel.renovarLicencia(dias) },
-                    onToggleActivo = { viewModel.toggleActivo() },
-                    onEliminar = { mostrarEliminar = true }
-                )
-            }
+    Scaffold(containerColor = Color(0xFF0B0F14), topBar = { TopAppBar(title = { Column { Text("Licencia", fontWeight = FontWeight.Bold); if (negocioNombre.isNotBlank()) Text(negocioNombre, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } }, navigationIcon = { if (onBack != null) IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }, actions = { IconButton(onClick = { viewModel.refrescar() }) { Icon(Icons.Default.Refresh, null) } }) }) { padding ->
+        Column(Modifier.fillMaxSize().background(Color(0xFF0B0F14)).padding(padding).padding(16.dp)) {
+            when { uiState.isLoading -> EstadoCargando(); uiState.error != null -> EstadoError(uiState.error ?: "Error") { viewModel.refrescar() }; uiState.licencia == null -> ActivarLicenciaPanel(uiState.isSaving) { deviceId, dias -> viewModel.activarLicencia(deviceId, dias) }; else -> LicenciaPanel(uiState.licencia!!, uiState.isSaving, { viewModel.renovarLicencia(it) }, { viewModel.toggleActivo() }, { mostrarEliminar = true }) }
         }
     }
+    if (mostrarEliminar) ConfirmarEliminarDialog("la licencia de este negocio", { viewModel.eliminarLicencia(); mostrarEliminar = false }, { mostrarEliminar = false })
+}
 
-    if (mostrarEliminar) {
-        ConfirmarEliminarDialog(
-            nombre = "la licencia de este negocio",
-            onConfirm = {
-                viewModel.eliminarLicencia()
-                mostrarEliminar = false
-            },
-            onDismiss = { mostrarEliminar = false }
-        )
+@Composable
+private fun LicenciaPanel(licencia: Licencia, isSaving: Boolean, onRenovar: (Int) -> Unit, onToggleActivo: () -> Unit, onEliminar: () -> Unit) {
+    val diasRestantes = licencia.getDiasRestantes(); val bloqueada = licencia.estaBloqueada()
+    Surface(color = Color(0xFF111827), shape = RoundedCornerShape(20.dp), tonalElevation = 6.dp, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.VerifiedUser, null, tint = if (bloqueada) MaterialTheme.colorScheme.error else Color(0xFF60A5FA)); Spacer(Modifier.width(10.dp)); Text("Licencia principal", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+            Spacer(Modifier.height(12.dp))
+            InfoFila("Android ID", licencia.device_id); InfoFila("Vence", licencia.expiracion); InfoFila("Estado", when { diasRestantes < 0 -> "Vencida"; diasRestantes == 0L -> "Vence hoy"; else -> "$diasRestantes días restantes" })
+            Spacer(Modifier.height(10.dp)); EstadoChip(activo = !bloqueada)
+            Spacer(Modifier.height(18.dp)); Text("Renovación rápida", fontWeight = FontWeight.SemiBold); Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(30, 90, 180, 365).forEach { dias -> OutlinedButton(onClick = { onRenovar(dias) }, enabled = !isSaving, shape = RoundedCornerShape(12.dp)) { Text("$dias d") } } }
+            Spacer(Modifier.height(20.dp)); RenovarPersonalizado(isSaving, onRenovar)
+            Spacer(Modifier.height(20.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedButton(onClick = onToggleActivo, enabled = !isSaving) { Text(if (licencia.activo) "Desactivar" else "Activar") }; TextButton(onClick = onEliminar, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) { Icon(Icons.Default.Delete, null); Spacer(Modifier.width(4.dp)); Text("Eliminar") } }
+        }
     }
 }
 
 @Composable
-private fun LicenciaPanel(
-    licencia: Licencia,
-    isSaving: Boolean,
-    onRenovar: (Int) -> Unit,
-    onToggleActivo: () -> Unit,
-    onEliminar: () -> Unit
-) {
-    val diasRestantes = licencia.getDiasRestantes()
-    val bloqueada = licencia.estaBloqueada()
-
-    if (bloqueada) {
-        Surface(
-            color = MaterialTheme.colorScheme.errorContainer,
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.Block, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        "Negocio bloqueado",
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        if (!licencia.activo) "Licencia desactivada manualmente" else "Licencia vencida",
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+private fun ActivarLicenciaPanel(isSaving: Boolean, onActivar: (String, Int) -> Unit) {
+    var deviceId by remember { mutableStateOf("") }; var diasTexto by remember { mutableStateOf("30") }; val dias = diasTexto.toIntOrNull()
+    Surface(color = Color(0xFF111827), shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Default.VerifiedUser,
-                    contentDescription = null,
-                    tint = if (bloqueada) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Licencia principal", style = MaterialTheme.typography.titleMedium)
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-
-            InfoFila("Android ID (admin)", licencia.device_id)
-            InfoFila("Vence el", licencia.expiracion)
-            InfoFila(
-                "Días restantes",
-                when {
-                    diasRestantes < 0 -> "Vencida hace ${-diasRestantes} días"
-                    diasRestantes == 0L -> "Vence hoy"
-                    else -> "$diasRestantes días"
-                }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            EstadoChip(activo = !bloqueada)
-        }
-    }
-
-    Spacer(modifier = Modifier.height(20.dp))
-    Text("Renovar por", style = MaterialTheme.typography.labelLarge)
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf(30, 90, 180, 365).forEach { dias ->
-            OutlinedButton(onClick = { onRenovar(dias) }, enabled = !isSaving) {
-                Text("$dias d")
-            }
-        }
-    }
-
-    Spacer(modifier = Modifier.height(24.dp))
-    RenovarPersonalizado(isSaving = isSaving, onRenovar = onRenovar)
-
-    Spacer(modifier = Modifier.height(24.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = onToggleActivo, enabled = !isSaving) {
-            Text(if (licencia.activo) "Desactivar manualmente" else "Reactivar")
-        }
-        TextButton(
-            onClick = onEliminar,
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-        ) {
-            Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(4.dp))
-            Text("Eliminar licencia")
+            Text("Activar licencia", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Spacer(Modifier.height(12.dp))
+            OutlinedTextField(deviceId, { deviceId = it }, label = { Text("Android ID") }, modifier = Modifier.fillMaxWidth()); Spacer(Modifier.height(10.dp))
+            OutlinedTextField(diasTexto, { diasTexto = it.filter(Char::isDigit) }, label = { Text("Días") }, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = { onActivar(deviceId.trim(), dias ?: 30) }, enabled = deviceId.isNotBlank() && dias != null && dias > 0 && !isSaving, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) { Text(if (isSaving) "Activando..." else "Activar") }
         }
     }
 }
 
 @Composable
 private fun InfoFila(etiqueta: String, valor: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Text(etiqueta, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
-        Text(valor, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+        Surface(color = Color(0xFF1F2937), shape = RoundedCornerShape(10.dp)) { Text(valor, Modifier.padding(horizontal = 10.dp, vertical = 4.dp), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface) }
     }
 }
 
 @Composable
 private fun RenovarPersonalizado(isSaving: Boolean, onRenovar: (Int) -> Unit) {
-    var diasTexto by remember { mutableStateOf("") }
-    val dias = diasTexto.toIntOrNull()
-
-    Text("O por días personalizados", style = MaterialTheme.typography.labelLarge)
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        OutlinedTextField(
-            value = diasTexto,
-            onValueChange = { diasTexto = it.filter { c -> c.isDigit() } },
-            label = { Text("Días") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.weight(1f)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Button(
-            enabled = dias != null && dias > 0 && !isSaving,
-            onClick = { dias?.let { onRenovar(it) }; diasTexto = "" }
-        ) {
-            Text("Renovar")
+    var diasTexto by remember { mutableStateOf("") }; val dias = diasTexto.toIntOrNull()
+    Column {
+        Text("Renovación personalizada", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold); Spacer(Modifier.height(8.dp))
+        Surface(color = Color(0xFF111827), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+            Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(diasTexto, { diasTexto = it.filter(Char::isDigit) }, label = { Text("Días") }, singleLine = true, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp))
+                Spacer(Modifier.width(10.dp))
+                Button(onClick = { dias?.let { onRenovar(it) }; diasTexto = "" }, enabled = dias != null && dias > 0 && !isSaving, shape = RoundedCornerShape(12.dp)) { Text("OK") }
+            }
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ActivarLicenciaPanel(
-    isSaving: Boolean,
-    onActivar: (deviceId: String, dias: Int) -> Unit
-) {
-    var deviceId by remember { mutableStateOf("") }
-    var diasTexto by remember { mutableStateOf("30") }
-    val dias = diasTexto.toIntOrNull()
-
-    Text(
-        "Este negocio aún no tiene licencia. Actívala con el Android ID del primer admin que se registró.",
-        style = MaterialTheme.typography.bodyMedium
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-    OutlinedTextField(
-        value = deviceId,
-        onValueChange = { deviceId = it },
-        label = { Text("Android ID del admin") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth()
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-    OutlinedTextField(
-        value = diasTexto,
-        onValueChange = { diasTexto = it.filter { c -> c.isDigit() } },
-        label = { Text("Días de vigencia") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier.fillMaxWidth()
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-    Button(
-        enabled = deviceId.isNotBlank() && dias != null && dias > 0 && !isSaving,
-        onClick = { onActivar(deviceId.trim(), dias ?: 30) },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(if (isSaving) "Activando..." else "Activar licencia")
     }
 }

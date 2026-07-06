@@ -1,243 +1,54 @@
 package org.luisito.admin360.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Storefront
-import androidx.compose.material.icons.filled.ToggleOff
-import androidx.compose.material.icons.filled.ToggleOn
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.luisito.admin360.data.models.Local
 import org.luisito.admin360.ui.components.BuscadorField
 import org.luisito.admin360.ui.components.ConfirmarEliminarDialog
-import org.luisito.admin360.ui.components.EstadoCargando
 import org.luisito.admin360.ui.components.EstadoChip
+import org.luisito.admin360.ui.components.EstadoCargando
 import org.luisito.admin360.ui.components.EstadoError
 import org.luisito.admin360.ui.components.EstadoVacio
 import org.luisito.admin360.ui.viewmodels.LocalViewModel
 
+private val BG = Color(0xFF070B1A)
+private val CARD = Color(0xFF101A33)
+private val ACCENT = Color(0xFF4DA3FF)
+private val TEXT = Color(0xFFEAF0FF)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LocalesScreen(
-    negocioId: String,
-    negocioNombre: String = "",
-    onBack: (() -> Unit)? = null,
-    viewModel: LocalViewModel = viewModel()
-) {
+fun LocalesScreen(negocioId: String, negocioNombre: String = "", onBack: (() -> Unit)? = null, viewModel: LocalViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
-    var query by remember { mutableStateOf("") }
-    var localEnEdicion by remember { mutableStateOf<Local?>(null) }
-    var mostrarFormulario by remember { mutableStateOf(false) }
-    var localAEliminar by remember { mutableStateOf<Local?>(null) }
+    var query by remember { mutableStateOf("") }; var edit by remember { mutableStateOf<Local?>(null) }; var showForm by remember { mutableStateOf(false) }; var deleteItem by remember { mutableStateOf<Local?>(null) }
+    LaunchedEffect(negocioId) { viewModel.loadLocales(negocioId) }
+    val filtered = uiState.locales.filter { query.isBlank() || it.nombre.contains(query, true) }
 
-    LaunchedEffect(negocioId) {
-        viewModel.loadLocales(negocioId)
-    }
-
-    val localesFiltrados = remember(uiState.locales, query) {
-        if (query.isBlank()) uiState.locales
-        else uiState.locales.filter { it.nombre.contains(query, ignoreCase = true) }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Locales")
-                        if (negocioNombre.isNotBlank()) {
-                            Text(negocioNombre, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                },
-                navigationIcon = {
-                    if (onBack != null) {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
-                        }
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.refrescar() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refrescar")
-                    }
-                }
-            )
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = {
-                    localEnEdicion = null
-                    mostrarFormulario = true
-                },
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Nuevo local") }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
+    Scaffold(containerColor = BG, topBar = { TopAppBar(title = { Column { Text("Locales", color = TEXT); if (negocioNombre.isNotBlank()) Text(negocioNombre, color = ACCENT) } }, navigationIcon = onBack?.let { { IconButton(onClick = it) { Icon(Icons.Default.ArrowBack, null, tint = ACCENT) } } } ?: {}, colors = TopAppBarDefaults.topAppBarColors(containerColor = BG)) }, floatingActionButton = { FloatingActionButton(containerColor = ACCENT, onClick = { edit = null; showForm = true }) { Icon(Icons.Default.Add, null) } }) { padding ->
+        Column(Modifier.fillMaxSize().background(BG).padding(padding).padding(16.dp)) {
             BuscadorField(query = query, onQueryChange = { query = it }, placeholder = "Buscar local...")
-            Spacer(modifier = Modifier.height(12.dp))
-
-            when {
-                uiState.isLoading -> EstadoCargando()
-                uiState.error != null -> EstadoError(uiState.error ?: "Error desconocido") { viewModel.refrescar() }
-                localesFiltrados.isEmpty() -> EstadoVacio(
-                    if (query.isBlank()) "Este negocio aún no tiene locales" else "Sin resultados para \"$query\""
-                )
-                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(localesFiltrados, key = { it.id }) { local ->
-                        LocalCard(
-                            local = local,
-                            onEditar = {
-                                localEnEdicion = local
-                                mostrarFormulario = true
-                            },
-                            onToggleActivo = { viewModel.toggleActivo(local) },
-                            onEliminar = { localAEliminar = local }
-                        )
-                    }
-                    item { Spacer(modifier = Modifier.height(72.dp)) }
-                }
-            }
+            Spacer(Modifier.height(12.dp))
+            when { uiState.isLoading -> EstadoCargando(); uiState.error != null -> EstadoError(uiState.error ?: "") { viewModel.refrescar() }; filtered.isEmpty() -> EstadoVacio(if (query.isBlank()) "Este negocio aún no tiene locales" else "Sin resultados"); else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) { items(filtered, key = { it.id }) { local -> ElevatedCard(Modifier.fillMaxWidth(), colors = CardDefaults.elevatedCardColors(containerColor = CARD)) { Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Storefront, null, tint = ACCENT); Spacer(Modifier.width(12.dp)); Column(Modifier.weight(1f)) { Text(local.nombre, color = TEXT); EstadoChip(activo = local.activo) }; IconButton(onClick = { edit = local; showForm = true }) { Icon(Icons.Default.Edit, null, tint = ACCENT) }; IconButton(onClick = { deleteItem = local }) { Icon(Icons.Default.Delete, null, tint = Color.Red) }; IconButton(onClick = { viewModel.toggleActivo(local) }) { Icon(if (local.activo) Icons.Default.ToggleOn else Icons.Default.ToggleOff, null, tint = ACCENT) } } } }; item { Spacer(Modifier.height(80.dp)) } } }
         }
     }
 
-    if (mostrarFormulario) {
-        LocalFormDialog(
-            local = localEnEdicion,
-            isSaving = uiState.isSaving,
-            onDismiss = { mostrarFormulario = false },
-            onGuardar = { nombre ->
-                val existente = localEnEdicion
-                if (existente == null) {
-                    viewModel.createLocal(nombre, negocioId)
-                } else {
-                    viewModel.updateLocal(existente.id, nombre)
-                }
-                mostrarFormulario = false
-            }
-        )
-    }
-
-    localAEliminar?.let { local ->
-        ConfirmarEliminarDialog(
-            nombre = local.nombre,
-            onConfirm = {
-                viewModel.deleteLocal(local.id)
-                localAEliminar = null
-            },
-            onDismiss = { localAEliminar = null }
-        )
-    }
+    if (showForm) LocalFormDialog(edit, uiState.isSaving, { showForm = false }) { name -> if (edit == null) viewModel.createLocal(name, negocioId) else viewModel.updateLocal(edit!!.id, name); showForm = false }
+    deleteItem?.let { local -> ConfirmarEliminarDialog(local.nombre, { viewModel.deleteLocal(local.id); deleteItem = null }, { deleteItem = null }) }
 }
 
 @Composable
-private fun LocalCard(
-    local: Local,
-    onEditar: () -> Unit,
-    onToggleActivo: () -> Unit,
-    onEliminar: () -> Unit
-) {
-    var menuAbierto by remember { mutableStateOf(false) }
-
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                Icons.Default.Storefront,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.secondary
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(local.nombre, style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(4.dp))
-                EstadoChip(activo = local.activo)
-            }
-            Box {
-                IconButton(onClick = { menuAbierto = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Más opciones")
-                }
-                DropdownMenu(expanded = menuAbierto, onDismissRequest = { menuAbierto = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Editar") },
-                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                        onClick = { menuAbierto = false; onEditar() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(if (local.activo) "Desactivar" else "Activar") },
-                        leadingIcon = {
-                            Icon(
-                                if (local.activo) Icons.Default.ToggleOff else Icons.Default.ToggleOn,
-                                contentDescription = null
-                            )
-                        },
-                        onClick = { menuAbierto = false; onToggleActivo() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Eliminar") },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-                        onClick = { menuAbierto = false; onEliminar() }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LocalFormDialog(
-    local: Local?,
-    isSaving: Boolean,
-    onDismiss: () -> Unit,
-    onGuardar: (nombre: String) -> Unit
-) {
+private fun LocalFormDialog(local: Local?, isSaving: Boolean, onDismiss: () -> Unit, onGuardar: (String) -> Unit) {
     var nombre by remember { mutableStateOf(local?.nombre ?: "") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (local == null) "Nuevo local" else "Editar local") },
-        text = {
-            OutlinedTextField(
-                value = nombre,
-                onValueChange = { nombre = it },
-                label = { Text("Nombre del local") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        confirmButton = {
-            TextButton(
-                enabled = nombre.isNotBlank() && !isSaving,
-                onClick = { onGuardar(nombre.trim()) }
-            ) {
-                Text(if (isSaving) "Guardando..." else "Guardar")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
-        }
-    )
+    AlertDialog(containerColor = CARD, onDismissRequest = onDismiss, title = { Text(if (local == null) "Nuevo local" else "Editar local", color = TEXT) }, text = { OutlinedTextField(nombre, { nombre = it }, label = { Text("Nombre", color = TEXT) }) }, confirmButton = { TextButton(enabled = nombre.isNotBlank() && !isSaving, onClick = { onGuardar(nombre.trim()) }) { Text(if (isSaving) "Guardando..." else "Guardar", color = ACCENT) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = Color.Gray) } })
 }

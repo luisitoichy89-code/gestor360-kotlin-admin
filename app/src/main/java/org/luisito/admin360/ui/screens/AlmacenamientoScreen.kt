@@ -1,5 +1,6 @@
 package org.luisito.admin360.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -46,16 +47,10 @@ class AlmacenamientoViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                val response = SupabaseProvider.client.postgrest.rpc("get_espacio_negocios").decodeList<EspacioNegocio>()
-                val storageResult = SupabaseProvider.client.postgrest.rpc("get_storage_public_mb").decodeAs<Double>()
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    negocios = response,
-                    totalUsadoMb = storageResult
-                )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
-            }
+                val negocios = SupabaseProvider.client.postgrest.rpc("get_espacio_negocios").decodeList<EspacioNegocio>()
+                val total = SupabaseProvider.client.postgrest.rpc("get_storage_public_mb").decodeAs<Double>()
+                _uiState.value = _uiState.value.copy(isLoading = false, negocios = negocios, totalUsadoMb = total)
+            } catch (e: Exception) { _uiState.value = _uiState.value.copy(isLoading = false, error = e.message) }
         }
     }
 }
@@ -63,48 +58,42 @@ class AlmacenamientoViewModel : ViewModel() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlmacenamientoScreen(onBack: () -> Unit, viewModel: AlmacenamientoViewModel = viewModel()) {
-    val uiState by viewModel.uiState.collectAsState()
-    var query by remember { mutableStateOf("") }
+    val state by viewModel.uiState.collectAsState()
     LaunchedEffect(Unit) { viewModel.cargar() }
-    val filtrados = uiState.negocios.filter { query.isBlank() || it.nombre_negocio.contains(query, true) }
-    val porcentajeUsado = if (uiState.totalMb > 0) (uiState.totalUsadoMb / uiState.totalMb) else 0.0
-    val libreMb = uiState.totalMb - uiState.totalUsadoMb
+    val libre = state.totalMb - state.totalUsadoMb
+    val porcentaje = if (state.totalMb > 0) (state.totalUsadoMb / state.totalMb).toFloat() else 0f
+    val alerta = when { porcentaje >= 0.95f -> "CRÍTICO: almacenamiento casi lleno"; porcentaje >= 0.85f -> "ALTO: revisa espacio disponible"; porcentaje >= 0.70f -> "ADVERTENCIA: uso elevado"; else -> null }
+    val top = state.negocios.sortedByDescending { it.espacio_estimado_mb }.take(5)
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Almacenamiento") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Volver") } }) }) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                        Text("Usado: ${"%.1f".format(uiState.totalUsadoMb)} MB", fontWeight = FontWeight.Bold)
-                        Text("Libre: ${"%.1f".format(libreMb)} MB", color = MaterialTheme.colorScheme.primary)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    LinearProgressIndicator(progress = { porcentajeUsado.toFloat() }, modifier = Modifier.fillMaxWidth().height(12.dp))
-                    Text("Total: ${"%.0f".format(uiState.totalMb)} MB", style = MaterialTheme.typography.bodySmall)
+    Scaffold(topBar = { TopAppBar(title = { Text("Storage Dashboard") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }) }) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+            Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Uso total del sistema", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(12.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("Usado: %.1f MB".format(state.totalUsadoMb)); Text("Libre: %.1f MB".format(libre)) }
+                    Spacer(Modifier.height(8.dp))
+                    LinearProgressIndicator(progress = { porcentaje }, modifier = Modifier.fillMaxWidth().height(10.dp))
+                    Spacer(Modifier.height(6.dp))
+                    Text("Total: %.0f MB".format(state.totalMb))
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("Buscar negocio...") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
-            when {
-                uiState.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                uiState.error != null -> Text(uiState.error!!, color = MaterialTheme.colorScheme.error)
-                filtrados.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Sin resultados") }
-                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(filtrados) { negocio ->
-                        Card(modifier = Modifier.fillMaxWidth()) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                                    Text(negocio.nombre_negocio, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                                    Text("${"%.1f".format(negocio.espacio_estimado_mb)} MB", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text("📦 ${negocio.productos}  🛒 ${negocio.ventas}  👤 ${negocio.usuarios}  💰 ${negocio.turnos}  📋 ${negocio.trazas}", style = MaterialTheme.typography.bodySmall)
-                                Text("Total: ${negocio.total_registros}", style = MaterialTheme.typography.bodySmall)
-                            }
-                        }
-                    }
+            if (alerta != null) { Spacer(Modifier.height(12.dp)); Card(colors = CardDefaults.cardColors(containerColor = when { porcentaje >= 0.95f -> MaterialTheme.colorScheme.errorContainer; porcentaje >= 0.85f -> MaterialTheme.colorScheme.tertiaryContainer; else -> MaterialTheme.colorScheme.primaryContainer })) { Text(alerta, Modifier.padding(12.dp), fontWeight = FontWeight.Bold) } }
+            Spacer(Modifier.height(16.dp))
+            Text("Top consumo de almacenamiento", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                top.forEach { n ->
+                    val max = top.maxOfOrNull { it.espacio_estimado_mb } ?: 1.0; val ratio = (n.espacio_estimado_mb / max).toFloat()
+                    Column { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(n.nombre_negocio, Modifier.weight(1f)); Text("%.1f MB".format(n.espacio_estimado_mb)) }; Spacer(Modifier.height(4.dp)); Box(Modifier.fillMaxWidth().height(10.dp).background(MaterialTheme.colorScheme.surfaceVariant)) { Box(Modifier.fillMaxHeight().fillMaxWidth(ratio).background(when { ratio > 0.8f -> MaterialTheme.colorScheme.error; ratio > 0.5f -> MaterialTheme.colorScheme.tertiary; else -> MaterialTheme.colorScheme.primary })) } }
                 }
+            }
+            Spacer(Modifier.height(16.dp))
+            when {
+                state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(state.error!!, color = MaterialTheme.colorScheme.error) }
+                state.negocios.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Sin datos de almacenamiento") }
+                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) { items(state.negocios) { n -> ElevatedCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(n.nombre_negocio, fontWeight = FontWeight.Bold, Modifier.weight(1f)); Text("%.1f MB".format(n.espacio_estimado_mb), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) }; Spacer(Modifier.height(6.dp)); Text("📦 ${n.productos}  🛒 ${n.ventas}  👤 ${n.usuarios}  ⏱ ${n.turnos}", style = MaterialTheme.typography.bodySmall); Text("Total registros: ${n.total_registros}", style = MaterialTheme.typography.bodySmall) } } } }
             }
         }
     }
