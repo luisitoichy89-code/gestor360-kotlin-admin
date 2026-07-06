@@ -21,7 +21,7 @@ fun NegocioDetailScreen(
     val tabs = listOf("Locales", "Usuarios", "Licencia")
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val scope = rememberCoroutineScope()
-    var selectedTab by remember { mutableStateOf(0) }
+    val selectedTab = pagerState.currentPage
 
     Scaffold(
         topBar = {
@@ -39,12 +39,23 @@ fun NegocioDetailScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            TabRow(selectedTabIndex = selectedTab) {
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                indicator = { tabPositions ->
+                    if (selectedTab < tabPositions.size) {
+                        TabRowDefaults.SecondaryIndicator(
+                            Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+            ) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = selectedTab == index,
                         onClick = {
-                            selectedTab = index
                             scope.launch { pagerState.animateScrollToPage(index) }
                         },
                         text = { Text(title) },

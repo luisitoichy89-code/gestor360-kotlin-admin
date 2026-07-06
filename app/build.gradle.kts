@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "org.luisito.admin360"
-        minSdk = 24
+        minSdk = 28
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
