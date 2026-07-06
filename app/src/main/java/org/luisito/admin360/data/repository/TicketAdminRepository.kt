@@ -1,5 +1,6 @@
 package org.luisito.admin360.data.repository
 
+private const val AUTOR_SOPORTE = "Admin"
 import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
