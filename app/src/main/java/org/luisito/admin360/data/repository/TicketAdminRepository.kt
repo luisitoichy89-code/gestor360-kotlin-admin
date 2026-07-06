@@ -8,7 +8,6 @@ import org.luisito.admin360.data.models.TicketMensaje
 import org.luisito.admin360.data.remote.SupabaseProvider
 
 class TicketAdminRepository {
-    private val autor = "Admin"
 
     suspend fun getTodosTickets(): Result<List<Ticket>> {
         return try {
@@ -26,10 +25,9 @@ class TicketAdminRepository {
 
     suspend fun responderTicket(ticketId: Long, mensaje: String): Result<Unit> {
         return try {
-            SupabaseProvider.client.from("ticket_mensajes").insert(mapOf(
-                "ticket_id" to ticketId, "autor" to autor, "mensaje" to mensaje, "leido" to true
-            ))
-            SupabaseProvider.client.from("tickets").update(mapOf("updated_at" to "now()")).eq("id", ticketId)
+            SupabaseProvider.client.postgrest.rpc("responder_ticket", buildJsonObject {
+                put("p_android_id", "admin"); put("p_ticket_id", ticketId); put("p_mensaje", mensaje)
+            })
             Result.success(Unit)
         } catch (e: Exception) { Result.failure(e) }
     }
