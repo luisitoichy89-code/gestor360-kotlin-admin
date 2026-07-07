@@ -1,4 +1,3 @@
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 package org.luisito.admin360
 
 import android.os.Bundle
@@ -13,8 +12,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        installSplashScreen()
-        installSplashScreen()
         setContent {
             Gestor360Theme {
                 AppContent()
