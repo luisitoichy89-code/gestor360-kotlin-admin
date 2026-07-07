@@ -1,0 +1,40 @@
+<svg width="500" height="580" viewBox="0 0 500 580" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5AA8FF"/>
+      <stop offset="100%" stop-color="#1E5FCC"/>
+    </linearGradient>
+    <linearGradient id="blackGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2A2D30"/>
+      <stop offset="100%" stop-color="#121315"/>
+    </linearGradient>
+    <filter id="dropShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="500" height="580" fill="#E4E7EC"/>
+  <g filter="url(#dropShadow)">
+    <path d="M100,55 L400,55 L400,275 C400,410 250,520 250,520 C250,520 100,410 100,275 Z" fill="url(#blueGrad)" stroke="#FF7A1A" stroke-width="6"/>
+    <path d="M124,80 L376,80 L376,272 C376,392 250,485 250,485 C250,485 124,392 124,272 Z" fill="url(#blackGrad)"/>
+  </g>
+  <g transform="translate(250,168)" fill="#5AA8FF">
+    <circle r="34" fill="none" stroke="#5AA8FF" stroke-width="10"/>
+    <circle r="12" fill="#5AA8FF"/>
+    <g id="teeth">
+      <rect x="-6" y="-52" width="12" height="18" rx="3"/>
+      <rect x="-6" y="34" width="12" height="18" rx="3"/>
+      <rect x="-52" y="-6" width="18" height="12" rx="3"/>
+      <rect x="34" y="-6" width="18" height="12" rx="3"/>
+    </g>
+    <g transform="rotate(45)">
+      <rect x="-6" y="-52" width="12" height="18" rx="3"/>
+      <rect x="-6" y="34" width="12" height="18" rx="3"/>
+      <rect x="-52" y="-6" width="18" height="12" rx="3"/>
+      <rect x="34" y="-6" width="18" height="12" rx="3"/>
+    </g>
+  </g>
+  <rect x="150" y="240" width="200" height="4" rx="2" fill="#FF7A1A"/>
+  <text x="250" y="305" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="46" fill="#FFFFFF" letter-spacing="3">GESTOR</text>
+  <text x="250" y="380" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="80" fill="#FFFFFF" letter-spacing="2">360</text>
+  <rect x="160" y="405" width="180" height="4" rx="2" fill="#FF7A1A"/>
+</svg>
