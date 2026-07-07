@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import org.luisito.admin360.data.models.Ticket
 import org.luisito.admin360.data.models.TicketMensaje
 import org.luisito.admin360.data.repository.TicketRepository
+import org.luisito.admin360.ui.theme.LineOrange
 
 data class TicketAdminUiState(
     val isLoading: Boolean = false, val isSending: Boolean = false,
@@ -65,7 +66,7 @@ private fun TicketChatView(state: TicketAdminUiState, vm: TicketAdminViewModel, 
     var input by remember { mutableStateOf("") }
     Scaffold(topBar = { TopAppBar(title = { Text("Ticket #${state.ticketSeleccionado?.id}") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }, actions = { IconButton(onClick = { vm.cambiarEstado(state.ticketSeleccionado!!.id!!, "resuelto") }) { Icon(Icons.Default.Check, null) } }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            LazyColumn(Modifier.weight(1f).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { items(state.mensajes) { m -> val isUser = m.autor != "Admin"; Row(Modifier.fillMaxWidth(), horizontalArrangement = if (isUser) Arrangement.Start else Arrangement.End) { Surface(color = if (isUser) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.medium) { Column(Modifier.padding(12.dp)) { Text(m.autor, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall); Text(m.mensaje); Text(m.created_at?.take(16)?.replace("T", " ") ?: "", style = MaterialTheme.typography.labelSmall) } } } } }
+            LazyColumn(Modifier.weight(1f).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { items(state.mensajes) { m -> val isUser = m.autor != "Admin"; Row(Modifier.fillMaxWidth(), horizontalArrangement = if (isUser) Arrangement.Start else Arrangement.End) { Surface(color = if (isUser) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.medium) { Column(Modifier.padding(12.dp)) { Text(m.autor, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall); Text(m.mensaje, color = LineOrange); Text(m.created_at?.take(16)?.replace("T", " ") ?: "", style = MaterialTheme.typography.labelSmall) } } } } }
             Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) { OutlinedTextField(input, { input = it }, modifier = Modifier.weight(1f), placeholder = { Text("Responder...") }, singleLine = true); IconButton(enabled = input.isNotBlank() && !state.isSending, onClick = { vm.responder(input); input = "" }) { Icon(Icons.Default.Send, null) } }
         }
     }

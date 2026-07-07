@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.luisito.admin360.data.remote.SupabaseProvider
 import io.github.jan.supabase.postgrest.postgrest
+import org.luisito.admin360.ui.theme.LineOrange
 
 @Serializable
 data class EspacioNegocio(
@@ -84,7 +85,20 @@ fun AlmacenamientoScreen(onBack: () -> Unit, viewModel: AlmacenamientoViewModel 
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("Buscar negocio...") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                label = { Text("Buscar negocio...") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedTextColor = LineOrange,
+                    focusedTextColor = LineOrange,
+                    cursorColor = LineOrange,
+                    focusedBorderColor = LineOrange,
+                    unfocusedBorderColor = LineOrange.copy(alpha = 0.5f)
+                )
+            )
             Spacer(modifier = Modifier.height(8.dp))
             when {
                 uiState.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
