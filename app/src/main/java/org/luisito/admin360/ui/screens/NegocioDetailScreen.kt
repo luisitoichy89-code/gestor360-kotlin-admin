@@ -1,3 +1,5 @@
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 package org.luisito.admin360.ui.screens
 
 import androidx.compose.foundation.layout.*
