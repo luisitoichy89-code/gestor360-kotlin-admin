@@ -1,56 +1,57 @@
 package org.luisito.admin360.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import org.luisito.admin360.ui.theme.LineOrange
 
-/**
- * Green/red pill used to show active/inactive state consistently across every CRUD screen.
- */
+@Composable
+fun EstadoCargando() {
+    Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+        CircularProgressIndicator(color = LineOrange)
+    }
+}
+
+@Composable
+fun EstadoError(mensaje: String, onRetry: () -> Unit) {
+    Column(Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Text(mensaje, color = MaterialTheme.colorScheme.error)
+        Spacer(Modifier.height(12.dp))
+        Button(onClick = onRetry) { Text("Reintentar") }
+    }
+}
+
 @Composable
 fun EstadoChip(activo: Boolean) {
-    val bg = if (activo) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
-    val fg = if (activo) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
     Surface(
-        color = bg,
-        contentColor = fg,
-        shape = RoundedCornerShape(50)
+        color = if (activo) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
     ) {
         Text(
-            text = if (activo) "Activo" else "Inactivo",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+            if (activo) "Activa" else "Bloqueada",
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            color = Color.White,
+            style = MaterialTheme.typography.labelSmall
         )
     }
 }
 
-/** Search field used at the top of every list screen to filter results client-side. */
+@Composable
+fun ConfirmarEliminarDialog(item: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Eliminar $item") },
+        text = { Text("¿Estás seguro de eliminar $item? Esta acción no se puede deshacer.") },
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Eliminar", color = MaterialTheme.colorScheme.error) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+    )
+}
+
 @Composable
 fun BuscadorField(
     query: String,
@@ -70,75 +71,13 @@ fun BuscadorField(
                     Icon(Icons.Default.Clear, contentDescription = "Limpiar")
                 }
             }
-        }
-    )
-}
-
-@Composable
-fun EstadoVacio(mensaje: String) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Default.Inbox,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Text(mensaje, color = MaterialTheme.colorScheme.outline)
-        }
-    }
-}
-
-@Composable
-fun EstadoError(mensaje: String, onRetry: () -> Unit) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Default.ErrorOutline,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Text(mensaje, color = MaterialTheme.colorScheme.error)
-            Button(
-                onClick = onRetry,
-                modifier = Modifier.padding(top = 12.dp),
-                colors = ButtonDefaults.buttonColors()
-            ) {
-                Text("Reintentar")
-            }
-        }
-    }
-}
-
-@Composable
-fun EstadoCargando() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
-    }
-}
-
-/** Generic "¿Eliminar X?" confirmation dialog reused by every screen. */
-@Composable
-fun ConfirmarEliminarDialog(
-    nombre: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Eliminar") },
-        text = { Text("¿Seguro que deseas eliminar \"$nombre\"? Esta acción no se puede deshacer.") },
-        confirmButton = {
-            TextButton(
-                onClick = { onConfirm() },
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-            ) {
-                Text("Eliminar")
-            }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
-        }
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedTextColor = LineOrange,
+            focusedTextColor = LineOrange,
+            cursorColor = LineOrange,
+            focusedBorderColor = LineOrange,
+            unfocusedBorderColor = LineOrange.copy(alpha = 0.5f)
+        )
     )
 }
