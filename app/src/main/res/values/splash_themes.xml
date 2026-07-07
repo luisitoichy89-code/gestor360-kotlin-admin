@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Gestor360.Splash" parent="Theme.AppCompat.NoActionBar">
+    <style name="Theme.Gestor360.Splash" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@drawable/gestor360_logo_splash</item>
     </style>
 </resources>
