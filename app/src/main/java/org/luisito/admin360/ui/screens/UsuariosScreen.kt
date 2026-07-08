@@ -1,4 +1,7 @@
 package org.luisito.admin360.ui.screens
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import org.luisito.admin360.ui.theme.LineOrange
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,7 +25,6 @@ import org.luisito.admin360.data.repository.LocalRepository
 import org.luisito.admin360.ui.components.*
 import org.luisito.admin360.ui.theme.NeumorphicShape
 import org.luisito.admin360.ui.theme.neumorphicOnBackground
-import org.luisito.admin360.ui.theme.LineOrange
 import org.luisito.admin360.ui.viewmodels.UsuarioViewModel
 
 private val ROLES = listOf("admin", "seller")
@@ -39,22 +41,9 @@ fun UsuariosScreen(clienteId: String, negocioNombre: String = "", onBack: (() ->
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background, topBar = { TopAppBar(title = { Text(if (negocioNombre.isNotBlank()) "Usuarios · $negocioNombre" else "Usuarios", color = MaterialTheme.colorScheme.onSurface) }, navigationIcon = { if (onBack != null) IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null, tint = MaterialTheme.colorScheme.primary) } }, actions = { IconButton(onClick = { viewModel.refrescar() }) { Icon(Icons.Default.Refresh, null, tint = MaterialTheme.colorScheme.primary) } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)) }, floatingActionButton = { FloatingActionButton(containerColor = MaterialTheme.colorScheme.primary, onClick = { usuarioEnEdicion = null; mostrarFormulario = true }) { Icon(Icons.Default.Add, null) } }) { padding ->
         Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(padding).padding(14.dp)) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                label = { Text("Buscar usuario") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedTextColor = LineOrange,
-                    focusedTextColor = LineOrange,
-                    cursorColor = LineOrange,
-                    focusedBorderColor = LineOrange,
-                    unfocusedBorderColor = LineOrange.copy(alpha = 0.5f)
-                )
-            )
+            OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("Buscar usuario") }, singleLine = true, modifier = Modifier.fillMaxWidth(), colors = OutlinedTextFieldDefaults.colors(unfocusedTextColor = LineOrange, focusedTextColor = LineOrange, cursorColor = LineOrange, focusedBorderColor = LineOrange, unfocusedBorderColor = LineOrange.copy(alpha = 0.5f)))
             Spacer(Modifier.height(10.dp))
-            when { uiState.isLoading -> EstadoCargando(); uiState.error != null -> EstadoError(uiState.error!!) { viewModel.refrescar() }; usuariosFiltrados.isEmpty() -> EstadoVacio("Sin usuarios"); else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) { items(usuariosFiltrados, key = { it.id }) { usuario -> val localNombre = if (usuario.rol == "admin") "Todos" else locales.find { it.id.toString() == usuario.almacen_id }?.nombre ?: "Local ${usuario.almacen_id}"; var menuAbierto by remember { mutableStateOf(false) }; Surface(color = MaterialTheme.colorScheme.surface, shape = NeumorphicShape, modifier = Modifier.fillMaxWidth().neumorphicOnBackground()) { Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Column(Modifier.weight(1f)) { Text("👤 ${usuario.username}", color = MaterialTheme.colorScheme.onSurface); Text("🏪 $localNombre · ${usuario.rol}", color = MaterialTheme.colorScheme.onSurfaceVariant); if (!usuario.android_id.isNullOrBlank()) Text("📱 ${usuario.android_id}", color = MaterialTheme.colorScheme.onSurfaceVariant); EstadoChip(activo = usuario.activo) }; Box { IconButton(onClick = { menuAbierto = true }) { Icon(Icons.Default.MoreVert, null, tint = MaterialTheme.colorScheme.primary) }; DropdownMenu(expanded = menuAbierto, onDismissRequest = { menuAbierto = false }) { DropdownMenuItem(text = { Text("Editar") }, onClick = { menuAbierto = false; usuarioEnEdicion = usuario; mostrarFormulario = true }); DropdownMenuItem(text = { Text(if (usuario.activo) "Desactivar" else "Activar") }, onClick = { menuAbierto = false; viewModel.toggleActivo(usuario) }); DropdownMenuItem(text = { Text("Cambiar PIN") }, onClick = { menuAbierto = false; usuarioParaCambiarPin = usuario; nuevoPin = "" }); DropdownMenuItem(text = { Text("Eliminar") }, onClick = { menuAbierto = false; usuarioAEliminar = usuario }) } } } } } } } }
+            when { uiState.isLoading -> EstadoCargando(); uiState.error != null -> EstadoError(uiState.error!!) { viewModel.refrescar() }; usuariosFiltrados.isEmpty() -> EstadoVacio("Sin usuarios"); else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) { items(usuariosFiltrados, key = { it.id }) { usuario -> val localNombre = if (usuario.rol == "admin") "Todos" else locales.find { it.id.toString() == usuario.almacen_id }?.nombre ?: "Local ${usuario.almacen_id}"; var menuAbierto by remember { mutableStateOf(false) }; Surface(color = MaterialTheme.colorScheme.surface, shape = NeumorphicShape, modifier = Modifier.fillMaxWidth().neumorphicOnBackground()) { Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Column(Modifier.weight(1f)) { Text("👤 ${usuario.username}", color = MaterialTheme.colorScheme.onSurface); Text("🏪 $localNombre · ${usuario.rol}", color = MaterialTheme.colorScheme.onSurfaceVariant); if (!usuario.android_id.isNullOrBlank()) Text("📱 ${usuario.android_id}", color = MaterialTheme.colorScheme.onSurfaceVariant); EstadoChip(activo = usuario.activo) }; Box { IconButton(onClick = { menuAbierto = true }) { Icon(Icons.Default.MoreVert, null, tint = MaterialTheme.colorScheme.primary) }; DropdownMenu(expanded = menuAbierto, onDismissRequest = { menuAbierto = false }) { DropdownMenuItem(text = { Text("Editar") }, onClick = { menuAbierto = false; usuarioEnEdicion = usuario; mostrarFormulario = true }); DropdownMenuItem(text = { Text(if (usuario.activo) "Desactivar" else "Activar") }, onClick = { menuAbierto = false; viewModel.toggleActivo(usuario) }); DropdownMenuItem(text = { Text("Cambiar PIN") }, onClick = { menuAbierto = false; usuarioParaCambiarPin = usuario; nuevoPin = "" }); DropdownMenuItem(text = { Text("Eliminar") }, onClick = { menuAbierto = false; usuarioAEliminar = usuario }) } } } } } } }
         }
     }
 
