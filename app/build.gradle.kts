@@ -28,6 +28,23 @@ android {
         buildConfig = true
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("gestor360.keystore")
+            storePassword = project.findProperty("RELEASE_STORE_PASSWORD") as String? ?: System.getenv("RELEASE_STORE_PASSWORD") ?: ""
+            keyAlias = project.findProperty("RELEASE_KEY_ALIAS") as String? ?: System.getenv("RELEASE_KEY_ALIAS") ?: ""
+            keyPassword = project.findProperty("RELEASE_KEY_PASSWORD") as String? ?: System.getenv("RELEASE_KEY_PASSWORD") ?: ""
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -64,6 +81,3 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:auth-kt:3.1.0")
     implementation("io.ktor:ktor-client-okhttp:3.0.1")
 }
-
-
-
