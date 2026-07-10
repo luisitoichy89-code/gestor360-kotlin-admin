@@ -15,8 +15,8 @@ object SupabaseProvider {
         if (BuildConfig.DEBUG) {
             Log.d("SUPABASE", "Inicializando cliente...")
             Log.d("SUPABASE", "URL: '${BuildConfig.SUPABASE_URL}'")
-            Log.d("SUPABASE", "KEY empieza con: '${BuildConfig.SUPABASE_KEY.take(10)}...'")
-            Log.d("SUPABASE", "KEY longitud: ${BuildConfig.SUPABASE_KEY.length}")
+            Log.d("SUPABASE", "KEY empieza con: '${BuildConfig.SUPABASE_ANON_KEY.take(10)}...'")
+            Log.d("SUPABASE", "KEY longitud: ${BuildConfig.SUPABASE_ANON_KEY.length}")
         }
 
         require(BuildConfig.SUPABASE_URL.isNotBlank()) {
@@ -24,13 +24,13 @@ object SupabaseProvider {
                 "y que build.gradle.kts la esté leyendo con Properties()/FileInputStream, " +
                 "no con project.findProperty()."
         }
-        require(BuildConfig.SUPABASE_KEY.isNotBlank()) {
+        require(BuildConfig.SUPABASE_ANON_KEY.isNotBlank()) {
             "SUPABASE_ANON_KEY está vacío. Debe ser la key 'anon public', nunca la 'service_role'."
         }
 
         createSupabaseClient(
             supabaseUrl = BuildConfig.SUPABASE_URL,
-            supabaseKey = BuildConfig.SUPABASE_KEY
+            supabaseKey = BuildConfig.SUPABASE_ANON_KEY
         ) {
             install(Auth)
             install(Postgrest)
