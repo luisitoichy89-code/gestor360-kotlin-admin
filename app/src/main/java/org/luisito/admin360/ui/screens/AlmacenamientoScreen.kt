@@ -27,7 +27,7 @@ import org.luisito.admin360.ui.theme.LineOrange
 data class EspacioNegocio(
     val negocio_id: String, val nombre_negocio: String,
     val productos: Long = 0, val ventas: Long = 0, val usuarios: Long = 0,
-    val turnos: Long = 0, val trazas: Long = 0,
+    val turnos: Long = 0,
     val total_registros: Long = 0, val espacio_estimado_mb: Double = 0.0
 )
 
@@ -113,7 +113,7 @@ fun AlmacenamientoScreen(onBack: () -> Unit, viewModel: AlmacenamientoViewModel 
                                     Text("${"%.1f".format(negocio.espacio_estimado_mb)} MB", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text("📦 ${negocio.productos}  🛒 ${negocio.ventas}  👤 ${negocio.usuarios}  💰 ${negocio.turnos}  📋 ${negocio.trazas}", style = MaterialTheme.typography.bodySmall)
+                                Text("📦 ${negocio.productos}  🛒 ${negocio.ventas}  👤 ${negocio.usuarios}  💰 ${negocio.turnos}", style = MaterialTheme.typography.bodySmall)
                                 Text("Total: ${negocio.total_registros}", style = MaterialTheme.typography.bodySmall)
                             }
                         }

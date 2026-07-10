@@ -39,6 +39,12 @@ class UsuarioViewModel(
         clienteIdActual?.let { loadUsuarios(it) }
     }
 
+    /**
+     * localId llega como String desde la UI (el selector de local trabaja con
+     * "l.id.toString()") y se convierte acá a Long?. rol == "admin" siempre
+     * guarda null (acceso a todos los locales del negocio); rol == "seller"
+     * requiere un local concreto.
+     */
     fun createUsuario(
         username: String,
         nombre: String,
@@ -48,9 +54,10 @@ class UsuarioViewModel(
         almacenId: String,
         androidId: String
     ) {
+        val localId = if (rol == "admin") null else almacenId.toLongOrNull()
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.createUsuario(username, nombre, pin, rol, clienteId, almacenId, androidId)
+            repository.createUsuario(username, nombre, pin, rol, clienteId, localId, androidId)
                 .onSuccess { loadUsuarios(clienteId) }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)
@@ -66,9 +73,10 @@ class UsuarioViewModel(
         androidId: String,
         activo: Boolean
     ) {
+        val localId = if (rol == "admin") null else almacenId.toLongOrNull()
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null)
-            repository.updateUsuario(id, username, nombre, rol, almacenId, androidId, activo)
+            repository.updateUsuario(id, username, nombre, rol, localId, androidId, activo)
                 .onSuccess { refrescar() }
                 .onFailure { e -> _uiState.value = _uiState.value.copy(error = e.message) }
             _uiState.value = _uiState.value.copy(isSaving = false)

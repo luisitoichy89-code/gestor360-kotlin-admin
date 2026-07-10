@@ -6,6 +6,9 @@ import kotlinx.serialization.Serializable
  * Coincide con la tabla real "usuarios": auth_id queda null para usuarios que solo
  * acceden por PIN (sin cuenta en Supabase Auth). El primer acceso valida contra esta
  * tabla + Android ID; después trabajan offline con caché local.
+ *
+ * local_id: null significa "admin con acceso a todos los locales del cliente_id".
+ * Para rol "seller" siempre debe tener un local_id concreto asignado.
  */
 @Serializable
 data class User(
@@ -17,7 +20,7 @@ data class User(
     val rol: String,
     val pin: String? = null,
     val android_id: String? = null,
-    val almacen_id: String? = "1",
+    val local_id: Long? = null,
     val activo: Boolean = true,
     val created_at: String? = null
 )

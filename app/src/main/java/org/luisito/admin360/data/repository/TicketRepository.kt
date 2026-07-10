@@ -7,6 +7,15 @@ import org.luisito.admin360.data.models.Ticket
 import org.luisito.admin360.data.models.TicketMensaje
 import org.luisito.admin360.data.remote.SupabaseProvider
 
+/**
+ * Consola de soporte del super-admin (dueño del SaaS), NO de un negocio en
+ * particular: ve tickets de TODOS los clientes/negocios. Por eso esto no usa
+ * p_android_id/p_local_id como la app cliente — usa la sesión real de
+ * Supabase Auth (JWT) con la que este admin inició sesión (ver AuthRepository).
+ * Antes esto mandaba p_android_id = "admin" (un string fijo, sin validar
+ * nada); ahora las funciones "admin_*" validan auth.uid() contra la tabla
+ * "admins" del lado del servidor.
+ */
 class TicketRepository {
     suspend fun getTodosTickets(): Result<List<Ticket>> {
         return try {
@@ -18,7 +27,7 @@ class TicketRepository {
     suspend fun getMensajes(ticketId: Long): Result<List<TicketMensaje>> {
         return try {
             val mensajes = SupabaseProvider.client.postgrest
-                .rpc("get_ticket_mensajes", buildJsonObject { put("p_ticket_id", ticketId) })
+                .rpc("admin_get_ticket_mensajes", buildJsonObject { put("p_ticket_id", ticketId) })
                 .decodeList<TicketMensaje>()
             Result.success(mensajes)
         } catch (e: Exception) { Result.failure(e) }
@@ -26,8 +35,8 @@ class TicketRepository {
 
     suspend fun responderTicket(ticketId: Long, mensaje: String): Result<Unit> {
         return try {
-            SupabaseProvider.client.postgrest.rpc("responder_ticket", buildJsonObject {
-                put("p_android_id", "admin"); put("p_ticket_id", ticketId); put("p_mensaje", mensaje)
+            SupabaseProvider.client.postgrest.rpc("admin_responder_ticket", buildJsonObject {
+                put("p_ticket_id", ticketId); put("p_mensaje", mensaje)
             })
             Result.success(Unit)
         } catch (e: Exception) { Result.failure(e) }
@@ -35,7 +44,7 @@ class TicketRepository {
 
     suspend fun cambiarEstado(ticketId: Long, estado: String): Result<Unit> {
         return try {
-            SupabaseProvider.client.postgrest.rpc("cambiar_estado_ticket", buildJsonObject {
+            SupabaseProvider.client.postgrest.rpc("admin_cambiar_estado_ticket", buildJsonObject {
                 put("p_ticket_id", ticketId); put("p_estado", estado)
             })
             Result.success(Unit)

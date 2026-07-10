@@ -5,19 +5,18 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 /**
- * Licencia principal del negocio (una sola por cliente/negocio, no por usuario).
+ * Licencia principal del negocio (una sola por cliente/negocio, no por usuario ni por local).
  * Coincide con la tabla real "licencias": id bigint, cliente_id uuid, device_id text,
- * almacen_id text, expiracion date, activo boolean, created_at.
+ * expiracion date, activo boolean, created_at.
  * device_id = Android ID del primer admin que registró/activó el negocio.
- * Si vence o queda inactiva, tanto admin como vendedores de ese negocio quedan bloqueados
- * en la app cliente hasta que se renueve.
+ * Si vence o queda inactiva, tanto admin como vendedores de TODOS los locales de ese
+ * negocio quedan bloqueados en la app cliente hasta que se renueve.
  */
 @Serializable
 data class Licencia(
     val id: Long? = null,
     val cliente_id: String,
     val device_id: String,
-    val almacen_id: String? = null,
     val expiracion: String,
     val activo: Boolean = true,
     val created_at: String? = null

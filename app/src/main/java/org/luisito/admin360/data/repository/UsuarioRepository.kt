@@ -1,6 +1,7 @@
 package org.luisito.admin360.data.repository
 
 import io.github.jan.supabase.postgrest.from
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.luisito.admin360.data.models.User
@@ -10,6 +11,10 @@ import org.luisito.admin360.data.remote.SupabaseProvider
  * Usuarios (admin/seller) autenticados solo por PIN + Android ID, sin cuenta en
  * Supabase Auth (auth_id queda null). El primer acceso en el dispositivo valida
  * contra esta tabla; luego la app cliente trabaja offline con caché local.
+ *
+ * local_id: para rol "seller" es obligatorio (un vendedor pertenece a un único
+ * local). Para rol "admin" se guarda null (acceso a todos los locales del
+ * cliente_id; el local activo lo elige la app cliente con el selector).
  *
  * IMPORTANTE: se usa buildJsonObject en vez de mapOf(...) porque los payloads mezclan
  * String y Boolean. Un mapOf con tipos mixtos se infiere como Map<String, Any>, y
@@ -44,9 +49,12 @@ class UsuarioRepository {
         pin: String,
         rol: String,
         clienteId: String,
-        almacenId: String,
+        localId: Long?,
         androidId: String
     ): Result<Unit> {
+        if (rol == "seller" && localId == null) {
+            return Result.failure(IllegalArgumentException("Un vendedor debe tener un local asignado"))
+        }
         return try {
             val payload = buildJsonObject {
                 put("username", username)
@@ -54,7 +62,7 @@ class UsuarioRepository {
                 put("pin", pin)
                 put("rol", rol)
                 put("cliente_id", clienteId)
-                put("almacen_id", almacenId)
+                if (localId != null) put("local_id", localId) else put("local_id", JsonNull)
                 put("android_id", androidId)
                 put("activo", true)
             }
@@ -72,16 +80,19 @@ class UsuarioRepository {
         username: String,
         nombre: String,
         rol: String,
-        almacenId: String,
+        localId: Long?,
         androidId: String,
         activo: Boolean
     ): Result<Unit> {
+        if (rol == "seller" && localId == null) {
+            return Result.failure(IllegalArgumentException("Un vendedor debe tener un local asignado"))
+        }
         return try {
             val payload = buildJsonObject {
                 put("username", username)
                 put("nombre", nombre)
                 put("rol", rol)
-                put("almacen_id", almacenId)
+                if (localId != null) put("local_id", localId) else put("local_id", JsonNull)
                 put("android_id", androidId)
                 put("activo", activo)
             }
