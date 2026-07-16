@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -102,9 +103,24 @@ fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MonitorCard("Pendientes", s.totalPendientes, MaterialTheme.colorScheme.error)
-                MonitorCard("Error", s.totalError, MaterialTheme.colorScheme.tertiary)
-                MonitorCard("Éxito", s.totalExitosas, MaterialTheme.colorScheme.primary)
+                ElevatedCard(Modifier.weight(1f)) {
+                    Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("${s.totalPendientes}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.error)
+                        Text("Pendientes", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                ElevatedCard(Modifier.weight(1f)) {
+                    Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("${s.totalError}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.tertiary)
+                        Text("Error", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                ElevatedCard(Modifier.weight(1f)) {
+                    Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("${s.totalExitosas}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+                        Text("Éxito", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
             }
             Spacer(Modifier.height(16.dp))
 
@@ -116,16 +132,6 @@ fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()
                     items(s.items) { item -> SyncQueueCard(item) { vm.cancelar(item.id) } }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun MonitorCard(titulo: String, cantidad: Int, color: androidx.compose.ui.graphics.Color) {
-    ElevatedCard(modifier = Modifier.weight(1f)) {
-        Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("$cantidad", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall, color = color)
-            Text(titulo, style = MaterialTheme.typography.labelSmall)
         }
     }
 }
