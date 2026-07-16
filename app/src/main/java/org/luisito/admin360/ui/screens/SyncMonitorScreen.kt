@@ -34,7 +34,10 @@ data class SyncQueueItem(
     val intentos: Int = 0,
     val ultimo_error: String? = null,
     val creado_en: String? = null
-)
+) {
+    val puedeReintentar: Boolean get() = estado != "sincronizado" && estado != "cancelado" && intentos < 5 && !tipo.startsWith("eliminar")
+    val puedeCancelar: Boolean get() = estado != "sincronizado" && estado != "cancelado"
+}
 
 data class SyncMonitorUiState(
     val isLoading: Boolean = false,
@@ -42,7 +45,8 @@ data class SyncMonitorUiState(
     val totalPendientes: Int = 0,
     val totalError: Int = 0,
     val totalExitosas: Int = 0,
-    val error: String? = null
+    val error: String? = null,
+    val mensaje: String? = null
 )
 
 class SyncMonitorViewModel : ViewModel() {
@@ -68,6 +72,21 @@ class SyncMonitorViewModel : ViewModel() {
         }
     }
 
+    fun reintentar(id: Long) {
+        viewModelScope.launch {
+            try {
+                SupabaseProvider.client.postgrest.rpc(
+                    "reintentar_sync",
+                    buildJsonObject { put("p_id", id) }
+                )
+                _s.value = _s.value.copy(mensaje = "Acción reintentada correctamente")
+                cargar()
+            } catch (e: Exception) {
+                _s.value = _s.value.copy(error = e.message)
+            }
+        }
+    }
+
     fun cancelar(id: Long) {
         viewModelScope.launch {
             try {
@@ -79,12 +98,16 @@ class SyncMonitorViewModel : ViewModel() {
                         put("p_error", "Cancelado por admin")
                     }
                 )
+                _s.value = _s.value.copy(mensaje = "Acción cancelada")
                 cargar()
             } catch (e: Exception) {
                 _s.value = _s.value.copy(error = e.message)
             }
         }
     }
+
+    fun clearMensaje() { _s.value = _s.value.copy(mensaje = null) }
+    fun clearError() { _s.value = _s.value.copy(error = null) }
 }
 
 @Composable
@@ -99,6 +122,12 @@ fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } },
                 actions = { IconButton(onClick = { vm.cargar() }) { Icon(Icons.Default.Refresh, null) } }
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = remember { SnackbarHostState() }.also {
+                LaunchedEffect(s.mensaje) { s.mensaje?.let { msg -> it.showSnackbar(msg); vm.clearMensaje() } }
+                LaunchedEffect(s.error) { s.error?.let { err -> it.showSnackbar(err); vm.clearError() } }
+            })
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
@@ -126,10 +155,9 @@ fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()
 
             when {
                 s.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                s.error != null -> Text(s.error!!, color = MaterialTheme.colorScheme.error)
                 s.items.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No hay acciones registradas") }
                 else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(s.items) { item -> SyncQueueCard(item) { vm.cancelar(item.id) } }
+                    items(s.items) { item -> SyncQueueCard(item, { vm.reintentar(item.id) }, { vm.cancelar(item.id) }) }
                 }
             }
         }
@@ -137,7 +165,7 @@ fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()
 }
 
 @Composable
-private fun SyncQueueCard(item: SyncQueueItem, onCancelar: () -> Unit) {
+private fun SyncQueueCard(item: SyncQueueItem, onReintentar: () -> Unit, onCancelar: () -> Unit) {
     ElevatedCard {
         Column(Modifier.padding(12.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -164,12 +192,23 @@ private fun SyncQueueCard(item: SyncQueueItem, onCancelar: () -> Unit) {
             if (item.ultimo_error != null) {
                 Text(item.ultimo_error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
-            if (item.estado != "sincronizado" && item.estado != "cancelado") {
+            if (item.puedeReintentar || item.puedeCancelar) {
                 Spacer(Modifier.height(8.dp))
-                TextButton(onClick = onCancelar, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
-                    Icon(Icons.Default.Cancel, null, Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Cancelar")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (item.puedeReintentar) {
+                        TextButton(onClick = onReintentar, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
+                            Icon(Icons.Default.Refresh, null, Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Reintentar")
+                        }
+                    }
+                    if (item.puedeCancelar) {
+                        TextButton(onClick = onCancelar, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+                            Icon(Icons.Default.Cancel, null, Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Cancelar")
+                        }
+                    }
                 }
             }
         }
