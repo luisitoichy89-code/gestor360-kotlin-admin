@@ -35,8 +35,8 @@ data class SyncQueueItem(
     val ultimo_error: String? = null,
     val creado_en: String? = null
 ) {
-    val puedeReintentar: Boolean get() = estado != "sincronizado" && estado != "cancelado" && intentos < 5 && !tipo.startsWith("eliminar")
-    val puedeCancelar: Boolean get() = estado != "sincronizado" && estado != "cancelado"
+    val puedeReintentar: Boolean get() = estado == "pendiente" || (estado == "error" && intentos < 5 && !tipo.startsWith("eliminar"))
+    val puedeCancelar: Boolean get() = estado in listOf("pendiente", "error")
 }
 
 data class SyncMonitorUiState(
@@ -75,11 +75,8 @@ class SyncMonitorViewModel : ViewModel() {
     fun reintentar(id: Long) {
         viewModelScope.launch {
             try {
-                SupabaseProvider.client.postgrest.rpc(
-                    "reintentar_sync",
-                    buildJsonObject { put("p_id", id) }
-                )
-                _s.value = _s.value.copy(mensaje = "Acción reintentada correctamente")
+                SupabaseProvider.client.postgrest.rpc("reintentar_sync", buildJsonObject { put("p_id", id) })
+                _s.value = _s.value.copy(mensaje = "Reintentado con éxito")
                 cargar()
             } catch (e: Exception) {
                 _s.value = _s.value.copy(error = e.message)
@@ -90,15 +87,22 @@ class SyncMonitorViewModel : ViewModel() {
     fun cancelar(id: Long) {
         viewModelScope.launch {
             try {
-                SupabaseProvider.client.postgrest.rpc(
-                    "resolver_sync",
-                    buildJsonObject {
-                        put("p_id", id)
-                        put("p_estado", "cancelado")
-                        put("p_error", "Cancelado por admin")
-                    }
-                )
-                _s.value = _s.value.copy(mensaje = "Acción cancelada")
+                SupabaseProvider.client.postgrest.rpc("resolver_sync", buildJsonObject {
+                    put("p_id", id); put("p_estado", "cancelado"); put("p_error", "Cancelado por admin")
+                })
+                _s.value = _s.value.copy(mensaje = "Cancelado")
+                cargar()
+            } catch (e: Exception) {
+                _s.value = _s.value.copy(error = e.message)
+            }
+        }
+    }
+
+    fun limpiarSincronizadas() {
+        viewModelScope.launch {
+            try {
+                SupabaseProvider.client.postgrest.rpc("limpiar_sync_queue")
+                _s.value = _s.value.copy(mensaje = "Cola limpia")
                 cargar()
             } catch (e: Exception) {
                 _s.value = _s.value.copy(error = e.message)
@@ -113,22 +117,23 @@ class SyncMonitorViewModel : ViewModel() {
 @Composable
 fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()) {
     val s by vm.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(Unit) { vm.cargar() }
+    LaunchedEffect(s.mensaje) { s.mensaje?.let { snackbarHostState.showSnackbar(it); vm.clearMensaje() } }
+    LaunchedEffect(s.error) { s.error?.let { snackbarHostState.showSnackbar(it); vm.clearError() } }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Monitor de Sincronización") },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } },
-                actions = { IconButton(onClick = { vm.cargar() }) { Icon(Icons.Default.Refresh, null) } }
+                actions = {
+                    IconButton(onClick = { vm.limpiarSincronizadas() }) { Icon(Icons.Default.CleaningServices, "Limpiar sincronizadas") }
+                    IconButton(onClick = { vm.cargar() }) { Icon(Icons.Default.Refresh, null) }
+                }
             )
         },
-        snackbarHost = {
-            SnackbarHost(hostState = remember { SnackbarHostState() }.also {
-                LaunchedEffect(s.mensaje) { s.mensaje?.let { msg -> it.showSnackbar(msg); vm.clearMensaje() } }
-                LaunchedEffect(s.error) { s.error?.let { err -> it.showSnackbar(err); vm.clearError() } }
-            })
-        }
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
