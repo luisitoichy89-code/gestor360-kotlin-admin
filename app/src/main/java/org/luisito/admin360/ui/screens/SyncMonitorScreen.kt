@@ -33,10 +33,53 @@ data class SyncQueueItem(
     val estado: String,
     val intentos: Int = 0,
     val ultimo_error: String? = null,
-    val creado_en: String? = null
+    val creado_en: String? = null,
+    val cliente_id: Long = 0,
+    val nombre_negocio: String = "Sin negocio",
+    val nombre_local: String = "Sin local"
 ) {
     val puedeReintentar: Boolean get() = estado in listOf("pendiente", "error") && intentos < 5 && !tipo.startsWith("eliminar")
     val puedeCancelar: Boolean get() = estado in listOf("pendiente", "error")
+}
+
+// --- Agrupación jerárquica: negocio -> local -> acciones ---
+
+data class LocalGrupo(
+    val localId: Long,
+    val nombreLocal: String,
+    val items: List<SyncQueueItem>
+) {
+    val errores: Int get() = items.count { it.estado == "error" }
+    val pendientes: Int get() = items.count { it.estado == "pendiente" }
+    val tieneAlerta: Boolean get() = errores > 0 || pendientes > 0
+}
+
+data class NegocioGrupo(
+    val clienteId: Long,
+    val nombreNegocio: String,
+    val locales: List<LocalGrupo>
+) {
+    val errores: Int get() = locales.sumOf { it.errores }
+    val pendientes: Int get() = locales.sumOf { it.pendientes }
+    val tieneAlerta: Boolean get() = errores > 0 || pendientes > 0
+}
+
+private fun agruparJerarquico(items: List<SyncQueueItem>): List<NegocioGrupo> {
+    return items.groupBy { it.cliente_id to it.nombre_negocio }
+        .map { (claveNegocio, itemsNegocio) ->
+            val locales = itemsNegocio.groupBy { it.local_id to it.nombre_local }
+                .map { (claveLocal, itemsLocal) -> LocalGrupo(claveLocal.first, claveLocal.second, itemsLocal) }
+                .sortedWith(compareByDescending<LocalGrupo> { it.tieneAlerta }.thenBy { it.nombreLocal })
+            NegocioGrupo(claveNegocio.first, claveNegocio.second, locales)
+        }
+        .sortedWith(compareByDescending<NegocioGrupo> { it.tieneAlerta }.thenBy { it.nombreNegocio })
+}
+
+private fun resumenTexto(errores: Int, pendientes: Int): String = when {
+    errores > 0 && pendientes > 0 -> "$errores error${if (errores == 1) "" else "es"} · $pendientes pendiente${if (pendientes == 1) "" else "s"}"
+    errores > 0 -> "$errores error${if (errores == 1) "" else "es"}"
+    pendientes > 0 -> "$pendientes pendiente${if (pendientes == 1) "" else "s"}"
+    else -> "0 errores"
 }
 
 data class SyncMonitorUiState(
@@ -58,7 +101,7 @@ class SyncMonitorViewModel : ViewModel() {
         viewModelScope.launch {
             _s.value = _s.value.copy(isLoading = true, error = null)
             try {
-                val items = SupabaseProvider.client.postgrest.rpc("get_sync_queue")
+                val items = SupabaseProvider.client.postgrest.rpc("get_sync_queue_jerarquico")
                     .decodeList<SyncQueueItem>()
                 _s.value = _s.value.copy(
                     isLoading = false,
@@ -128,6 +171,12 @@ fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()
     LaunchedEffect(s.error) { s.error?.let { snackbarHostState.showSnackbar(it); vm.clearError() } }
 
     val itemsFiltrados = if (s.mostrarResueltos) s.items else s.items.filter { it.estado in listOf("pendiente", "error") }
+    val grupos = remember(itemsFiltrados) { agruparJerarquico(itemsFiltrados) }
+
+    // Estado de expansión manual: si no hay override, el grupo se expande
+    // automáticamente solo cuando tiene errores/pendientes (tieneAlerta).
+    val negociosExpandidos = remember { mutableStateMapOf<Long, Boolean>() }
+    val localesExpandidos = remember { mutableStateMapOf<Long, Boolean>() }
 
     Scaffold(
         topBar = {
@@ -173,11 +222,84 @@ fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()
 
             when {
                 s.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                itemsFiltrados.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No hay acciones pendientes") }
+                grupos.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No hay acciones pendientes") }
                 else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(itemsFiltrados) { item -> SyncQueueCard(item, { vm.reintentar(item.id) }, { vm.cancelar(item.id) }) }
+                    grupos.forEach { negocio ->
+                        val negocioExpandido = negociosExpandidos[negocio.clienteId] ?: negocio.tieneAlerta
+                        item(key = "negocio-${negocio.clienteId}") {
+                            NegocioHeader(negocio, negocioExpandido) {
+                                negociosExpandidos[negocio.clienteId] = !negocioExpandido
+                            }
+                        }
+                        if (negocioExpandido) {
+                            negocio.locales.forEach { local ->
+                                val localExpandido = localesExpandidos[local.localId] ?: local.tieneAlerta
+                                item(key = "local-${local.localId}") {
+                                    LocalHeader(local, localExpandido) {
+                                        localesExpandidos[local.localId] = !localExpandido
+                                    }
+                                }
+                                if (localExpandido) {
+                                    items(local.items, key = { it.id }) { syncItem ->
+                                        Box(Modifier.padding(start = 20.dp)) {
+                                            SyncQueueCard(syncItem, { vm.reintentar(syncItem.id) }, { vm.cancelar(syncItem.id) })
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun NegocioHeader(negocio: NegocioGrupo, expandido: Boolean, onToggle: () -> Unit) {
+    ElevatedCard(
+        onClick = onToggle,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = if (negocio.tieneAlerta) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f) else MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Store, null, tint = if (negocio.tieneAlerta) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(negocio.nombreNegocio, fontWeight = FontWeight.Bold)
+                Text(
+                    resumenTexto(negocio.errores, negocio.pendientes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (negocio.tieneAlerta) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(if (expandido) Icons.Default.ExpandLess else Icons.Default.ExpandMore, null)
+        }
+    }
+}
+
+@Composable
+private fun LocalHeader(local: LocalGrupo, expandido: Boolean, onToggle: () -> Unit) {
+    ElevatedCard(
+        onClick = onToggle,
+        modifier = Modifier.padding(start = 16.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = if (local.tieneAlerta) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Place, null, Modifier.size(18.dp), tint = if (local.tieneAlerta) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.width(8.dp))
+            Column(Modifier.weight(1f)) {
+                Text(local.nombreLocal, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    resumenTexto(local.errores, local.pendientes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (local.tieneAlerta) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(if (expandido) Icons.Default.ExpandLess else Icons.Default.ExpandMore, null, Modifier.size(18.dp))
         }
     }
 }
