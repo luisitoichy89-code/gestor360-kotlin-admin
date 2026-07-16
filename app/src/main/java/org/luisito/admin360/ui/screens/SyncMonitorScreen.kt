@@ -1,4 +1,5 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
+import androidx.compose.foundation.layout.RowScope
 package org.luisito.admin360.ui.screens
 
 import androidx.compose.foundation.layout.*
@@ -22,7 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import org.luisito.admin360.data.remote.SupabaseClientProvider
+import org.luisito.admin360.data.remote.SupabaseProvider
 
 @Serializable
 data class SyncQueueItem(
@@ -52,7 +53,7 @@ class SyncMonitorViewModel : ViewModel() {
         viewModelScope.launch {
             _s.value = _s.value.copy(isLoading = true, error = null)
             try {
-                val items = SupabaseClientProvider.client.postgrest.rpc("get_sync_queue")
+                val items = SupabaseProvider.client.postgrest.rpc("get_sync_queue")
                     .decodeList<SyncQueueItem>()
                 _s.value = _s.value.copy(
                     isLoading = false,
@@ -70,7 +71,7 @@ class SyncMonitorViewModel : ViewModel() {
     fun cancelar(id: Long) {
         viewModelScope.launch {
             try {
-                SupabaseClientProvider.client.postgrest.rpc(
+                SupabaseProvider.client.postgrest.rpc(
                     "resolver_sync",
                     buildJsonObject {
                         put("p_id", id)
