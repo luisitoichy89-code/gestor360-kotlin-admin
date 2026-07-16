@@ -25,7 +25,7 @@ private data class SeccionDashboard(
 fun AdminDashboardScreen(negocioActivo: Negocio? = null, onNavigate: (String) -> Unit, onLogout: () -> Unit) {
     val secciones = buildList {
         add(SeccionDashboard("Negocios", "Gestiona todos los negocios", Icons.Default.Business, "negocios"))
-        add(SeccionDashboard("Tickets", "Soporte a clientes", Icons.Default.HeadsetMic, "tickets"))
+        add(SeccionDashboard("Monitor Sync", "Cola de sincronización", Icons.Default.Sync, "sync"))
         add(SeccionDashboard("Almacenamiento", "Espacio usado por cada negocio", Icons.Default.Storage, "almacenamiento"))
         if (negocioActivo != null) add(SeccionDashboard("Gestionar ${negocioActivo.nombre_negocio}", "Locales · Usuarios · Licencia", Icons.Default.Settings, "gestionar"))
     }

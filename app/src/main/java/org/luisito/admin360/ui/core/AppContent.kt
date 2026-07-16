@@ -9,7 +9,7 @@ private sealed class Pantalla {
     object Negocios : Pantalla()
     data class NegocioDetail(val negocio: Negocio) : Pantalla()
     object Almacenamiento : Pantalla()
-    object Tickets : Pantalla()
+    object SyncMonitor : Pantalla()
 }
 
 @Composable
@@ -30,7 +30,7 @@ fun AppContent() {
                 pantallaActual = when (route) {
                     "negocios" -> Pantalla.Negocios
                     "almacenamiento" -> Pantalla.Almacenamiento
-                    "tickets" -> Pantalla.Tickets
+                    "sync" -> Pantalla.SyncMonitor
                     "gestionar" -> negocioActivo?.let { Pantalla.NegocioDetail(it) } ?: Pantalla.Dashboard
                     else -> Pantalla.Dashboard
                 }
@@ -55,7 +55,7 @@ fun AppContent() {
             onBack = { pantallaActual = Pantalla.Dashboard }
         )
 
-        is Pantalla.Tickets -> TicketsAdminScreen(onBack = { pantallaActual = Pantalla.Dashboard })
+        is Pantalla.SyncMonitor -> SyncMonitorScreen(onBack = { pantallaActual = Pantalla.Dashboard })
         is Pantalla.Almacenamiento -> AlmacenamientoScreen(
             onBack = { pantallaActual = Pantalla.Dashboard }
         )
