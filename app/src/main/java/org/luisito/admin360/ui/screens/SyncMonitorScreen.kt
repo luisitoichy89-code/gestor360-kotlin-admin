@@ -34,7 +34,7 @@ data class SyncQueueItem(
     val intentos: Int = 0,
     val ultimo_error: String? = null,
     val creado_en: String? = null,
-    val cliente_id: Long = 0,
+    val cliente_id: String = 0,
     val nombre_negocio: String = "Sin negocio",
     val nombre_local: String = "Sin local"
 ) {
