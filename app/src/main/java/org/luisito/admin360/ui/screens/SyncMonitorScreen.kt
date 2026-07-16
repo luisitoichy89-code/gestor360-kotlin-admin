@@ -34,7 +34,7 @@ data class SyncQueueItem(
     val intentos: Int = 0,
     val ultimo_error: String? = null,
     val creado_en: String? = null,
-    val cliente_id: String = 0,
+    val cliente_id: String = "",
     val nombre_negocio: String = "Sin negocio",
     val nombre_local: String = "Sin local"
 ) {
@@ -55,7 +55,7 @@ data class LocalGrupo(
 }
 
 data class NegocioGrupo(
-    val clienteId: Long,
+    val clienteId: String,
     val nombreNegocio: String,
     val locales: List<LocalGrupo>
 ) {
@@ -175,7 +175,7 @@ fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()
 
     // Estado de expansión manual: si no hay override, el grupo se expande
     // automáticamente solo cuando tiene errores/pendientes (tieneAlerta).
-    val negociosExpandidos = remember { mutableStateMapOf<Long, Boolean>() }
+    val negociosExpandidos = remember { mutableStateMapOf<String, Boolean>() }
     val localesExpandidos = remember { mutableStateMapOf<Long, Boolean>() }
 
     Scaffold(
