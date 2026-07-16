@@ -1,5 +1,4 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
-import androidx.compose.foundation.layout.RowScope
 package org.luisito.admin360.ui.screens
 
 import androidx.compose.foundation.layout.*
@@ -123,7 +122,7 @@ fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()
 
 @Composable
 private fun MonitorCard(titulo: String, cantidad: Int, color: androidx.compose.ui.graphics.Color) {
-    ElevatedCard(Modifier.weight(1f)) {
+    ElevatedCard(modifier = Modifier.weight(1f)) {
         Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("$cantidad", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall, color = color)
             Text(titulo, style = MaterialTheme.typography.labelSmall)
