@@ -22,16 +22,13 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import org.luisito.admin360.data.SupabaseClientProvider
-import org.luisito.admin360.utils.SessionManager
-import org.luisito.admin360.ui.theme.LineOrange
+import org.luisito.admin360.data.remote.SupabaseClientProvider
 
 @Serializable
 data class SyncQueueItem(
     val id: Long,
     val local_id: Long,
     val tipo: String,
-    val payload: kotlinx.serialization.json.JsonObject? = null,
     val estado: String,
     val intentos: Int = 0,
     val ultimo_error: String? = null,
@@ -51,14 +48,12 @@ class SyncMonitorViewModel : ViewModel() {
     private val _s = MutableStateFlow(SyncMonitorUiState())
     val uiState: StateFlow<SyncMonitorUiState> = _s.asStateFlow()
 
-    fun cargar(androidId: String) {
+    fun cargar() {
         viewModelScope.launch {
             _s.value = _s.value.copy(isLoading = true, error = null)
             try {
-                val items = SupabaseClientProvider.client.postgrest.rpc(
-                    "get_sync_queue",
-                    buildJsonObject { put("p_android_id", androidId) }
-                ).decodeList<SyncQueueItem>()
+                val items = SupabaseClientProvider.client.postgrest.rpc("get_sync_queue")
+                    .decodeList<SyncQueueItem>()
                 _s.value = _s.value.copy(
                     isLoading = false,
                     items = items,
@@ -72,7 +67,7 @@ class SyncMonitorViewModel : ViewModel() {
         }
     }
 
-    fun cancelar(androidId: String, id: Long) {
+    fun cancelar(id: Long) {
         viewModelScope.launch {
             try {
                 SupabaseClientProvider.client.postgrest.rpc(
@@ -83,7 +78,7 @@ class SyncMonitorViewModel : ViewModel() {
                         put("p_error", "Cancelado por admin")
                     }
                 )
-                cargar(androidId)
+                cargar()
             } catch (e: Exception) {
                 _s.value = _s.value.copy(error = e.message)
             }
@@ -94,24 +89,21 @@ class SyncMonitorViewModel : ViewModel() {
 @Composable
 fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()) {
     val s by vm.uiState.collectAsState()
-    val androidId = remember { SessionManager(org.luisito.admin360.utils.AppContextHolder.context).getAndroidId() }
-
-    LaunchedEffect(Unit) { vm.cargar(androidId) }
+    LaunchedEffect(Unit) { vm.cargar() }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Monitor de Sincronización") },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } },
-                actions = { IconButton(onClick = { vm.cargar(androidId) }) { Icon(Icons.Default.Refresh, null) } }
+                actions = { IconButton(onClick = { vm.cargar() }) { Icon(Icons.Default.Refresh, null) } }
             )
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            // Contadores
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 MonitorCard("Pendientes", s.totalPendientes, MaterialTheme.colorScheme.error)
-                MonitorCard("Error", s.totalError, LineOrange)
+                MonitorCard("Error", s.totalError, MaterialTheme.colorScheme.tertiary)
                 MonitorCard("Éxito", s.totalExitosas, MaterialTheme.colorScheme.primary)
             }
             Spacer(Modifier.height(16.dp))
@@ -121,7 +113,7 @@ fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()
                 s.error != null -> Text(s.error!!, color = MaterialTheme.colorScheme.error)
                 s.items.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No hay acciones registradas") }
                 else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(s.items) { item -> SyncQueueCard(item) { vm.cancelar(androidId, item.id) } }
+                    items(s.items) { item -> SyncQueueCard(item) { vm.cancelar(item.id) } }
                 }
             }
         }
@@ -150,12 +142,12 @@ private fun SyncQueueCard(item: SyncQueueItem, onCancelar: () -> Unit) {
                     colors = AssistChipDefaults.assistChipColors(
                         containerColor = when (item.estado) {
                             "pendiente" -> MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
-                            "error" -> LineOrange.copy(alpha = 0.15f)
+                            "error" -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f)
                             else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                         },
                         labelColor = when (item.estado) {
                             "pendiente" -> MaterialTheme.colorScheme.error
-                            "error" -> LineOrange
+                            "error" -> MaterialTheme.colorScheme.tertiary
                             else -> MaterialTheme.colorScheme.primary
                         }
                     )
