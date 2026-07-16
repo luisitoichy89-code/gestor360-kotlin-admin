@@ -35,7 +35,7 @@ data class SyncQueueItem(
     val ultimo_error: String? = null,
     val creado_en: String? = null
 ) {
-    val puedeReintentar: Boolean get() = estado == "pendiente" || (estado == "error" && intentos < 5 && !tipo.startsWith("eliminar"))
+    val puedeReintentar: Boolean get() = estado in listOf("pendiente", "error") && intentos < 5 && !tipo.startsWith("eliminar")
     val puedeCancelar: Boolean get() = estado in listOf("pendiente", "error")
 }
 
@@ -45,6 +45,7 @@ data class SyncMonitorUiState(
     val totalPendientes: Int = 0,
     val totalError: Int = 0,
     val totalExitosas: Int = 0,
+    val mostrarResueltos: Boolean = false,
     val error: String? = null,
     val mensaje: String? = null
 )
@@ -70,6 +71,10 @@ class SyncMonitorViewModel : ViewModel() {
                 _s.value = _s.value.copy(isLoading = false, error = e.message)
             }
         }
+    }
+
+    fun toggleResueltos() {
+        _s.value = _s.value.copy(mostrarResueltos = !_s.value.mostrarResueltos)
     }
 
     fun reintentar(id: Long) {
@@ -122,13 +127,21 @@ fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()
     LaunchedEffect(s.mensaje) { s.mensaje?.let { snackbarHostState.showSnackbar(it); vm.clearMensaje() } }
     LaunchedEffect(s.error) { s.error?.let { snackbarHostState.showSnackbar(it); vm.clearError() } }
 
+    val itemsFiltrados = if (s.mostrarResueltos) s.items else s.items.filter { it.estado in listOf("pendiente", "error") }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Monitor de Sincronización") },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } },
                 actions = {
-                    IconButton(onClick = { vm.limpiarSincronizadas() }) { Icon(Icons.Default.CleaningServices, "Limpiar sincronizadas") }
+                    IconButton(onClick = { vm.toggleResueltos() }) {
+                        Icon(
+                            if (s.mostrarResueltos) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            "Ver resueltos"
+                        )
+                    }
+                    IconButton(onClick = { vm.limpiarSincronizadas() }) { Icon(Icons.Default.CleaningServices, "Limpiar") }
                     IconButton(onClick = { vm.cargar() }) { Icon(Icons.Default.Refresh, null) }
                 }
             )
@@ -160,9 +173,9 @@ fun SyncMonitorScreen(onBack: () -> Unit, vm: SyncMonitorViewModel = viewModel()
 
             when {
                 s.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                s.items.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No hay acciones registradas") }
+                itemsFiltrados.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No hay acciones pendientes") }
                 else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(s.items) { item -> SyncQueueCard(item, { vm.reintentar(item.id) }, { vm.cancelar(item.id) }) }
+                    items(itemsFiltrados) { item -> SyncQueueCard(item, { vm.reintentar(item.id) }, { vm.cancelar(item.id) }) }
                 }
             }
         }
@@ -182,11 +195,13 @@ private fun SyncQueueCard(item: SyncQueueItem, onReintentar: () -> Unit, onCance
                         containerColor = when (item.estado) {
                             "pendiente" -> MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
                             "error" -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f)
+                            "cancelado" -> MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
                             else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                         },
                         labelColor = when (item.estado) {
                             "pendiente" -> MaterialTheme.colorScheme.error
                             "error" -> MaterialTheme.colorScheme.tertiary
+                            "cancelado" -> MaterialTheme.colorScheme.outline
                             else -> MaterialTheme.colorScheme.primary
                         }
                     )
